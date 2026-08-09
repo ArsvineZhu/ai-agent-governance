@@ -1,0 +1,134 @@
+#!/usr/bin/env node
+// Governance Validator — plain Node, no dependencies.
+// Usage: node scripts/verify-governance.js [--json]
+// Paths come from .agent/manifest.json when present (structure-adaptive);
+// otherwise built-in defaults are used.
+// Exit code 0 when every governance artifact exists, 1 otherwise.
+
+const fs = require("fs");
+const path = require("path");
+
+const ROOT = process.cwd();
+const MANIFEST = path.join(ROOT, ".agent", "manifest.json");
+
+// [name, relativePath, checker]
+const DEFAULTS = [
+  ["AGENTS.md", "AGENTS.md", isFile],
+  ["CHANGELOG.md", "CHANGELOG.md", isFile],
+  ["Architecture doc", "docs/ARCHITECTURE.md", isFile],
+  ["Feature registry", "docs/features", isDir],
+  ["Plans", "docs/plans", isDir],
+  ["Rules", "docs/rules", isDir],
+  [".gitignore", ".gitignore", isFile],
+  [".env.example", ".env.example", isFile],
+  ["CI workflow", null, hasCI],
+  ["Validator self", "scripts/verify-governance.js", isFile],
+  [".agent state dir", ".agent", isDir],
+  [".agent manifest", ".agent/manifest.json", isFile],
+  [".agent state", ".agent/state.json", isFile],
+  [".agent validation", ".agent/validation.json", isFile],
+  [".agent preflight", ".agent/preflight.json", isFile],
+  ["Governance version", null, hasGovernanceVersion],
+];
+
+function isFile(p) {
+  try {
+    return fs.statSync(p).isFile();
+  } catch {
+    return false;
+  }
+}
+
+function isDir(p) {
+  try {
+    return fs.statSync(p).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+function hasCI() {
+  return (
+    isFile(path.join(ROOT, ".github/workflows/ci.yml")) ||
+    isFile(path.join(ROOT, ".github/workflows/ci.yaml")) ||
+    isDir(path.join(ROOT, ".github/workflows")) ||
+    isFile(path.join(ROOT, ".gitlab-ci.yml")) ||
+    isFile(path.join(ROOT, ".circleci/config.yml"))
+  );
+}
+
+function getGovernanceVersion() {
+  try {
+    const m = JSON.parse(fs.readFileSync(MANIFEST, "utf8"));
+    return typeof m.governance_version === "string" ? m.governance_version : null;
+  } catch {
+    return null;
+  }
+}
+
+function hasGovernanceVersion() {
+  return getGovernanceVersion() !== null;
+}
+
+function loadManifestChecks() {
+  try {
+    const m = JSON.parse(fs.readFileSync(MANIFEST, "utf8"));
+    if (!Array.isArray(m.artifacts) || m.artifacts.length === 0) return null;
+    return m.artifacts.map((a) => {
+      const rel = path.normalize(a.path);
+      const abs = path.join(ROOT, rel);
+      return {
+        name: a.name || rel,
+        path: rel,
+        ok: a.kind === "dir" ? isDir(abs) : isFile(abs),
+      };
+    });
+  } catch {
+    return null;
+  }
+}
+
+const manifestChecks = loadManifestChecks();
+const results = manifestChecks
+  ? [...manifestChecks, { name: "Governance version", path: "manifest.governance_version", ok: hasGovernanceVersion() }]
+  : DEFAULTS.map(([name, rel, check]) => {
+      const target = rel === null ? null : path.join(ROOT, rel);
+      const ok = rel === null ? check() : check(target);
+      return { name, path: rel || "(auto)", ok };
+    });
+
+const missing = results.filter((r) => !r.ok);
+const pass = results.length - missing.length;
+const allOk = missing.length === 0;
+
+if (process.argv.includes("--json")) {
+  process.stdout.write(
+    JSON.stringify(
+      {
+        root: ROOT,
+        timestamp: new Date().toISOString(),
+        mode: manifestChecks ? "manifest" : "defaults",
+        governance_version: getGovernanceVersion(),
+        total: results.length,
+        passed: pass,
+        failed: missing.length,
+        passedAll: allOk,
+        results,
+      },
+      null,
+      2
+    ) + "\n"
+  );
+} else {
+  console.log(`mode: ${manifestChecks ? "manifest" : "defaults"}`);
+  for (const r of results) {
+    console.log(`${r.ok ? "✓" : "✗"} ${r.name}  (${r.path})`);
+  }
+  console.log(`\n${pass}/${results.length} checks passed.`);
+  if (missing.length > 0) {
+    console.log("Missing:");
+    for (const m of missing) console.log(`  - ${m.name} (${m.path})`);
+  }
+}
+
+process.exit(allOk ? 0 : 1);

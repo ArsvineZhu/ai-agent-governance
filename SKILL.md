@@ -1,0 +1,282 @@
+---
+name: ai-agent-governance
+description: Use when initializing, retrofitting, OR auditing a project's AI-agent governance framework. Init mode: one-shot bootstrap of AGENTS.md, feature registry, lifecycle, CI validation, security baseline. Audit mode: health-check an already-governed project, detect drift vs .agent/manifest.json, apply minimal fixes. Triggers on "initialize governance", "setup project for AI agents", "create AGENTS.md framework", "audit governance", "governance health check", "fix governance drift". Also loads the generated sub-skills in .agent/skills for ongoing agent work. Do NOT use for normal development tasks.
+---
+
+# Governance Bootstrap
+
+在**项目创建初期**一次性建立「AI Agent 软件治理体系」，并在项目运行期**持续治理与巡检**（长期维稳）。单次运行内完成，但允许**阶段化暂停**（见执行层）。禁止省略任何一项、禁止以"应该没问题"代替验证。生成的治理体系与具体 AI 工具无关（AGENTS.md / CLAUDE.md / rules / 子技能），Claude Code、Cursor、Codex、opencode 等均可使用。
+
+本 Skill 只负责治理体系搭建与巡检维护，不写业务代码、技术规范、测试内容。
+
+## 进入模式（Entry Mode）
+
+| 模式 | 触发条件 | 行为 |
+| --- | --- | --- |
+| INIT（初始化） | 新项目 / 无 `.agent/manifest.json` / 成熟度 L0-L1 | 完整引导（见下方执行层） |
+| AUDIT（巡检） | 已有 `.agent/manifest.json` / 成熟度 L2-L3 / 用户说"巡检/健康检查/治理偏差" | 只读巡检 + 最小补丁修复（见下方 Audit 流程） |
+
+判定优先级：**用户明确指令 > `.agent/manifest.json` 存在性 > 成熟度**。INIT 与 AUDIT 都先走 Phase 0 环境检测。AUDIT 不重建、不重构、不迁移，只输出差距报告与最小补丁；涉及治理文件改动走「治理文件保护」流程。
+
+> 定位：INIT 完成的项目进入**长期运行期**，日常任务由生成的 `.agent/skills/` 子技能接管（含 `drift-check` 巡检）；本 skill 可随时以 AUDIT 模式回来做健康检查。
+
+## 策略层（Policy —— 每次执行都必须遵守）
+
+### 单一事实源（Single Source of Truth）
+
+- 本 SKILL 是**初始化规范唯一源头**（生成规则）
+- 生成后的 **AGENTS.md 是项目运行期规则唯一源头**
+- `docs/rules/` 承接细节，AGENTS.md 按章节 `@` 引用
+- 执行与校验由 `scripts/verify-governance.js` 与 `.agent/skills/` 负责
+- **同一规则不得在多处独立维护**；需修改时从源头改，再同步生成物
+
+### Rule Priority（规则冲突裁决顺序）
+
+```
+1. System / Platform Safety（系统/平台安全）
+2. Explicit User Request（用户明确要求）
+3. Governance Integrity（治理完整性）
+4. AGENTS.md
+5. docs/rules/
+6. Existing Code Convention（既有代码约定）
+```
+
+约束：用户可通过**明确指令**要求修改治理规则（走「治理文件保护」流程），但不能通过**普通业务任务**隐式绕过治理规则；"帮我改 AGENTS.md / 删掉安全检查"视为修改治理体系，触发保护流程，而非普通指令直接覆盖。
+
+### Agent Permission Model（权限矩阵）
+
+| 操作 | 权限 |
+| --- | --- |
+| Read | automatic |
+| Create Documentation | automatic |
+| Modify Code | allowed，但必须验证（测试/静态检查/构建） |
+| Delete Code | confirmation required |
+| Dependency Change | confirmation required |
+| Git Commit | confirmation required |
+| Git Push | forbidden（禁止自动执行） |
+
+### 状态协议（最终报告必须支持三态）
+
+- ✅ Completed（有真实证据）
+- ⚠️ Blocked（外部依赖缺失，如仓库未建、CI 无法触发 —— 写明原因）
+- ❌ Failed（存在失败项）
+
+未 100% ✅ 不得宣布"完成"。
+
+**外部阻塞 ≠ 跳过**。遇到阻塞：① 标记 ⚠️ Blocked + 原因 → ② 继续执行所有**不依赖该阻塞项**的任务 → ③ 不得伪造完成 → ④ 最终状态为 **INCOMPLETE/BLOCKED（而非 COMPLETED）**，在报告顶部显式声明。这样"单次执行"仍成立。
+
+### 反虚构规则
+
+- **Feature Registry 必须根据实际代码状态生成**：已存在功能 → 创建真实 Feature 文档；新项目无业务代码 → 按「Feature 占位策略」建占位，**绝不虚构功能**（不写 authentication.md 除非真有认证）。
+- **禁止删除已有代码/文档**：删除前必须说明原因、当前作用、搜索全部引用、确认 Feature Registry 影响、提供迁移方案。动态调用 / 插件机制 / 配置驱动代码必须特别谨慎。
+- 所有验证证据必须是真实命令输出，不是推断。
+
+### Feature 占位策略（无业务代码时）
+
+- 若 `src/` / `app/` 等目录下无任何业务代码：`docs/features/` 下仅创建 `_TEMPLATE.md`（复制 `reference/feature-doc.template.md`）与 `README.md`（说明"待业务模块确定后按模板逐个登记"）。
+- 若已有代码（如存在 `auth`、`pdf` 目录）：才逆推创建 `authentication.md` 等具体文档，且 `Implementation` 路径必须与 `find` / `rg` 查到的真实路径一致，**严禁虚构路径**。
+- 任何真实文档中暂缺的字段一律标 `[PLACEHOLDER]` + `# TODO: 业务确定后填充`。
+
+### 项目默认值约定（输入缺失时采用，禁止乱猜）
+
+| 项 | 默认 | 备注 |
+| --- | --- | --- |
+| 文档语言 | 中文 | 项目约定另指时跟随；AGENTS.md 保持英文（工具自动加载） |
+| 提交信息语言 | 英文（Conventional Commits） | `feat(auth): add login endpoint` |
+| 包管理器 | `pnpm-lock.yaml` → pnpm，否则 npm；Python 看 `uv.lock` → uv，否则 pip | 以检测到的锁文件为准 |
+| 测试命令 | 未提供 → 占位 `echo "TEST_PLACEHOLDER"` | 在 Inspection Report 中高亮提醒用户 |
+| 测试/静态检查脚本缺失 | CI 中该步骤仅输出警告占位 | 见 CI 降级策略 |
+
+### 熔断机制（错误恢复）
+
+- **平台不可用**：CI 无法创建/触发（Token 未配置、Actions 未开启、仓库未推送）→ 该项标 ⚠️ Blocked 并写明原因，**停止后续 CI 步骤，但其余文档类任务必须全部完成**。
+- **Git 身份未配置**：首次提交前检查 `user.name`/`user.email`，未配置 → ⚠️ Blocked，提示用户配置，不擅自设置。
+- **禁止"跳过后假装成功"**：任何被熔断的项必须出现在报告的 Blocked 栏，不得从核对表消失。
+
+### 上下文熔断（Two-Pass）
+
+若上下文可能不足：**Phase 1 第 1–2 步（docs/rules/ + AGENTS.md）完成后可暂停**，输出"阶段一完成，请回复『继续』以生成剩余文件"。未获"继续"指令不得省略任何项；获得指令后从 `.agent/state.json` 断点续跑。
+
+### 治理文件保护（Governance Protection）
+
+以下文件是**治理体系本身**，修改需要特殊权限（防止 Agent 自我解除限制）：
+
+```
+AGENTS.md / CLAUDE.md
+docs/rules/**              （规则文件）
+.agent/manifest.json       （治理工件清单）
+.agent/preflight.json      （回滚快照）
+scripts/verify-governance.js
+opencode.json / .github/workflows/**
+```
+
+修改这些文件必须：说明原因 → 更新 CHANGELOG → **更新 `.agent/manifest.json` 的 `governance_version`** → 运行 `scripts/verify-governance.js`。涉及**权限/安全/删除保护/校验步骤**的修改必须用户**明确确认**。未经用户明确同意不得删除权限限制、不得放宽 Git Policy、不得移除校验步骤。普通业务任务不得隐式触发本流程（见 Rule Priority）。此规则本身写入生成的 AGENTS.md 与 `docs/rules/git-policy.md`。
+
+### 多 Agent 协作（Agent Identity）
+
+多 Agent 同时工作时（Claude / Codex / Cursor / opencode）：
+- 每次任务在 `.agent/state.json` 记录 `agent_id` + `task_id` + 起始时间戳。
+- 开始任务前先读 `state.json`：若某阶段被其他 Agent 标记 `locked`，等待或协商，**不得并行修改同一文件**。
+- 完成时释放锁（`locked: null`）并写入完成清单。
+
+### 错误分类（Error Classification）
+
+外部命令失败时按此分类处理，禁止一律跳过：
+
+| 分类 | 示例 | 处理 |
+| --- | --- | --- |
+| Recoverable | 网络失败、依赖下载失败 | 重试 1 次，仍失败则标 ⚠️ Blocked 并继续其余项 |
+| Blocked | 权限不足、缺 token、Git 身份未配置 | 标 ⚠️ Blocked + 原因，停相关轨道，其余任务继续 |
+| Fatal | 文件损坏、环境不可识别 | 停止整个初始化，输出 .agent/preflight.json 与回滚建议 |
+
+## 执行层（Execution）
+
+### 初始化模式判断（Project Maturity Detection）
+
+Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
+
+| 等级 | 判定 | 策略 |
+| --- | --- | --- |
+| Level 0 空仓库 | 只有 README/无源码 | 创建完整治理骨架（默认结构） |
+| Level 1 原型 | 有少量源码，无测试/CI/文档体系 | 完整骨架 + 接管现有文件（合并不覆盖） |
+| Level 2 活跃开发 | 有源码 + 测试 + 部分 CI/文档 | 增量补齐缺口，**只创建缺失项**，不迁移既有结构 |
+| Level 3 生产项目 | 大量文件 + 已有规范 | **审计模式**：不重构、不覆盖、不迁移，只输出差距报告与最小补丁建议，重大改动需用户逐项确认 |
+
+模式写入 `.agent/state.json`（字段 `maturity`），并决定后文每步的"创建 vs 合并 vs 跳过"。
+
+执行顺序有依赖关系，必须按序。每次 Agent 完成任务时更新 `.agent/state.json` 与 `.agent/validation.json`。
+
+### Audit 流程（长期巡检模式）
+
+仅当进入模式判定为 AUDIT 时执行，替代下方的 Phase 1 构建流程（Phase 0 环境检测仍执行）：
+
+1. 读取 `.agent/manifest.json`，确认 `governance_version` 与声明工件
+2. 运行 `scripts/verify-governance.js --json`，比对声明与实际 → 得到偏差清单（缺失工件、版本漂移）
+3. 输出**治理健康报告**：通过项 / 缺失项 / 版本漂移，写入 `.agent/validation.json` 与 `.agent/drift-report.json`
+4. **最小补丁**：仅修复缺失项，不重建、不重构、不迁移结构；修复治理文件走「治理文件保护」流程（需用户确认）
+5. 若 `governance_version` 与基线不一致 → 报告版本漂移，说明差异，不擅自降级/升级
+
+**长期运行期**：INIT 完成后，日常任务的巡检由生成的 `.agent/skills/drift-check` 子技能承担；AUDIT 模式用于定期人工健康检查。
+
+### Phase 0：环境检测（Repository Inspection）
+
+不创建任何文件之前，先分析现状。检查：目录结构、已有文档、语言、包管理器、构建工具、测试框架、静态检查工具、Git 状态、已有 CI、已有 AI 指南文件。同时判定**项目成熟度**（见初始化模式判断）。
+
+约束：不覆盖重要文件；目标文件已存在则先分析再合并/更新；不删除已有配置；识别缺失自动化能力；不用假设模板。
+
+输出 Repository Inspection Report（JSON）：
+
+```json
+{
+  "projectType": "",
+  "language": "",
+  "packageManager": "",
+  "buildTool": "",
+  "testFramework": "",
+  "linter": "",
+  "gitRepo": true,
+  "maturity": "LEVEL_0_EMPTY",
+  "existingDocRoot": "docs",
+  "ci": "",
+  "existingDocs": [],
+  "missingAutomation": [],
+  "plannedChanges": []
+}
+```
+
+若 `.agent/state.json` 已存在（上次运行留下），先读取并**从断点续跑**，保持幂等，不重复已完成的项。
+
+开始写入前先记录 `.agent/preflight.json`（Git 状态摘要 + 已存在文件清单 + 时间戳），作为回滚依据（见 .agent/ 机器可读状态）。
+
+### Phase 1：治理体系构建（按序执行）
+
+**目录结构适配规则**：以下结构是**默认布局**，不是强制迁移目标。若项目已有成熟结构（如已有 `documentation/`、`docs/` 被产品文档占用、monorepo 用 `packages/*/docs`），**适配现有体系**：把治理文件放进既有文档根，并把实际路径写入 `.agent/manifest.json`。`verify-governance.js` 以 manifest 声明的路径为准。禁止创建第二个平行文档中心。
+
+1. **docs/rules/** —— 先建规则文件（AGENTS.md 要 `@` 引用它们）；内容从本 Skill 的 `reference/rules/` 模板生成，替换 `{{...}}` 占位符：
+   - `reference/rules/lifecycle.md` → `docs/rules/lifecycle.md`
+   - `reference/rules/git-policy.md` → `docs/rules/git-policy.md`
+   - `reference/rules/security.md` → `docs/rules/security.md`
+   - `reference/rules/coding.md` → `docs/rules/coding.md`
+   - `reference/rules/testing.md` → `docs/rules/testing.md`
+2. **AGENTS.md** —— 按 `reference/agents-md.template.md` 生成。保持精简（≤150 行），章节内嵌、规范 `@` 引用 rules 文件。语言：默认英文，除非项目约定另指。
+3. **CLAUDE.md** —— `@AGENTS.md` 引用即可。按检测到的工具生成对应入口文件（如 `.cursorrules`、`.github/copilot-instructions.md`、`opencode.json`）。
+4. **CHANGELOG.md** —— Keep a Changelog 格式；`[Unreleased]` 只记已完成变更；SemVer 版本号。
+   **Change Classification（何时写 CHANGELOG）**：
+   - 仅文档改动（README/注释/typo）→ 不更新 CHANGELOG
+   - Bug 修复 → `Fixed`
+   - 新能力 → `Added`
+   - 架构/行为/破坏性变更 → `Changed`
+5. **docs/plans/DEVELOPMENT_PLAN.md** —— 里程碑计划（勾选框 + 状态标记 + 验收标准）；提供单任务模板 `TASK_<name>.md`（Task Purpose / Current Problem / Proposed Solution / Affected Files / Risks / Validation Method）供 Lifecycle Phase 2 使用。
+6. **docs/features/** —— Feature Registry，按 `reference/feature-doc.template.md` 生成；**只登记真实功能**（见反虚构规则与 Feature 占位策略）。
+   **登记对象判定**：
+   - 必须登记：用户可见能力、独立业务模块、核心基础设施（数据库适配层等）、对外 API。
+   - 不登记：普通工具函数（如 `utils/date.ts`）、测试辅助代码、临时脚本。防止 Feature 文档爆炸。
+7. **docs/ARCHITECTURE.md** —— 数据流 + ADR + 组件登记表（New Code Registration 的登记去处）。
+   **组件登记分级**：
+   - Level 1 必须登记：服务、模块、子系统、数据流节点。
+   - Level 2 不登记：普通类、工具函数、UI 组件（如 Button/Modal）。
+   **防膨胀**：单文件超过约 300 行时拆分到 `docs/architecture/<module>.md`，主文件只留导航与摘要。
+8. **README.md** —— 仅文档索引超链接 + CI 徽章，不复制内容；提交信息模板 `.gitmessage.txt` 并配置为仓库级默认。
+9. **安全基线** —— `.env.example`（占位无真实值）、完善 `.gitignore`（.env、*.key、*.pem、构建产物、依赖目录）、按 CI 平台启用密钥扫描/dependabot。
+10. **.agent/** —— 机器可读状态目录（见下）。
+11. **scripts/verify-governance.js** —— 从本 Skill 的 `scripts/verify_governance.js` 复制到项目 `scripts/verify-governance.js`，注册为项目命令（如 `npm run governance-check`）。
+12. **CI workflow** —— 按检测到的平台/栈从 `reference/ci-workflows.md` 选择模板生成；推送与 PR 自动运行。**管线步骤按 CI Pipeline Capability Detection 决定，不强制全部存在**：
+    - TypeScript → 加 typecheck；Python → mypy 可选；Rust → clippy；纯文档项目 → markdown lint + 链接检查，无构建。
+    - 若 `package.json` / `pyproject.toml` 等中无 `test`/`lint` 脚本，对应步骤只保留 `echo "No tests configured yet"`（黄字警告），**不得强行编写无法执行的 `npm run test`**；包管理器以锁文件为准（见默认值约定）。
+13. **.agent/skills/** —— 按 `reference/sub-skills.md` 生成子技能（repository-inspection / ci-generator / governance-validator / state-manager / **drift-check**），并写入 `opencode.json` 的 `skills.paths` 使其被加载（如项目用 opencode）。其中 `drift-check` 承担长期巡检（治理健康报告、版本漂移检测）。
+
+### .agent/ 机器可读状态
+
+- `manifest.json` —— 治理工件清单（应存在什么：AGENTS.md、CHANGELOG.md、ARCHITECTURE、features、plans、rules、.gitignore、.env.example、CI、scripts/verify-governance.js、.agent/* 等，含**实际路径**与预期状态 + 版本）。**校验脚本以它声明的路径为准**，结构适配场景下改动此处即可；`artifacts` 必须覆盖全部治理工件（不限于文档），否则校验会漏项：
+
+```json
+{
+  "governance_version": "1.0.0",
+  "doc_root": "docs",
+  "artifacts": [
+    { "name": "AGENTS.md", "path": "AGENTS.md", "kind": "file" },
+    { "name": "Feature registry", "path": "docs/features", "kind": "dir" },
+    { "name": "CI workflow", "path": ".github/workflows", "kind": "dir" }
+  ]
+}
+```
+
+- `state.json` —— 当前任务/成熟度/Agent 身份/阶段（示例）：
+
+```json
+{
+  "maturity": "LEVEL_0_EMPTY",
+  "phase": "CI_SETUP",
+  "agent_id": "",
+  "task_id": "",
+  "locked": null,
+  "completed": ["docs", "agents", "rules"],
+  "blocked": ["github_permission"]
+}
+```
+
+- `validation.json` —— 最近一次治理校验结果（逐项 ✅/❌ + 时间戳）
+- `preflight.json` —— **初始化前快照**（回滚依据）：`git status` 摘要、已存在文件清单、时间戳。失败/Fatal 时输出 "Rollback recommended" 并给出如何恢复（如 `git checkout` 已改动文件、删除本次新建清单）。
+
+**状态机**：`state.json` 的 `phase` 取值 = 生命周期六阶段 `understand / plan / implement / validate / synchronize / report` + 终止态 `completed / blocked / failed`。任意阶段异常 → `blocked`/`failed`；崩溃/中断后恢复时先读 `phase` 确定断点，**不得重跑已完成项**，也不得跳步。
+
+### Phase 2：校验（Governance Validator）
+
+运行项目内的 `scripts/verify-governance.js`，把真实输出记录进 `validation.json` 与最终报告。校验项：
+
+```
+AGENTS.md 存在 / CHANGELOG.md 存在 / docs/ARCHITECTURE.md 存在 /
+docs/features/ 存在 / docs/rules/ 存在 / .gitignore 存在 /
+.env.example 存在 / CI 配置存在 / scripts/verify-governance.js 存在
+```
+
+### Phase 3：交付报告
+
+输出**完成度核对表**：每项 `✅/⚠️/❌` + 证据命令 + 输出摘录；列出新建文件清单；无法完成的项明确原因。报告前先跑 `verify-governance.js` 确认退出码为 0。
+
+## Definition of Done
+
+- 全部治理项 ✅，或 ⚠️ Blocked 且原因明确
+- `scripts/verify-governance.js` 退出码 0
+- `validation.json` 已更新
+- 报告包含真实证据，无虚构
