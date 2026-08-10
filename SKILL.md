@@ -246,8 +246,8 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
 ```json
 {
   "schema_version": "1.0",
-  "governance_version": "0.3.1",
-  "release": { "version": "0.3.1", "tag": "v0.3.1", "validated": false },
+  "governance_version": "0.3.2",
+  "release": { "version": "0.3.2", "tag": "v0.3.2", "validated": false },
   "doc_root": "docs",
   "artifacts": [
     { "name": "AGENTS.md", "path": "AGENTS.md", "kind": "file", "type": "policy" },
@@ -278,7 +278,7 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
 }
 ```
 
-- `validation.json` —— 最近一次治理校验结果（逐项 ✅/❌ + 时间戳）
+- `validation.json` —— 最近一次治理校验结果（逐项 ✅/❌ + 时间戳）。**运行时输出**：由 AUDIT/校验产生，被 git 忽略、**不作为 required artifact**（fresh-checkout CI 不依赖它）
 - `preflight.json` —— **初始化前快照**（回滚依据）：`git status` 摘要、已存在文件清单、时间戳。失败/Fatal 时输出 "Rollback recommended" 并给出如何恢复（如 `git checkout` 已改动文件、删除本次新建清单）。
 
 **状态机**：`state.json` 的 `phase` 取值 = 生命周期六阶段 `understand / plan / implement / validate / synchronize / report` + 终止态 `completed / blocked / failed`。任意阶段异常 → `blocked`/`failed`；崩溃/中断后恢复时先读 `phase` 确定断点，**不得重跑已完成项**，也不得跳步。
@@ -287,12 +287,12 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
 
 运行项目内的 `scripts/verify-governance.js`，把真实输出记录进 `validation.json` 与最终报告。
 
-> 校验项集合由 `verify-governance.js` 定义，可能随 schema 版本演进，**以校验器实际输出为准**，本清单仅为当前默认项：
+> 校验项集合由 `verify-governance.js` 定义，可能随 schema 版本演进，**以校验器实际输出为准**。`validation.json` / `drift-report.json` 是**运行时输出，不作为 required artifact**（fresh-checkout CI 必须无它们也通过）。当前默认项：
 
 ```
 AGENTS.md / CHANGELOG.md / docs/ARCHITECTURE.md / docs/features/ / docs/plans/ /
 docs/rules/ / .gitignore / .env.example / CI workflow / scripts/verify-governance.js /
-.governance/ 目录 / manifest.json / state.json / validation.json / preflight.json / governance_version
+.governance/ 目录 / manifest.json / state.json / preflight.json / governance_version
 ```
 
 ### Phase 3：交付报告

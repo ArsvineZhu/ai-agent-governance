@@ -18,13 +18,23 @@
 
 ## .governance/ Git 跟踪策略
 
+**Tracked governance state（validator required artifacts）**：
+
 | 文件 | 性质 | Git |
 | --- | --- | --- |
 | `manifest.json` | 期望态（唯一索引） | 提交 |
 | `state.json` | 治理状态（当前态） | 提交 |
+| `preflight.json` | 回滚快照 | 提交 |
 | `generated/skills/` | 治理产物 | 提交 |
+
+**Runtime outputs（validator 不要求，git 忽略）**：
+
+| 文件 | 性质 | Git |
+| --- | --- | --- |
 | `validation.json` | 临时观测结果 | 忽略 |
 | `drift-report.json` | 运行报告 | 忽略 |
+
+`validation.json` / `drift-report.json` 由 AUDIT/校验产生，**不作为 required artifact**——fresh-checkout CI 必须无它们也通过。
 
 ## .governance/README.md 生成模板
 

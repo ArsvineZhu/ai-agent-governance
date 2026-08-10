@@ -4,6 +4,14 @@ All notable changes to this project will be documented here.
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-08-10
+
+### Fixed
+
+- Validator no longer requires `.governance/validation.json`: it is a git-ignored runtime output, so fresh-checkout CI passes without it (default checks 16 → 15)
+- Restored separation between tracked governance state (`manifest.json` / `state.json` / `preflight.json` / `generated/`) and runtime outputs (`validation.json` / `drift-report.json`)
+- Updated documentation and tests to reflect runtime output semantics (absent → OK, present → OK)
+
 ## [0.3.1] - 2026-08-10
 
 ### Fixed

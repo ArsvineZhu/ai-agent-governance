@@ -74,7 +74,7 @@ description: Use to check that this repo's governance artifacts are intact befor
 
 Run: `node scripts/verify-governance.js` (or registered npm script `npm run governance-check`).
 
-Path resolution: uses `.governance/manifest.json` artifacts when present (structure-adaptive), otherwise built-in defaults. Checks: AGENTS.md, CHANGELOG.md, ARCHITECTURE, features, plans, rules, .gitignore, .env.example, CI config, validator self, .governance/*, governance_version.
+Path resolution: uses `.governance/manifest.json` artifacts when present (structure-adaptive), otherwise built-in defaults. Checks: AGENTS.md, CHANGELOG.md, ARCHITECTURE, features, plans, rules, .gitignore, .env.example, CI config, validator self, `.governance/` (dir, manifest.json, state.json, preflight.json), governance_version. `validation.json` / `drift-report.json` are runtime outputs and are NOT required.
 
 Then update `.governance/validation.json`:
 

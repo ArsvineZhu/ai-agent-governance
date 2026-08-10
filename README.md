@@ -141,7 +141,7 @@ Plus generated agent modules under `.governance/generated/skills/` (incl. drift-
 
 ### Governance as Code
 
-Instead of keeping AI rules in chat history, this project stores governance as version-controlled files inside the repository — `manifest.json`, `validation.json`, versioned rules, and a verifiable validator. Everything is reviewable, diffable, and auditable like code.
+Instead of keeping AI rules in chat history, this project stores governance as version-controlled files inside the repository — `manifest.json` (desired state), `state.json` (current state), versioned rules, and a verifiable validator. Everything is reviewable, diffable, and auditable like code. Runtime outputs (`validation.json`, `drift-report.json`) are git-ignored and never required for a fresh checkout.
 
 ### How It Works
 
@@ -388,7 +388,7 @@ my-project/
 
 ### Governance as Code（治理即代码）
 
-不再依赖聊天记录保存 AI 行为规则，而是将治理体系作为仓库内可版本控制的代码资产 —— `manifest.json`、`validation.json`、带版本的规则文件与可验证的校验器。一切如代码一样可评审、可 diff、可审计。
+不再依赖聊天记录保存 AI 行为规则，而是将治理体系作为仓库内可版本控制的代码资产 —— `manifest.json`（期望态）、`state.json`（当前态）、带版本的规则文件与可验证的校验器。一切如代码一样可评审、可 diff、可审计。运行时输出（`validation.json`、`drift-report.json`）被 git 忽略，fresh checkout 不依赖它们。
 
 ### 工作原理
 

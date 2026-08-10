@@ -54,7 +54,6 @@ function buildFullDefault(dir) {
     [".env.example", "x"],
     [".github/workflows/ci.yml", "x"],
     [".governance/state.json", "{}"],
-    [".governance/validation.json", "{}"],
     [".governance/preflight.json", "{}"],
   ];
   for (const [p, c] of files) write(path.join(dir, p), c);
@@ -67,7 +66,7 @@ test("full default structure exits 0 (defaults mode)", () => {
   buildFullDefault(dir);
 
   const r = run(dir);
-  return r.status === 0 && r.stdout.includes("16/16 checks passed.");
+  return r.status === 0 && r.stdout.includes("15/15 checks passed.");
 });
 
 // ---------- 3. Custom structure via manifest ----------
@@ -86,7 +85,6 @@ test("custom doc root (documentation/) follows manifest (manifest mode)", () => 
     [".env.example", "x"],
     [".github/workflows/ci.yml", "x"],
     [".governance/state.json", "{}"],
-    [".governance/validation.json", "{}"],
     [".governance/preflight.json", "{}"],
   ];
   for (const [p, c] of files) write(path.join(dir, p), c);
@@ -136,7 +134,7 @@ test("--json reports passedAll, mode and governance_version", () => {
     out.passedAll === true &&
     out.governance_version === "1.0.0" &&
     Array.isArray(out.results) &&
-    out.results.length === 16
+    out.results.length === 15
   );
 });
 
@@ -156,6 +154,19 @@ test("validator uses .governance only and leaves no .agent dir", () => {
     r.status === 0 &&
     r.stdout.includes(".governance manifest") &&
     !fs.existsSync(path.join(dir, ".agent"))
+  );
+});
+
+// ---------- 8. validation.json is optional runtime output ----------
+test("validation.json present is optional and still passes", () => {
+  const dir = tmp("withval");
+  buildFullDefault(dir);
+  write(path.join(dir, ".governance/validation.json"), "{}");
+  const r = run(dir);
+  return (
+    r.status === 0 &&
+    r.stdout.includes("15/15 checks passed.") &&
+    !r.stdout.includes(".governance validation")
   );
 });
 

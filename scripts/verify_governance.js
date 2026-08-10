@@ -22,6 +22,8 @@ const ROOT = process.cwd();
 const MANIFEST = path.join(ROOT, ".governance", "manifest.json");
 
 // [name, relativePath, checker]
+// validation.json / drift-report.json are runtime outputs (optional), NOT required artifacts:
+// they are produced by AUDIT/release runs and ignored by git, so fresh-checkout CI must pass without them.
 const DEFAULTS = [
   ["AGENTS.md", "AGENTS.md", isFile],
   ["CHANGELOG.md", "CHANGELOG.md", isFile],
@@ -36,7 +38,6 @@ const DEFAULTS = [
   [".governance state dir", ".governance", isDir],
   [".governance manifest", ".governance/manifest.json", isFile],
   [".governance state", ".governance/state.json", isFile],
-  [".governance validation", ".governance/validation.json", isFile],
   [".governance preflight", ".governance/preflight.json", isFile],
   ["Governance version", null, hasGovernanceVersion],
 ];
