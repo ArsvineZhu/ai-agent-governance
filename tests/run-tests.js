@@ -147,6 +147,18 @@ test("--help exits 0 and prints usage", () => {
   return r.status === 0 && r.stdout.includes("Usage:") && r.stdout.includes("--json");
 });
 
+// ---------- 7. legacy .agent must not exist ----------
+test("validator uses .governance only and leaves no .agent dir", () => {
+  const dir = tmp("noagent");
+  buildFullDefault(dir);
+  const r = run(dir);
+  return (
+    r.status === 0 &&
+    r.stdout.includes(".governance manifest") &&
+    !fs.existsSync(path.join(dir, ".agent"))
+  );
+});
+
 // ---------- runner ----------
 let failed = 0;
 for (const t of tests) {

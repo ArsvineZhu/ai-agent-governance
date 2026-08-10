@@ -246,8 +246,8 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
 ```json
 {
   "schema_version": "1.0",
-  "governance_version": "0.2.0",
-  "release": { "version": "0.2.0", "tag": "v0.2.0", "validated": false },
+  "governance_version": "0.3.1",
+  "release": { "version": "0.3.1", "tag": "v0.3.1", "validated": false },
   "doc_root": "docs",
   "artifacts": [
     { "name": "AGENTS.md", "path": "AGENTS.md", "kind": "file", "type": "policy" },

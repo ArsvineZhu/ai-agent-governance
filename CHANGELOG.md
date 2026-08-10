@@ -4,6 +4,18 @@ All notable changes to this project will be documented here.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-08-10
+
+### Fixed
+
+- Aligned manifest version examples with the v0.3.1 release.
+- Removed remaining runtime ambiguity around legacy `.agent` paths.
+- Added regression test ensuring the governance runtime only uses `.governance`.
+
+### Tests
+
+- All tests passing (7/7).
+
 ## [0.3.0] - 2026-08-10
 
 ### Added
