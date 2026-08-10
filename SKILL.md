@@ -230,13 +230,15 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
    - Level 1 必须登记：服务、模块、子系统、数据流节点。
    - Level 2 不登记：普通类、工具函数、UI 组件（如 Button/Modal）。
    **防膨胀**：单文件超过约 300 行时拆分到 `docs/architecture/<module>.md`，主文件只留导航与摘要。
-8. **README.md** —— 仅文档索引超链接 + CI 徽章，不复制内容；提交信息模板 `.gitmessage.txt` 并配置为仓库级默认。
+8. **README.md** —— 若项目**无 README**：生成**基础 README**。**只生成一个文件 `README.md`**；**禁止**创建 `README.zh-CN.md`、`README-zh.md`、`README_cn.md` 或任何独立语言版本文件。采用**单文件双语布局**（与本 skill 的 README 一致）：`# 项目名` + CI 徽章 + 语言切换锚点 `[English](#english) · [简体中文](#chinese)`，前半段为**英文**（项目名 + 一句话简介 + 文档索引），`---` 分隔后后半段为**简体中文**（同一文件内）；文档索引链接 AGENTS.md / docs/ARCHITECTURE.md / docs/features/ 等治理文档。若已有：仅补文档索引与 CI 徽章，**合并不覆盖**已有内容，也**不拆分**为多个语言文件。另建提交信息模板 `.gitmessage.txt` 并配置为仓库级默认。
 9. **安全基线** —— `.env.example`（占位无真实值）、完善 `.gitignore`（.env、*.key、*.pem、构建产物、依赖目录）、按 CI 平台启用密钥扫描/dependabot。
 10. **.governance/** —— 机器可读状态目录（见下）；生成时附 `README.md`（见 `references/governance-files.md` 模板），说明各文件用途与 Git 跟踪策略，避免误删/混淆。
 11. **scripts/verify-governance.js** —— 从本 Skill 的 `scripts/verify_governance.js` 复制到项目 `scripts/verify-governance.js`，注册为项目命令（如 `npm run governance-check`）。
 12. **CI workflow** —— 按检测到的平台/栈从 `references/ci-workflows.md` 选择模板生成；推送与 PR 自动运行。**管线步骤按 CI Pipeline Capability Detection 决定，不强制全部存在**：
-    - TypeScript → 加 typecheck；Python → mypy 可选；Rust → clippy；纯文档项目 → markdown lint + 链接检查，无构建。
-    - 若 `package.json` / `pyproject.toml` 等中无 `test`/`lint` 脚本，对应步骤只保留 `echo "No tests configured yet"`（黄字警告），**不得强行编写无法执行的 `npm run test`**；包管理器以锁文件为准（见默认值约定）。
+    - 每种栈管线统一：安装 → **format 检查** → lint → typecheck（如适用）→ test → build → 产物上传。format 用各栈标准工具：Node/TS → Prettier（`pnpm format`）；Python → `ruff format --check`；Rust → `cargo fmt --check`；Go → `gofmt -l`；Java(Maven) → `spotless:check`；C++ → `clang-format --dry-run --Werror`；纯文档项目 → markdown lint + 链接检查，无构建。
+    - 栈模板：Node/TS（+typecheck）、Python（ruff check + mypy 可选）、Rust（clippy）、Go（go vet）、Java（spotless + google-java-format **必配**，INIT 写入 pom.xml）、C++（clang-tidy 可选，CMake/CTest 或 Make 按检测选择；同时生成 `.clang-format` 风格基线）。
+    - format 配置策略：**必须带配置才能检查**的栈（Java spotless、C++ clang-format）由 INIT 生成配置；**默认即可运行**的栈（Node/Python）默认用工具默认值，定制才生成 `.prettierrc` / `[tool.ruff]`；Go（gofmt）、Rust（rustfmt）零配置。
+    - 若项目脚本缺失，对应步骤只保留 `echo "No <tool> configured yet"`（黄字警告），**不得强行编写无法执行的命令**；包管理器以锁文件为准（见默认值约定）。
 13. **.governance/generated/skills/** —— 按 `references/sub-skills.md` 生成子技能（repository-inspection / ci-generator / governance-validator / state-manager / **drift-check** / **release-manager**），并写入 `opencode.json` 的 `skills.paths` 使其被加载（如项目用 opencode）。其中 `drift-check` 承担长期巡检（治理健康报告、版本漂移检测），`release-manager` 承担版本发布（RELEASE 模式）。
 
 ### .governance/ 机器可读状态
@@ -246,8 +248,8 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
 ```json
 {
   "schema_version": "1.0",
-  "governance_version": "0.3.2",
-  "release": { "version": "0.3.2", "tag": "v0.3.2", "validated": false },
+  "governance_version": "0.3.3",
+  "release": { "version": "0.3.3", "tag": "v0.3.3", "validated": false },
   "doc_root": "docs",
   "artifacts": [
     { "name": "AGENTS.md", "path": "AGENTS.md", "kind": "file", "type": "policy" },

@@ -58,8 +58,8 @@ SemVer：MAJOR.MINOR.PATCH —— 破坏性 → MAJOR，新能力 → MINOR，�
 ```json
 {
   "release": {
-    "version": "0.3.2",
-    "tag": "v0.3.2",
+    "version": "0.3.3",
+    "tag": "v0.3.3",
     "validated": false
   }
 }

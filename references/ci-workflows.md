@@ -2,7 +2,9 @@
 
 管线统一包含：**安装依赖 → 格式检查 → 静态检查 → 类型检查 → 测试 → 构建 → 产物/报告上传**。平台未知 → ⚠️ Blocked 并询问用户。
 
-## GitHub Actions — Node.js + pnpm（Vitest）
+按项目实际能力裁剪：项目脚本缺失时对应步骤只保留 `echo "No <tool> configured yet"`（黄字警告），**不得强行编写无法执行的命令**（见 SKILL.md「CI 降级策略」）。
+
+## GitHub Actions — Node.js / TypeScript + pnpm（Prettier + ESLint）
 
 ```yaml
 name: CI
@@ -23,6 +25,7 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm format
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
@@ -33,7 +36,9 @@ jobs:
           path: dist
 ```
 
-## GitHub Actions — Python（pytest + ruff）
+> Node/TS：Prettier 默认值即可运行（2 空格、单引号、80 列）；如需定制，项目根放 `.prettierrc`（可选，非强制生成）。
+
+## GitHub Actions — Python（ruff check + ruff format + mypy）
 
 ```yaml
 name: CI
@@ -53,6 +58,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install -e ".[dev]"
+      - run: ruff format --check .
       - run: ruff check .
       - run: mypy .
       - run: pytest -q
@@ -61,6 +67,139 @@ jobs:
         with:
           name: dist-${{ matrix.python-version }}
           path: dist
+```
+
+> Python：ruff 默认（black 风格、line-length 88）即可运行；如需定制，在 `pyproject.toml` 的 `[tool.ruff]` 配置（可选，非强制生成）。
+
+## GitHub Actions — Rust（cargo fmt + clippy）
+
+```yaml
+name: CI
+on:
+  push:
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --check
+      - run: cargo clippy -- -D warnings
+      - run: cargo test
+      - run: cargo build --release
+```
+
+## GitHub Actions — Go（gofmt + go vet）
+
+```yaml
+name: CI
+on:
+  push:
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "stable"
+          cache: true
+      - run: gofmt -l .
+      - run: go vet ./...
+      - run: go test ./...
+      - run: go build ./...
+```
+
+## GitHub Actions — Java（Maven + Spotless）
+
+```yaml
+name: CI
+on:
+  push:
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - run: mvn -B spotless:check
+      - run: mvn -B test
+      - run: mvn -B package -DskipTests
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: target/*.jar
+```
+
+> Java（Maven）：`spotless:check` **必须在 `pom.xml` 中声明插件与风格，否则 CI 无法运行**。INIT 时写入（google-java-format）：
+
+```xml
+<!-- pom.xml：加入 <build><plugins> -->
+<plugin>
+  <groupId>com.diffplug.spotless</groupId>
+  <artifactId>spotless-maven-plugin</artifactId>
+  <version>2.43.0</version>
+  <configuration>
+    <java>
+      <googleJavaFormat/>
+    </java>
+  </configuration>
+</plugin>
+```
+
+> Gradle 项目改用 `com.diffplug.spotless` 插件 + `googleJavaFormat()` 配置，CI 步骤替换为 `./gradlew spotlessCheck`。
+
+## GitHub Actions — C++（clang-format + CMake + CTest）
+
+```yaml
+name: CI
+on:
+  push:
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y clang clang-tools cmake ninja-build
+      - run: clang-format --dry-run --Werror --recursive src/ include/ tests/
+      - run: cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++
+      - run: cmake --build build
+      - run: ctest --test-dir build --output-on-failure
+```
+
+> 按检测到的构建系统选择：CMake 用上例；Makefile 项目把 build 步骤替换为 `make` / `make test`。`clang-tidy` 需 `compile_commands.json`（CMake 加 `-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`），可选。
+
+INIT 同时生成项目 `.clang-format`（风格基线，CI 的 `clang-format --dry-run` 默认读取它）：
+
+```yaml
+BasedOnStyle: LLVM
+IndentWidth: 4
+UseTab: Never
+BreakBeforeBraces: Attach
+ColumnLimit: 120
+PointerAlignment: Left
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+NamespaceIndentation: None
+DerivePointerAlignment: false
+SortIncludes: true
+SpacesInAngles: Never
+Standard: Latest
 ```
 
 ## GitLab CI（示例骨架）

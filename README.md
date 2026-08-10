@@ -75,6 +75,7 @@ my-project/
 my-project/
 ├── AGENTS.md
 ├── CHANGELOG.md
+├── README.md
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── plans/
@@ -100,13 +101,14 @@ my-project/
 ├── AGENTS.md                    runtime rule source
 ├── CLAUDE.md                    agent entry file (@AGENTS.md), per detected tool
 ├── CHANGELOG.md                 Keep a Changelog
+├── README.md                    basic project README (name + badge + doc index)
 ├── docs/
 │   ├── ARCHITECTURE.md          data flow + ADR + component registry
 │   ├── plans/                   development plan + task templates
 │   ├── features/                feature registry (real features only)
 │   └── rules/                   lifecycle / git-policy / security / coding / testing
 ├── .env.example                 security baseline
-├── .governance/                      manifest / state / validation / preflight
+├── .governance/                 manifest / state / preflight + generated/skills
 ├── scripts/verify-governance.js validation gate (exit code = pass/fail)
 └── .github/workflows/           CI pipeline (capability-detected, degrades gracefully)
 ```
@@ -122,6 +124,9 @@ Plus generated agent modules under `.governance/generated/skills/` (incl. drift-
 - **AGENTS.md generation** — the runtime rule source, concise and tool-agnostic
 - **Rule system generation** — lifecycle / Git policy / security / coding / testing rules, referenced from AGENTS.md
 - **Validation setup** — installs a governance validation command into the project (zero dependencies)
+- **CI generation** — capability-detected workflows for 6 stacks (Node/TS, Python, Rust, Go, Java, C++), each with an explicit format step (Prettier / ruff / cargo fmt / gofmt / spotless / clang-format)
+- **Format baselines** — config-required stacks (C++ `.clang-format`, Java spotless) get real style configs; default-config stacks (Node/Python) use tool defaults; Go/Rust are zero-config
+- **README bootstrap** — generates a bilingual basic README (English then 简体中文, anchor-linked) when the project has none (merge-only if one exists)
 
 **Long-term — keep it healthy:**
 
@@ -171,7 +176,7 @@ ai-agent-governance/
 ├── scripts/
 │   └── verify_governance.js    # validator (manifest-driven paths + governance_version)
 └── tests/
-    └── run-tests.js            # test suite (empty / default / custom-manifest / json)
+    └── run-tests.js            # test suite (default / custom / missing-version / json / help / no-legacy / optional-validation)
 ```
 
 ### Governance Flow
@@ -238,7 +243,7 @@ Compatible with Claude Code, Cursor, Codex, opencode, and other AGENTS.md-based 
 npm test        # or node tests/run-tests.js
 ```
 
-Covers: empty project, full default structure, custom doc root via manifest, missing governance_version, and `--json` output. CI runs it on every push/PR.
+Covers: empty project, full default structure, custom doc root via manifest, missing governance_version, `--json` output, `--help`, no legacy `.agent` leakage, and optional `validation.json`. CI runs it on every push/PR.
 
 ### Roadmap
 
@@ -246,6 +251,7 @@ Covers: empty project, full default structure, custom doc root via manifest, mis
 - [x] Feature registry
 - [x] Governance validator
 - [x] Release workflow
+- [x] Multi-language CI templates
 - [ ] IDE extension
 - [ ] Multi-agent coordination protocol
 - [ ] Remote governance dashboard
@@ -322,6 +328,7 @@ my-project/
 my-project/
 ├── AGENTS.md
 ├── CHANGELOG.md
+├── README.md
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── plans/
@@ -347,13 +354,14 @@ my-project/
 ├── AGENTS.md                    运行期规则源头
 ├── CLAUDE.md                    Agent 入口文件（@AGENTS.md，按检测到的工具生成）
 ├── CHANGELOG.md                 Keep a Changelog
+├── README.md                    基础项目 README（名称 + 徽章 + 文档索引）
 ├── docs/
 │   ├── ARCHITECTURE.md          数据流 + ADR + 组件登记
 │   ├── plans/                   开发计划 + 任务模板
 │   ├── features/                Feature 登记（只登记真实功能）
 │   └── rules/                   lifecycle / git-policy / security / coding / testing
 ├── .env.example                 安全基线
-├── .governance/                      manifest / state / validation / preflight
+├── .governance/                 manifest / state / preflight + generated/skills
 ├── scripts/verify-governance.js 校验门禁（退出码 = 通过/失败）
 └── .github/workflows/           CI 管线（能力检测式，优雅降级）
 ```
@@ -369,6 +377,9 @@ my-project/
 - **AGENTS.md 生成** — 运行期规则源头，精简且与工具无关
 - **规则体系生成** — lifecycle / Git 规范 / 安全 / 编码 / 测试规则，AGENTS.md 按章节 `@` 引用
 - **校验搭建** — 安装治理校验命令（零依赖校验器）
+- **CI 生成** — 6 种栈的能力检测式流水线（Node/TS、Python、Rust、Go、Java、C++），每种带显式 format 步骤（Prettier / ruff / cargo fmt / gofmt / spotless / clang-format）
+- **格式基线** — 必须配的栈（C++ `.clang-format`、Java spotless）生成真实风格配置；默认即可的栈（Node/Python）用工具默认；Go/Rust 零配置
+- **README 引导** — 项目无 README 时生成双语基础 README（英文在前 + 简体中文在后，锚点切换；已有则只合并不覆盖）
 
 **长期维护 —— 持续保鲜：**
 
@@ -418,7 +429,7 @@ ai-agent-governance/
 ├── scripts/
 │   └── verify_governance.js    # 校验引擎（manifest 驱动路径 + governance_version）
 └── tests/
-    └── run-tests.js            # 验证套件（empty / default / custom-manifest / json）
+    └── run-tests.js            # 验证套件（default / custom / 缺版本 / json / help / 无残留 / validation 可选）
 ```
 
 ### 治理流程
@@ -485,7 +496,7 @@ AGENTS.md
 npm test        # 或 node tests/run-tests.js
 ```
 
-覆盖：空项目（exit 1）、完整默认结构（exit 0）、自定义文档根经 manifest（manifest 模式）、缺 governance_version（exit 1）、`--json` 输出。CI 已接入。
+覆盖：空项目（exit 1）、完整默认结构（exit 0）、自定义文档根经 manifest（manifest 模式）、缺 governance_version（exit 1）、`--json` 输出、`--help`、无 `.agent` 残留、`validation.json` 可选。CI 已接入。
 
 ### Roadmap
 
@@ -493,6 +504,7 @@ npm test        # 或 node tests/run-tests.js
 - [x] Feature 登记
 - [x] 治理校验器
 - [x] 发布工作流
+- [x] 多语言 CI 模板
 - [ ] IDE 扩展
 - [ ] 多 Agent 协调协议
 - [ ] 远程治理看板
