@@ -1,5 +1,7 @@
 node_modules/
-.agent/
+# Governance runtime outputs (desired/current state stays tracked)
+.governance/validation.json
+.governance/drift-report.json
 .env
 .env.*
 *.pem

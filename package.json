@@ -1,10 +1,10 @@
 {
   "name": "ai-agent-governance",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "AI Agent governance skill — project initialization plus long-term maintenance: AGENTS.md, feature registry, lifecycle, Git policy, CI validation, security baseline, drift-check and audit mode. Tool-agnostic; compatible with Claude Code, Cursor, Codex, opencode.",
   "private": true,
   "scripts": {
-    "test": "node test/run-tests.js"
+    "test": "node tests/run-tests.js"
   },
   "engines": {
     "node": ">=18"

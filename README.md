@@ -31,6 +31,28 @@ Developers repeatedly need to create, by hand:
 
 This skill bootstraps these governance foundations **automatically** on day one — then keeps them healthy for the rest of the project lifecycle.
 
+### Install
+
+Install the skill where your agent can discover it. For cross-agent use, `.agents/skills` is the recommended location:
+
+```
+.agents/skills/ai-agent-governance/SKILL.md
+```
+
+```bash
+git clone https://github.com/Consciencieux/ai-agent-governance
+# copy or symlink the repo into your chosen directory
+```
+
+| Location | Auto-discovered by | Best for |
+| --- | --- | --- |
+| `.agents/skills` | opencode + Claude-compatible agents | cross-agent sharing |
+| `.claude/skills` | opencode, Claude Code | Claude Code ecosystem |
+| `.opencode/skills` | opencode | opencode-only |
+| `~/.config/opencode/skills` | opencode (global) | machine-wide for opencode |
+
+opencode auto-scans `.opencode/skills`, `.claude/skills`, and `.agents/skills` (project and global). Claude Code reads `.claude/skills`.
+
 ### Quick Start
 
 In your AI coding agent's chat session, run:
@@ -58,7 +80,7 @@ my-project/
 │   ├── plans/
 │   ├── features/
 │   └── rules/
-├── .agent/
+├── .governance/
 ├── scripts/
 └── .github/workflows/
 ```
@@ -84,12 +106,12 @@ my-project/
 │   ├── features/                feature registry (real features only)
 │   └── rules/                   lifecycle / git-policy / security / coding / testing
 ├── .env.example                 security baseline
-├── .agent/                      manifest / state / validation / preflight
+├── .governance/                      manifest / state / validation / preflight
 ├── scripts/verify-governance.js validation gate (exit code = pass/fail)
 └── .github/workflows/           CI pipeline (capability-detected, degrades gracefully)
 ```
 
-Plus generated agent modules under `.agent/skills/` (incl. drift-check) that keep daily agent work inside the framework.
+Plus generated agent modules under `.governance/generated/skills/` (incl. drift-check) that keep daily agent work inside the framework.
 
 ### Features
 
@@ -107,7 +129,7 @@ Plus generated agent modules under `.agent/skills/` (incl. drift-check) that kee
 - **Drift detection** — catch governance decay before it becomes technical debt
 - **Audit mode** — health-check any governed project, apply minimal fixes (no rebuild, no restructure)
 - **Maturity-adaptive** — adjusts create/merge/audit strategy: L0 empty repo · L1 early development · L2 active project · L3 production system
-- **Multi-agent state** — `.agent/state.json` tracks `agent_id` / `task_id` / `locked` for coordination
+- **Multi-agent state** — `.governance/state.json` tracks `agent_id` / `task_id` / `locked` for coordination
 
 **Design principles:**
 
@@ -136,15 +158,16 @@ Runs in a single pass with an optional phased pause; blocked items are reported 
 ```
 ai-agent-governance/
 ├── SKILL.md                    # policy + INIT/AUDIT orchestration
-├── reference/
+├── references/
 │   ├── agents-md.template.md   # AGENTS.md template
 │   ├── feature-doc.template.md # feature doc template (anti-fabrication rules)
 │   ├── ci-workflows.md         # CI templates (capability detection + degradation)
 │   ├── sub-skills.md           # generated agent modules (incl. drift-check)
+│   ├── governance-files.md     # protected files + .governance git-tracking policy
 │   └── rules/                  # lifecycle / git-policy / security / coding / testing
 ├── scripts/
 │   └── verify_governance.js    # validator (manifest-driven paths + governance_version)
-└── test/
+└── tests/
     └── run-tests.js            # test suite (empty / default / custom-manifest / json)
 ```
 
@@ -160,7 +183,7 @@ INIT — Inspect → Build → Validate → Report
 Generated Project Governance
     +-- AGENTS.md                   runtime rule source
     +-- docs/rules/                 detailed policies (referenced from AGENTS.md)
-    +-- .agent/state.json           machine state (maturity / phase / locks)
+    +-- .governance/state.json           machine state (maturity / phase / locks)
     +-- scripts/verify-governance.js  validation gate (exit code = pass/fail)
     |
     v
@@ -170,6 +193,35 @@ Runtime — agent modules validate integrity, resume sessions, check drift
 AUDIT — health check + minimal fixes (no rebuild)
 ```
 
+### Concept Map
+
+```
+.agents/skills
+    Agent capability distribution (installation)
+
+        ↓
+
+SKILL.md
+    Governance orchestration layer
+
+        ↓
+
+AGENTS.md
+    Human-readable behavioral contract
+
+        ↓
+
+.governance/
+    Machine-readable governance state (manifest / state / validation)
+```
+
+- `.agents` tells agents what they can do.
+- `AGENTS.md` tells agents how they should behave.
+- `.governance` tells the system what has been established and verified.
+
+Manifest layers follow a Kubernetes-like Spec / Status / Health split:
+`manifest.json` = desired state · `state.json` = current state · `validation.json` = observed state.
+
 ### Supported Agents
 
 Compatible with Claude Code, Cursor, Codex, opencode, and other AGENTS.md-based coding agents.
@@ -177,7 +229,7 @@ Compatible with Claude Code, Cursor, Codex, opencode, and other AGENTS.md-based 
 ### Development
 
 ```bash
-npm test        # or node test/run-tests.js
+npm test        # or node tests/run-tests.js
 ```
 
 Covers: empty project, full default structure, custom doc root via manifest, missing governance_version, and `--json` output. CI runs it on every push/PR.
@@ -219,6 +271,28 @@ AI 编码 Agent 能力很强，但每个新项目都是从零开始、没有上�
 
 本 Skill 在第一天**自动**搭建好这些治理地基 —— 并在项目整个生命周期里持续维护它们。
 
+### 安装
+
+把 skill 放到你的 Agent 能发现的位置。跨 Agent 共享推荐 `.agents/skills`：
+
+```
+.agents/skills/ai-agent-governance/SKILL.md
+```
+
+```bash
+git clone https://github.com/Consciencieux/ai-agent-governance
+# 将仓库复制或软链到你选择的目录
+```
+
+| 位置 | 自动发现方 | 适合 |
+| --- | --- | --- |
+| `.agents/skills` | opencode 及 Claude 兼容 Agent | 跨 Agent 共享 |
+| `.claude/skills` | opencode、Claude Code | Claude Code 生态 |
+| `.opencode/skills` | opencode | 仅 opencode |
+| `~/.config/opencode/skills` | opencode（全局） | 全机器 opencode 使用 |
+
+opencode 自动扫描 `.opencode/skills`、`.claude/skills`、`.agents/skills`（项目级与全局级）；Claude Code 读取 `.claude/skills`。
+
 ### 快速开始
 
 在你的 AI 编码 Agent 会话中运行：
@@ -246,7 +320,7 @@ my-project/
 │   ├── plans/
 │   ├── features/
 │   └── rules/
-├── .agent/
+├── .governance/
 ├── scripts/
 └── .github/workflows/
 ```
@@ -272,12 +346,12 @@ my-project/
 │   ├── features/                Feature 登记（只登记真实功能）
 │   └── rules/                   lifecycle / git-policy / security / coding / testing
 ├── .env.example                 安全基线
-├── .agent/                      manifest / state / validation / preflight
+├── .governance/                      manifest / state / validation / preflight
 ├── scripts/verify-governance.js 校验门禁（退出码 = 通过/失败）
 └── .github/workflows/           CI 管线（能力检测式，优雅降级）
 ```
 
-同时生成 `.agent/skills/` 下的 Agent 模块（含 drift-check），接管日常任务的持续巡检。
+同时生成 `.governance/generated/skills/` 下的 Agent 模块（含 drift-check），接管日常任务的持续巡检。
 
 ### 特性
 
@@ -295,7 +369,7 @@ my-project/
 - **漂移检测** — 在治理腐化变成技术债之前发现
 - **AUDIT 巡检** — 随时健康检查已治理项目，最小补丁修复（不重建、不重构）
 - **成熟度适配** — 自动调整"创建/合并/审计"策略：L0 空仓库 · L1 早期开发 · L2 活跃项目 · L3 生产系统
-- **多 Agent 状态** — `.agent/state.json` 跟踪 `agent_id` / `task_id` / `locked`，为协作做准备
+- **多 Agent 状态** — `.governance/state.json` 跟踪 `agent_id` / `task_id` / `locked`，为协作做准备
 
 **设计原则：**
 
@@ -324,15 +398,16 @@ my-project/
 ```
 ai-agent-governance/
 ├── SKILL.md                    # 策略层 + INIT/AUDIT 编排
-├── reference/
+├── references/
 │   ├── agents-md.template.md   # AGENTS.md 模板
 │   ├── feature-doc.template.md # Feature 文档模板（含反虚构规则）
 │   ├── ci-workflows.md         # CI 模板（能力检测 + 降级）
 │   ├── sub-skills.md           # 生成的 Agent 模块（含 drift-check）
+│   ├── governance-files.md     # 受保护文件 + .governance Git 跟踪策略
 │   └── rules/                  # lifecycle / git-policy / security / coding / testing
 ├── scripts/
 │   └── verify_governance.js    # 校验引擎（manifest 驱动路径 + governance_version）
-└── test/
+└── tests/
     └── run-tests.js            # 验证套件（empty / default / custom-manifest / json）
 ```
 
@@ -348,7 +423,7 @@ INIT — Inspect → Build → Validate → Report
 生成的项目治理
     +-- AGENTS.md                  运行期规则源头
     +-- docs/rules/                详细策略（AGENTS.md 按章节 @ 引用）
-    +-- .agent/state.json          机器状态（成熟度 / 阶段 / 锁）
+    +-- .governance/state.json          机器状态（成熟度 / 阶段 / 锁）
     +-- scripts/verify-governance.js  校验门禁（退出码 = 通过/失败）
     |
     v
@@ -358,6 +433,35 @@ INIT — Inspect → Build → Validate → Report
 AUDIT — 健康检查 + 最小补丁（不重建）
 ```
 
+### 概念关系
+
+```
+.agents/skills
+    能力分发层（安装）
+
+        ↓
+
+SKILL.md
+    治理编排层
+
+        ↓
+
+AGENTS.md
+    人类可读的行为契约
+
+        ↓
+
+.governance/
+    机器可读的治理状态（manifest / state / validation）
+```
+
+- `.agents` 告诉 Agent 它能做什么。
+- `AGENTS.md` 告诉 Agent 它应该如何表现。
+- `.governance` 告诉系统已建立并验证了什么。
+
+状态分层参照 Kubernetes 的 Spec / Status / Health：
+`manifest.json` = 期望态 · `state.json` = 当前态 · `validation.json` = 观测态。
+
 ### 支持的 Agent
 
 兼容 Claude Code、Cursor、Codex、opencode 及其他基于 AGENTS.md 的编码 Agent。
@@ -365,7 +469,7 @@ AUDIT — 健康检查 + 最小补丁（不重建）
 ### 开发
 
 ```bash
-npm test        # 或 node test/run-tests.js
+npm test        # 或 node tests/run-tests.js
 ```
 
 覆盖：空项目（exit 1）、完整默认结构（exit 0）、自定义文档根经 manifest（manifest 模式）、缺 governance_version（exit 1）、`--json` 输出。CI 已接入。

@@ -83,7 +83,7 @@ Note: users may request governance changes via explicit instruction (through the
 - Full detail: @docs/rules/git-policy.md
 
 ## Governance File Protection
-Modifying AGENTS.md, docs/rules/**, .agent/manifest.json, .agent/preflight.json, scripts/verify-governance.js, or CI config requires: reason → CHANGELOG update → run verify-governance.js. Never loosen permission limits or remove validation without explicit user approval.
+Modifying AGENTS.md, CLAUDE.md, docs/rules/**, .governance/manifest.json, .governance/preflight.json, scripts/verify-governance.js, opencode.json, or CI config (.github/workflows/**, .gitlab-ci.yml) requires: reason → CHANGELOG update → bump `.governance/manifest.json` governance_version → run verify-governance.js. Never loosen permission limits or remove validation without explicit user approval.
 
 ## Mandatory Pre-commit Checklist
 CHANGELOG must be updated before push/PR. No CHANGELOG update → no push.

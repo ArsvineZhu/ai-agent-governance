@@ -1,11 +1,11 @@
-# .agent/skills/ 子技能（生成到目标项目 `.agent/skills/<name>/SKILL.md`）
+# .governance/generated/skills/ 子技能（生成到目标项目 `.governance/generated/skills/<name>/SKILL.md`）
 
 生成的子技能供**项目内的后续 Agent 开发任务**使用。生成后若项目用 opencode，写入 `opencode.json`：
 
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "skills": { "paths": [".agent/skills"] }
+  "skills": { "paths": [".governance/generated/skills"] }
 }
 ```
 
@@ -67,16 +67,16 @@ Rules:
 ````
 ---
 name: governance-validator
-description: Use to check that this repo's governance artifacts are intact before declaring a task complete. Runs scripts/verify-governance.js and records results into .agent/validation.json. Triggers on "governance check", "verify governance", "validate AGENTS".
+description: Use to check that this repo's governance artifacts are intact before declaring a task complete. Runs scripts/verify-governance.js and records results into .governance/validation.json. Triggers on "governance check", "verify governance", "validate AGENTS".
 ---
 
 # Governance Validator
 
 Run: `node scripts/verify-governance.js` (or registered npm script `npm run governance-check`).
 
-Path resolution: uses `.agent/manifest.json` artifacts when present (structure-adaptive), otherwise built-in defaults. Checks: AGENTS.md, CHANGELOG.md, ARCHITECTURE, features, plans, rules, .gitignore, .env.example, CI config, validator self, .agent/*, governance_version.
+Path resolution: uses `.governance/manifest.json` artifacts when present (structure-adaptive), otherwise built-in defaults. Checks: AGENTS.md, CHANGELOG.md, ARCHITECTURE, features, plans, rules, .gitignore, .env.example, CI config, validator self, .governance/*, governance_version.
 
-Then update `.agent/validation.json`:
+Then update `.governance/validation.json`:
 
 ```json
 {"timestamp":"<ISO>","mode":"manifest","total":0,"passed":0,"failed":0,"passedAll":false,"results":[]}
@@ -92,14 +92,14 @@ If any check fails -> report ❌ Failed with the missing items. Do NOT declare t
 ````
 ---
 name: state-manager
-description: Use at the end of any agent task to persist progress into .agent/state.json. Tracks maturity, phase, agent identity, completed items and blocked items so later sessions resume correctly. Triggers on "update state", "record progress".
+description: Use at the end of any agent task to persist progress into .governance/state.json. Tracks maturity, phase, agent identity, completed items and blocked items so later sessions resume correctly. Triggers on "update state", "record progress".
 ---
 
 # State Manager
 
 State machine: `understand → plan → implement → validate → synchronize → report`, plus terminal states `completed / blocked / failed`. Any phase failure → `blocked`/`failed`. On crash/recovery, read `phase` to find the resume point — never re-run completed items, never skip phases.
 
-At the end of every task (or on interruption), update `.agent/state.json`:
+At the end of every task (or on interruption), update `.governance/state.json`:
 
 ```json
 {"maturity":"","phase":"","agent_id":"","task_id":"","locked":null,"completed":[],"blocked":[],"updatedAt":"<ISO>"}
@@ -122,17 +122,17 @@ Multi-agent rule: before starting, read state.json; if `locked` is set for the p
 ````
 ---
 name: drift-check
-description: Use to detect governance drift in this repo — compare declared artifacts in .agent/manifest.json against reality, check governance_version, and produce a health report. Triggers on "check governance drift", "governance health report", "is governance intact".
+description: Use to detect governance drift in this repo — compare declared artifacts in .governance/manifest.json against reality, check governance_version, and produce a health report. Triggers on "check governance drift", "governance health report", "is governance intact".
 ---
 
 # Drift Check
 
 1. Run: `node scripts/verify-governance.js --json`
-2. Read `.agent/manifest.json`: `governance_version` + declared `artifacts`
+2. Read `.governance/manifest.json`: `governance_version` + declared `artifacts`
 3. Compute drift:
    - missing artifacts: declared in manifest but absent on disk (from validator results)
-   - version drift: `governance_version` now vs last recorded in `.agent/validation.json`
-4. Write `.agent/drift-report.json`:
+   - version drift: `governance_version` now vs last recorded in `.governance/validation.json`
+4. Write `.governance/drift-report.json`:
    ```json
    {"timestamp":"<ISO>","governance_version":"<X>","missing":[],"versionDrift":false}
    ```

@@ -1,15 +1,25 @@
 #!/usr/bin/env node
 // Governance Validator — plain Node, no dependencies.
 // Usage: node scripts/verify-governance.js [--json]
-// Paths come from .agent/manifest.json when present (structure-adaptive);
+// Paths come from .governance/manifest.json when present (structure-adaptive);
 // otherwise built-in defaults are used.
 // Exit code 0 when every governance artifact exists, 1 otherwise.
 
 const fs = require("fs");
 const path = require("path");
 
+if (process.argv.includes("--help") || process.argv.includes("-h")) {
+  console.log(`Usage:
+  verify-governance.js [options]
+
+Options:
+  --json       Output JSON report
+  --help       Show help`);
+  process.exit(0);
+}
+
 const ROOT = process.cwd();
-const MANIFEST = path.join(ROOT, ".agent", "manifest.json");
+const MANIFEST = path.join(ROOT, ".governance", "manifest.json");
 
 // [name, relativePath, checker]
 const DEFAULTS = [
@@ -23,11 +33,11 @@ const DEFAULTS = [
   [".env.example", ".env.example", isFile],
   ["CI workflow", null, hasCI],
   ["Validator self", "scripts/verify-governance.js", isFile],
-  [".agent state dir", ".agent", isDir],
-  [".agent manifest", ".agent/manifest.json", isFile],
-  [".agent state", ".agent/state.json", isFile],
-  [".agent validation", ".agent/validation.json", isFile],
-  [".agent preflight", ".agent/preflight.json", isFile],
+  [".governance state dir", ".governance", isDir],
+  [".governance manifest", ".governance/manifest.json", isFile],
+  [".governance state", ".governance/state.json", isFile],
+  [".governance validation", ".governance/validation.json", isFile],
+  [".governance preflight", ".governance/preflight.json", isFile],
   ["Governance version", null, hasGovernanceVersion],
 ];
 
@@ -70,6 +80,15 @@ function hasGovernanceVersion() {
   return getGovernanceVersion() !== null;
 }
 
+function hasSchemaVersion() {
+  try {
+    const m = JSON.parse(fs.readFileSync(MANIFEST, "utf8"));
+    return typeof m.schema_version === "string" && m.schema_version.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 function loadManifestChecks() {
   try {
     const m = JSON.parse(fs.readFileSync(MANIFEST, "utf8"));
@@ -90,7 +109,11 @@ function loadManifestChecks() {
 
 const manifestChecks = loadManifestChecks();
 const results = manifestChecks
-  ? [...manifestChecks, { name: "Governance version", path: "manifest.governance_version", ok: hasGovernanceVersion() }]
+  ? [
+      ...manifestChecks,
+      { name: "Manifest schema", path: "manifest.schema_version", ok: hasSchemaVersion() },
+      { name: "Governance version", path: "manifest.governance_version", ok: hasGovernanceVersion() },
+    ]
   : DEFAULTS.map(([name, rel, check]) => {
       const target = rel === null ? null : path.join(ROOT, rel);
       const ok = rel === null ? check() : check(target);

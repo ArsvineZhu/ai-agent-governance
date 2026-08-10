@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Test harness for scripts/verify_governance.js — plain Node, no dependencies.
-// Usage: npm test   (or: node test/run-tests.js)
+// Usage: npm test   (or: node tests/run-tests.js)
 
 const { spawnSync } = require("child_process");
 const fs = require("fs");
@@ -41,7 +41,7 @@ test("empty project exits 1 (governance missing)", () => {
 
 // ---------- 2. Full default structure ----------
 function buildFullDefault(dir) {
-  const dirs = ["docs/features", "docs/plans", "docs/rules", ".agent", ".github/workflows", "scripts"];
+  const dirs = ["docs/features", "docs/plans", "docs/rules", ".governance", ".github/workflows", "scripts"];
   for (const d of dirs) fs.mkdirSync(path.join(dir, d), { recursive: true });
   const files = [
     ["AGENTS.md", "x"],
@@ -53,12 +53,12 @@ function buildFullDefault(dir) {
     [".gitignore", "x"],
     [".env.example", "x"],
     [".github/workflows/ci.yml", "x"],
-    [".agent/state.json", "{}"],
-    [".agent/validation.json", "{}"],
-    [".agent/preflight.json", "{}"],
+    [".governance/state.json", "{}"],
+    [".governance/validation.json", "{}"],
+    [".governance/preflight.json", "{}"],
   ];
   for (const [p, c] of files) write(path.join(dir, p), c);
-  write(path.join(dir, ".agent/manifest.json"), JSON.stringify({ governance_version: "1.0.0", artifacts: [] }));
+  write(path.join(dir, ".governance/manifest.json"), JSON.stringify({ governance_version: "1.0.0", artifacts: [] }));
   fs.copyFileSync(VALIDATOR, path.join(dir, "scripts/verify-governance.js"));
 }
 
@@ -73,7 +73,7 @@ test("full default structure exits 0 (defaults mode)", () => {
 // ---------- 3. Custom structure via manifest ----------
 test("custom doc root (documentation/) follows manifest (manifest mode)", () => {
   const dir = tmp("custom");
-  const dirs = ["documentation/features", "documentation/plans", "documentation/rules", ".agent", ".github/workflows", "scripts"];
+  const dirs = ["documentation/features", "documentation/plans", "documentation/rules", ".governance", ".github/workflows", "scripts"];
   for (const d of dirs) fs.mkdirSync(path.join(dir, d), { recursive: true });
   const files = [
     ["AGENTS.md", "x"],
@@ -85,12 +85,13 @@ test("custom doc root (documentation/) follows manifest (manifest mode)", () => 
     [".gitignore", "x"],
     [".env.example", "x"],
     [".github/workflows/ci.yml", "x"],
-    [".agent/state.json", "{}"],
-    [".agent/validation.json", "{}"],
-    [".agent/preflight.json", "{}"],
+    [".governance/state.json", "{}"],
+    [".governance/validation.json", "{}"],
+    [".governance/preflight.json", "{}"],
   ];
   for (const [p, c] of files) write(path.join(dir, p), c);
   const manifest = {
+    schema_version: "1.0",
     governance_version: "1.0.0",
     doc_root: "documentation",
     artifacts: [
@@ -102,19 +103,19 @@ test("custom doc root (documentation/) follows manifest (manifest mode)", () => 
       { name: "Rules", path: "documentation/rules", kind: "dir" },
     ],
   };
-  write(path.join(dir, ".agent/manifest.json"), JSON.stringify(manifest));
+  write(path.join(dir, ".governance/manifest.json"), JSON.stringify(manifest));
   fs.copyFileSync(VALIDATOR, path.join(dir, "scripts/verify-governance.js"));
 
   const r = run(dir);
-  return r.status === 0 && r.stdout.includes("mode: manifest") && r.stdout.includes("7/7 checks passed.");
+  return r.status === 0 && r.stdout.includes("mode: manifest") && r.stdout.includes("8/8 checks passed.");
 });
 
 // ---------- 4. Manifest without governance_version ----------
 test("manifest without governance_version exits 1", () => {
   const dir = tmp("noversion");
-  fs.mkdirSync(path.join(dir, ".agent"), { recursive: true });
+  fs.mkdirSync(path.join(dir, ".governance"), { recursive: true });
   fs.mkdirSync(path.join(dir, "scripts"), { recursive: true });
-  write(path.join(dir, ".agent/manifest.json"), JSON.stringify({ artifacts: [] }));
+  write(path.join(dir, ".governance/manifest.json"), JSON.stringify({ schema_version: "1.0", artifacts: [] }));
   fs.copyFileSync(VALIDATOR, path.join(dir, "scripts/verify-governance.js"));
 
   const r = run(dir);
@@ -136,6 +137,13 @@ test("--json reports passedAll, mode and governance_version", () => {
     Array.isArray(out.results) &&
     out.results.length === 16
   );
+});
+
+// ---------- 6. --help output ----------
+test("--help exits 0 and prints usage", () => {
+  const dir = tmp("help");
+  const r = run(dir, ["--help"]);
+  return r.status === 0 && r.stdout.includes("Usage:") && r.stdout.includes("--json");
 });
 
 // ---------- runner ----------
