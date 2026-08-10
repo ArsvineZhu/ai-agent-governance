@@ -4,6 +4,28 @@ All notable changes to this project will be documented here.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-10
+
+### Added
+
+- RELEASE governance mode, completing the lifecycle: INIT → Runtime → AUDIT → RELEASE
+- Generated `release-manager` sub-skill (enforces preconditions, version-synced, transactional release)
+- Centralized release policy (`references/release-policy.md`): release requirements, version consistency rules, release workflow, transactional guarantee
+- Optional `release` metadata in `manifest.json` (`version` / `tag` / `validated`)
+
+### Changed
+
+- Validator validates release metadata when declared (Release metadata check in manifest mode)
+- Updated documentation: Governance Flow, architecture diagrams, feature overview, Roadmap
+
+### Lifecycle
+
+AI Agent Governance now supports:
+
+```
+INIT → Runtime → AUDIT → RELEASE
+```
+
 ## [0.2.0] - 2026-08-10
 
 ### Changed

@@ -1,7 +1,7 @@
 ---
 name: ai-agent-governance
 description: >-
-  Use when initializing, retrofitting, OR auditing a project's AI-agent governance framework. Init mode: one-shot bootstrap of AGENTS.md, feature registry, lifecycle, CI validation, security baseline. Audit mode: health-check an already-governed project, detect drift vs .governance/manifest.json, apply minimal fixes. Triggers on "initialize governance", "setup project for AI agents", "create AGENTS.md framework", "audit governance", "governance health check", "fix governance drift". Also loads the generated sub-skills in .governance/generated/skills for ongoing agent work. Do NOT use for normal development tasks.
+  Use when initializing, retrofitting, auditing, OR releasing a project's AI-agent governance framework. Init mode: one-shot bootstrap of AGENTS.md, feature registry, lifecycle, CI validation, security baseline. Audit mode: health-check an already-governed project, detect drift vs .governance/manifest.json, apply minimal fixes. Release mode: version-synced, validated releases via the generated release-manager sub-skill. Triggers on "initialize governance", "setup project for AI agents", "create AGENTS.md framework", "audit governance", "governance health check", "fix governance drift", "release", "publish version". Also loads the generated sub-skills in .governance/generated/skills for ongoing agent work. Do NOT use for normal development tasks.
 ---
 
 # Governance Bootstrap
@@ -16,8 +16,9 @@ description: >-
 | --- | --- | --- |
 | INIT（初始化） | 新项目 / 无 `.governance/manifest.json` / 成熟度 L0-L1 | 完整引导（见下方执行层） |
 | AUDIT（巡检） | 已有 `.governance/manifest.json` / 成熟度 L2-L3 / 用户说"巡检/健康检查/治理偏差" | 只读巡检 + 最小补丁修复（见下方 Audit 流程） |
+| RELEASE（发布） | 用户说"发布 / release / publish"、或版本推进需求 | 前置检查 → 版本同步 → 校验 → tag → push → GitHub Release（见下方 Release 流程） |
 
-判定优先级：**用户明确指令 > `.governance/manifest.json` 存在性 > 成熟度**。INIT 与 AUDIT 都先走 Phase 0 环境检测。AUDIT 不重建、不重构、不迁移，只输出差距报告与最小补丁；涉及治理文件改动走「治理文件保护」流程。
+判定优先级：**用户明确指令 > `.governance/manifest.json` 存在性 > 成熟度**。INIT / AUDIT / RELEASE 都先走 Phase 0 环境检测。AUDIT 不重建、不重构、不迁移，只输出差距报告与最小补丁；RELEASE 由生成的 `release-manager` 子技能执行（见 `references/release-policy.md`）；涉及治理文件改动走「治理文件保护」流程。
 
 > 定位：INIT 完成的项目进入**长期运行期**，日常任务由生成的 `.governance/generated/skills/` 子技能接管（含 `drift-check` 巡检）；本 skill 可随时以 AUDIT 模式回来做健康检查。
 
@@ -159,6 +160,18 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
 
 **长期运行期**：INIT 完成后，日常任务的巡检由生成的 `.governance/generated/skills/drift-check` 子技能承担；AUDIT 模式用于定期人工健康检查。
 
+### Release 流程（版本发布模式）
+
+仅当进入模式判定为 RELEASE 时执行（Phase 0 环境检测仍执行）。发布由生成的 `release-manager` 子技能承担，详细规范见 `references/release-policy.md`（单一事实源）：
+
+1. **前置检查**（release_requirements，全部通过才允许发布）：工作区干净 / 测试通过 / CHANGELOG 已更新 / 版本一致（package.json · CHANGELOG · `manifest.governance_version` · tag）/ 目标 tag 不存在 / 校验器通过。任一失败 → 输出 ⚠️/❌ 清单并停止。
+2. **确认目标版本**：按 SemVer 与用户确认（破坏性 → MAJOR，新能力 → MINOR，修复 → PATCH）。
+3. **版本同步**：`package.json` → CHANGELOG（`[Unreleased]` 移入 `[X.Y.Z]`）→ `.governance/manifest.json` 的 `governance_version` 与 `release` 字段。
+4. **校验**：运行 `scripts/verify-governance.js`，退出码必须为 0。
+5. **提交与 tag**：`git commit -m "release: vX.Y.Z - <summary>"` → `git tag vX.Y.Z` → push（写操作均需用户确认）。
+6. **GitHub Release**：`gh release create vX.Y.Z --title "vX.Y.Z" --notes "<CHANGELOG 摘要>"`；gh 未装/未登录 → ⚠️ Blocked 并提示。
+7. **收尾**：`manifest.release.validated` 置 `true`，重跑校验并写入 `validation.json`。
+
 ### Phase 0：环境检测（Repository Inspection）
 
 不创建任何文件之前，先分析现状。检查：目录结构、已有文档、语言、包管理器、构建工具、测试框架、静态检查工具、Git 状态、已有 CI、已有 AI 指南文件。同时判定**项目成熟度**（见初始化模式判断）。
@@ -224,7 +237,7 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
 12. **CI workflow** —— 按检测到的平台/栈从 `references/ci-workflows.md` 选择模板生成；推送与 PR 自动运行。**管线步骤按 CI Pipeline Capability Detection 决定，不强制全部存在**：
     - TypeScript → 加 typecheck；Python → mypy 可选；Rust → clippy；纯文档项目 → markdown lint + 链接检查，无构建。
     - 若 `package.json` / `pyproject.toml` 等中无 `test`/`lint` 脚本，对应步骤只保留 `echo "No tests configured yet"`（黄字警告），**不得强行编写无法执行的 `npm run test`**；包管理器以锁文件为准（见默认值约定）。
-13. **.governance/generated/skills/** —— 按 `references/sub-skills.md` 生成子技能（repository-inspection / ci-generator / governance-validator / state-manager / **drift-check**），并写入 `opencode.json` 的 `skills.paths` 使其被加载（如项目用 opencode）。其中 `drift-check` 承担长期巡检（治理健康报告、版本漂移检测）。
+13. **.governance/generated/skills/** —— 按 `references/sub-skills.md` 生成子技能（repository-inspection / ci-generator / governance-validator / state-manager / **drift-check** / **release-manager**），并写入 `opencode.json` 的 `skills.paths` 使其被加载（如项目用 opencode）。其中 `drift-check` 承担长期巡检（治理健康报告、版本漂移检测），`release-manager` 承担版本发布（RELEASE 模式）。
 
 ### .governance/ 机器可读状态
 
@@ -234,6 +247,7 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
 {
   "schema_version": "1.0",
   "governance_version": "0.2.0",
+  "release": { "version": "0.2.0", "tag": "v0.2.0", "validated": false },
   "doc_root": "docs",
   "artifacts": [
     { "name": "AGENTS.md", "path": "AGENTS.md", "kind": "file", "type": "policy" },
@@ -242,6 +256,8 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
   ]
 }
 ```
+
+> `release`（可选）把发布本身纳入治理对象：`version` 与 `governance_version` 一致，`tag` 为 `v<version>`，`validated` 发布通过校验后置 `true`（见 `references/release-policy.md`）。
 
 > 分层语义：`manifest.json` = 期望态（desired state），`state.json` = 当前态（current state），`validation.json` = 观测态（observed state）。
 > `type` 是治理语义元数据，用于分类与报告，**不参与文件系统校验**（文件系统判断只看 `kind`）。

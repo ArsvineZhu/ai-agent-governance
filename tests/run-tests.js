@@ -93,6 +93,7 @@ test("custom doc root (documentation/) follows manifest (manifest mode)", () => 
   const manifest = {
     schema_version: "1.0",
     governance_version: "1.0.0",
+    release: { version: "1.0.0", tag: "v1.0.0", validated: false },
     doc_root: "documentation",
     artifacts: [
       { name: "AGENTS.md", path: "AGENTS.md", kind: "file" },
@@ -107,7 +108,7 @@ test("custom doc root (documentation/) follows manifest (manifest mode)", () => 
   fs.copyFileSync(VALIDATOR, path.join(dir, "scripts/verify-governance.js"));
 
   const r = run(dir);
-  return r.status === 0 && r.stdout.includes("mode: manifest") && r.stdout.includes("8/8 checks passed.");
+  return r.status === 0 && r.stdout.includes("mode: manifest") && r.stdout.includes("9/9 checks passed.");
 });
 
 // ---------- 4. Manifest without governance_version ----------

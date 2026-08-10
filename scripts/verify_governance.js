@@ -89,6 +89,22 @@ function hasSchemaVersion() {
   }
 }
 
+function checkReleaseMeta() {
+  try {
+    const m = JSON.parse(fs.readFileSync(MANIFEST, "utf8"));
+    const rel = m.release;
+    if (rel === undefined || rel === null) return null; // not declared -> no check
+    if (typeof rel !== "object") return false;
+    return (
+      typeof rel.version === "string" &&
+      typeof rel.tag === "string" &&
+      typeof rel.validated === "boolean"
+    );
+  } catch {
+    return false;
+  }
+}
+
 function loadManifestChecks() {
   try {
     const m = JSON.parse(fs.readFileSync(MANIFEST, "utf8"));
@@ -109,11 +125,18 @@ function loadManifestChecks() {
 
 const manifestChecks = loadManifestChecks();
 const results = manifestChecks
-  ? [
-      ...manifestChecks,
-      { name: "Manifest schema", path: "manifest.schema_version", ok: hasSchemaVersion() },
-      { name: "Governance version", path: "manifest.governance_version", ok: hasGovernanceVersion() },
-    ]
+  ? (() => {
+      const checks = [
+        ...manifestChecks,
+        { name: "Manifest schema", path: "manifest.schema_version", ok: hasSchemaVersion() },
+        { name: "Governance version", path: "manifest.governance_version", ok: hasGovernanceVersion() },
+      ];
+      const relOk = checkReleaseMeta();
+      if (relOk !== null) {
+        checks.push({ name: "Release metadata", path: "manifest.release", ok: relOk });
+      }
+      return checks;
+    })()
   : DEFAULTS.map(([name, rel, check]) => {
       const target = rel === null ? null : path.join(ROOT, rel);
       const ok = rel === null ? check() : check(target);

@@ -138,3 +138,44 @@ description: Use to detect governance drift in this repo — compare declared ar
    ```
 5. Propose minimal fixes only — no rebuild, no restructure, no migration. Governance-file changes require user confirmation (see Governance File Protection).
 ````
+
+---
+
+## 6. release-manager
+
+````
+---
+name: release-manager
+description: Use to cut a tagged release for this repo. Enforces release preconditions (clean git status, passing tests, updated CHANGELOG, version consistency across package.json / CHANGELOG / manifest / tag), bumps versions, runs the validator, creates the git tag, pushes, and creates a GitHub Release via gh. Triggers on "release", "publish version", "create release", "/release vX.Y.Z".
+---
+
+# Release Manager
+
+Follow `release-policy.md` (the single source of truth). Release lifecycle: Design → Implement → Validate → Release → Audit.
+
+## release_requirements (all must pass)
+
+- `git.require_clean_status`: `git status --porcelain` empty
+- `tests.required`: test command exit 0
+- `changelog.required`: CHANGELOG records the change
+- `version.manifest_match_tag`: `package.json.version` == `CHANGELOG` top version == `manifest.governance_version` == tag `v<version>`
+- `release.tag_required`: target tag does not exist yet (`git tag -l <tag>`)
+- `validator.passed`: `node scripts/verify-governance.js` exit 0
+
+Any failure → report ⚠️/❌ with the exact item; do NOT proceed.
+
+## Steps
+
+1. Run all preconditions; stop on failure.
+2. Confirm target version with the user (SemVer: breaking → MAJOR, feature → MINOR, fix → PATCH).
+3. Update `package.json` → CHANGELOG (move `[Unreleased]` into `[X.Y.Z]`) → `.governance/manifest.json` (`governance_version` + `release` field).
+4. Run `node scripts/verify-governance.js`; exit code must be 0.
+5. `git add` (only relevant files) → `git commit -m "release: vX.Y.Z - <summary>"`.
+6. `git tag vX.Y.Z` → `git push origin main` → `git push origin vX.Y.Z`.
+7. `gh release create vX.Y.Z --title "vX.Y.Z" --notes "<CHANGELOG summary>"`. gh missing/unauthenticated → ⚠️ Blocked with reason.
+8. Set `manifest.release.validated` to `true`, re-run validator, record into `.governance/validation.json`.
+
+## Permissions
+
+Git tag, push, and `gh release create` are write operations — state intent and wait for explicit user confirmation before running. Modifying `release-policy.md` or manifest `release` fields follows the Governance File Protection flow.
+````
