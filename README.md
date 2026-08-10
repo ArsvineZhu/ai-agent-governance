@@ -57,7 +57,9 @@ opencode auto-scans `.opencode/skills`, `.claude/skills`, and `.agents/skills` (
 
 In your AI coding agent's chat session, run:
 
-> initialize project governance
+```bash
+initialize project governance
+```
 
 Works with: Claude Code · Cursor · Codex · opencode
 
@@ -90,7 +92,9 @@ One prompt, and your project has a complete governance environment: AGENTS.md, r
 
 Already governed? Run a health check instead:
 
-> audit governance
+```bash
+audit governance
+```
 
 ### What INIT Builds
 
@@ -252,6 +256,7 @@ Covers: empty project, full default structure, custom doc root via manifest, mis
 - [x] Governance validator
 - [x] Release workflow
 - [x] Multi-language CI templates
+- [ ] Skill lifecycle management — dedicated [`ai-skill-manager`](https://github.com/Consciencieux/ai-skill-manager) skill (INSTALL → UPDATE → ROLLBACK for all skills in `.agents/skills/`, incl. this one). Design: #1
 - [ ] IDE extension
 - [ ] Multi-agent coordination protocol
 - [ ] Remote governance dashboard
@@ -310,7 +315,9 @@ opencode 自动扫描 `.opencode/skills`、`.claude/skills`、`.agents/skills`�
 
 在你的 AI 编码 Agent 会话中运行：
 
-> initialize project governance
+```bash
+initialize project governance
+```
 
 支持：Claude Code · Cursor · Codex · opencode
 
@@ -343,7 +350,9 @@ my-project/
 
 已有治理体系？改用巡检：
 
-> audit governance
+```bash
+audit governance
+```
 
 ### 初始化产物
 
@@ -505,6 +514,7 @@ npm test        # 或 node tests/run-tests.js
 - [x] 治理校验器
 - [x] 发布工作流
 - [x] 多语言 CI 模板
+- [ ] Skill 生命周期管理 —— 独立 [`ai-skill-manager`](https://github.com/Consciencieux/ai-skill-manager) skill（管理 `.agents/skills/` 下所有 skill 的 INSTALL → UPDATE → ROLLBACK，含本 skill）。设计见 Issue #1
 - [ ] IDE 扩展
 - [ ] 多 Agent 协调协议
 - [ ] 远程治理看板
