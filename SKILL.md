@@ -1,6 +1,7 @@
 ---
 name: ai-agent-governance
-description: Use when initializing, retrofitting, OR auditing a project's AI-agent governance framework. Init mode: one-shot bootstrap of AGENTS.md, feature registry, lifecycle, CI validation, security baseline. Audit mode: health-check an already-governed project, detect drift vs .agent/manifest.json, apply minimal fixes. Triggers on "initialize governance", "setup project for AI agents", "create AGENTS.md framework", "audit governance", "governance health check", "fix governance drift". Also loads the generated sub-skills in .agent/skills for ongoing agent work. Do NOT use for normal development tasks.
+description: >-
+  Use when initializing, retrofitting, OR auditing a project's AI-agent governance framework. Init mode: one-shot bootstrap of AGENTS.md, feature registry, lifecycle, CI validation, security baseline. Audit mode: health-check an already-governed project, detect drift vs .agent/manifest.json, apply minimal fixes. Triggers on "initialize governance", "setup project for AI agents", "create AGENTS.md framework", "audit governance", "governance health check", "fix governance drift". Also loads the generated sub-skills in .agent/skills for ongoing agent work. Do NOT use for normal development tasks.
 ---
 
 # Governance Bootstrap

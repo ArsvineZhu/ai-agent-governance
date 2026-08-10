@@ -13,7 +13,7 @@
 
 ## 1. repository-inspection
 
-```markdown
+````
 ---
 name: repository-inspection
 description: Use at the start of any task in this repo to inspect the environment. Loads project type, language, package manager, build tool, test framework, linter, git state, existing CI, and existing AI guidance files. Triggers on "inspect the repo", "what is the stack", "check environment".
@@ -35,13 +35,13 @@ Constraints:
 - Never overwrite important files; merge or update existing.
 - Never delete existing config without stating a reason.
 - Output: JSON report above, plus the file(s) changed, if any.
-```
+````
 
 ---
 
 ## 2. ci-generator
 
-```markdown
+````
 ---
 name: ci-generator
 description: Use when this repo needs CI configuration for its detected stack. Generates a GitHub Actions / GitLab CI pipeline matching the repository's package manager, test framework and build tool. Triggers on "setup CI", "add CI", "create workflow".
@@ -58,13 +58,13 @@ Rules:
 - Use the project package manager and lockfile; pin tool versions.
 - If CI platform is unknown or permissions are missing -> report ⚠️ Blocked with the exact reason.
 - Real config only; verify YAML validity.
-```
+````
 
 ---
 
 ## 3. governance-validator
 
-```markdown
+````
 ---
 name: governance-validator
 description: Use to check that this repo's governance artifacts are intact before declaring a task complete. Runs scripts/verify-governance.js and records results into .agent/validation.json. Triggers on "governance check", "verify governance", "validate AGENTS".
@@ -83,13 +83,13 @@ Then update `.agent/validation.json`:
 ```
 
 If any check fails -> report ❌ Failed with the missing items. Do NOT declare the task done until exit code is 0.
-```
+````
 
 ---
 
 ## 4. state-manager
 
-```markdown
+````
 ---
 name: state-manager
 description: Use at the end of any agent task to persist progress into .agent/state.json. Tracks maturity, phase, agent identity, completed items and blocked items so later sessions resume correctly. Triggers on "update state", "record progress".
@@ -113,13 +113,13 @@ At the end of every task (or on interruption), update `.agent/state.json`:
 - `blocked`: external blockers with reason (e.g. "github_permission")
 
 Multi-agent rule: before starting, read state.json; if `locked` is set for the phase you need, wait or coordinate — never edit the same file in parallel. Never remove a completed entry. If a previous run left state, resume from it instead of restarting.
-```
+````
 
 ---
 
 ## 5. drift-check
 
-```markdown
+````
 ---
 name: drift-check
 description: Use to detect governance drift in this repo — compare declared artifacts in .agent/manifest.json against reality, check governance_version, and produce a health report. Triggers on "check governance drift", "governance health report", "is governance intact".
@@ -137,4 +137,4 @@ description: Use to detect governance drift in this repo — compare declared ar
    {"timestamp":"<ISO>","governance_version":"<X>","missing":[],"versionDrift":false}
    ```
 5. Propose minimal fixes only — no rebuild, no restructure, no migration. Governance-file changes require user confirmation (see Governance File Protection).
-```
+````

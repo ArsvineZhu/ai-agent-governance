@@ -2,7 +2,7 @@
 
 按项目替换 `{{...}}` 占位符。语言默认英文；若项目约定文档语言为中文，全文翻译并保持结构一致。
 
-```markdown
+```
 # {{PROJECT_NAME}} — Agent Guidelines
 
 ## Project Overview

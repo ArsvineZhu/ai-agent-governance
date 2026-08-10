@@ -6,7 +6,7 @@
 - 已有代码 → 逆推真实 Feature 文档，`Implementation` 路径必须与实际文件一致，严禁虚构路径。
 - 暂缺字段标 `[PLACEHOLDER]` + `# TODO: 业务确定后填充`。
 
-```markdown
+```
 # {{Feature Name}}
 
 ## Status
