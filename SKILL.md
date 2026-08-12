@@ -108,7 +108,10 @@ AGENTS.md / CLAUDE.md
 docs/rules/**              （规则文件）
 .governance/manifest.json       （治理工件清单）
 .governance/preflight.json      （回滚快照）
+.governance/git-policy.json     （Git 工作流策略）
 scripts/verify-governance.js
+scripts/check-lock.js
+scripts/check-git-policy.js
 opencode.json / .github/workflows/**
 ```
 
@@ -263,8 +266,8 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
 ```json
 {
   "schema_version": "1.0",
-  "governance_version": "0.3.3",
-  "release": { "version": "0.3.3", "tag": "v0.3.3", "validated": false },
+  "governance_version": "0.5.1",
+  "release": { "version": "0.5.1", "tag": "v0.5.1", "validated": false },
   "doc_root": "docs",
   "artifacts": [
     { "name": "AGENTS.md", "path": "AGENTS.md", "kind": "file", "type": "policy" },

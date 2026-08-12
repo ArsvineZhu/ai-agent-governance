@@ -1,6 +1,6 @@
 # ADR-0004: Human-in-the-loop release flow (Analyze → Proposal → Approval → Execute)
 
-- Status: Accepted (Unreleased)
+- Status: Accepted (v0.4.0)
 - Date: 2026
 
 ## Context
@@ -32,7 +32,7 @@ Analyze → Release Proposal → Developer Approval → Create Git Tag → Creat
 
 # ADR-0004: Human-in-the-loop 发布流程（Analyze → Proposal → Approval → Execute）
 
-- 状态：Accepted（Unreleased）
+- 状态：Accepted（v0.4.0）
 - 日期：2026
 
 ## 背景

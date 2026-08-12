@@ -174,10 +174,11 @@ Claude Code · Cursor · Codex · opencode — and other AGENTS.md-based agents.
 - [x] Multi-agent lock enforcement
 - [x] Validator content checks
 - [x] Git workflow governance
-- [ ] Skill lifecycle management *(near-term, v0.5.0)*
+- [ ] Skill lifecycle management *(near-term, v0.6.0)*
 - [ ] Agent activity audit *(near-term, v0.6.0)*
 - [ ] Secret scanning gate *(near-term, v0.6.0)*
 - [ ] Knowledge freshness detection *(mid-term, v0.7.0)*
+- [ ] Content consistency check *(mid-term, v0.7.0)*
 - [ ] Governance score & badge *(mid-term, v0.7.0)*
 - [ ] INIT scripted generator *(mid-term, v0.8.0)*
 - [ ] Multi-agent coordination protocol *(long-term)*
@@ -357,10 +358,11 @@ Claude Code · Cursor · Codex · opencode —— 以及其他基于 AGENTS.md �
 - [x] 多 Agent 锁强制
 - [x] 校验器内容检查
 - [x] Git 工作流治理
-- [ ] Skill 生命周期管理（*近期，v0.5.0*）
+- [ ] Skill 生命周期管理（*近期，v0.6.0*）
 - [ ] Agent 行为审计（*近期，v0.6.0*）
 - [ ] 密钥扫描门禁（*近期，v0.6.0*）
 - [ ] 知识新鲜度检测（*中期，v0.7.0*）
+- [ ] 内容一致性检查（*中期，v0.7.0*）
 - [ ] 治理健康分与徽章（*中期，v0.7.0*）
 - [ ] INIT 生成器脚本化（*中期，v0.8.0*）
 - [ ] 多 Agent 协调协议（*远期*）
