@@ -174,13 +174,17 @@ Claude Code · Cursor · Codex · opencode — and other AGENTS.md-based agents.
 - [x] Multi-agent lock enforcement
 - [x] Validator content checks
 - [x] Git workflow governance
-- [ ] Skill lifecycle management
-- [ ] Multi-agent coordination protocol
-- [ ] Remote governance dashboard
-- [ ] Monorepo multi-governance domains (long-term)
-- [ ] INIT scripted generator (very long-term)
-- [ ] Demo repository (very long-term)
-- [ ] Ecosystem polish: IDE extension + Cursor compatibility testing (very long-term)
+- [ ] Skill lifecycle management *(near-term, v0.5.0)*
+- [ ] Agent activity audit *(near-term, v0.6.0)*
+- [ ] Secret scanning gate *(near-term, v0.6.0)*
+- [ ] Knowledge freshness detection *(mid-term, v0.7.0)*
+- [ ] Governance score & badge *(mid-term, v0.7.0)*
+- [ ] INIT scripted generator *(mid-term, v0.8.0)*
+- [ ] Multi-agent coordination protocol *(long-term)*
+- [ ] Remote governance dashboard *(long-term)*
+- [ ] Monorepo multi-governance domains *(long-term)*
+- [ ] Demo repository *(very long-term)*
+- [ ] Ecosystem polish: IDE extension + Cursor compatibility testing *(very long-term)*
 
 Status details and design docs: [docs/roadmap.md](docs/roadmap.md)
 
@@ -353,13 +357,17 @@ Claude Code · Cursor · Codex · opencode —— 以及其他基于 AGENTS.md �
 - [x] 多 Agent 锁强制
 - [x] 校验器内容检查
 - [x] Git 工作流治理
-- [ ] Skill 生命周期管理
-- [ ] 多 Agent 协调协议
-- [ ] 远程治理看板
-- [ ] monorepo 多治理域（远期）
-- [ ] INIT 生成器脚本化（超远期）
-- [ ] demo 示例仓库（超远期）
-- [ ] 生态完善：IDE 扩展 + Cursor 兼容实测（超远期）
+- [ ] Skill 生命周期管理（*近期，v0.5.0*）
+- [ ] Agent 行为审计（*近期，v0.6.0*）
+- [ ] 密钥扫描门禁（*近期，v0.6.0*）
+- [ ] 知识新鲜度检测（*中期，v0.7.0*）
+- [ ] 治理健康分与徽章（*中期，v0.7.0*）
+- [ ] INIT 生成器脚本化（*中期，v0.8.0*）
+- [ ] 多 Agent 协调协议（*远期*）
+- [ ] 远程治理看板（*远期*）
+- [ ] monorepo 多治理域（*远期*）
+- [ ] demo 示例仓库（*超远期*）
+- [ ] 生态完善：IDE 扩展 + Cursor 兼容实测（*超远期*）
 
 状态详情与设计文档：[docs/roadmap.md](docs/roadmap.md)
 
