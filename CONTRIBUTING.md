@@ -12,7 +12,7 @@
 npm test        # or node tests/run-tests.js
 ```
 
-The test suite covers: empty project (exit 1), full default structure (exit 0, 17 checks), custom doc root via manifest (manifest mode), missing governance_version (exit 1), `--json` output, `--help`, no legacy `.agent` leakage, optional `validation.json`, CHANGELOG format check, lock check (no state / unlocked / held), release planning (SemVer classification: docs/refactor → patch, CLI → minor, deleted API → major, uncertainty → clarification, `--file` input), and the approval gate (unapproved → no tag, approved → annotated tag). CI runs it on every push/PR.
+The test suite covers: empty project (exit 1), full default structure (exit 0, 19 checks), custom doc root via manifest (manifest mode), missing governance_version (exit 1), `--json` output, `--help`, no legacy `.agent` leakage, optional `validation.json`, CHANGELOG format check, lock check (no state / unlocked / held), git policy check (invalid policy / protected-branch blocked / feature-branch ok), release planning (SemVer classification: docs/refactor → patch, CLI → minor, deleted API → major, uncertainty → clarification, `--file` input), and the approval gate (unapproved → no tag, approved → annotated tag). CI runs it on every push/PR.
 
 ### Where Things Live
 
@@ -51,7 +51,7 @@ Conventional Commits in English: `feat(scope): subject` / `fix(scope): subject`.
 npm test        # 或 node tests/run-tests.js
 ```
 
-测试套件覆盖：空项目（exit 1）、完整默认结构（exit 0，17 项检查）、自定义文档根经 manifest（manifest 模式）、缺 governance_version（exit 1）、`--json` 输出、`--help`、无 `.agent` 残留、`validation.json` 可选、CHANGELOG 格式检查、锁检查（无状态 / 未持锁 / 持锁）、发布规划（SemVer 分类：docs/重构 → patch、CLI 命令 → minor、删除公开 API → major、不确定性 → 澄清、`--file` 输入）与审批门禁（未批准 → 无 tag，批准 → 创建 annotated tag）。CI 每次 push/PR 运行。
+测试套件覆盖：空项目（exit 1）、完整默认结构（exit 0，19 项检查）、自定义文档根经 manifest（manifest 模式）、缺 governance_version（exit 1）、`--json` 输出、`--help`、无 `.agent` 残留、`validation.json` 可选、CHANGELOG 格式检查、锁检查（无状态 / 未持锁 / 持锁）、Git 策略检查（非法策略 / 受保护分支阻止 / 特性分支通过）、发布规划（SemVer 分类：docs/重构 → patch、CLI 命令 → minor、删除公开 API → major、不确定性 → 澄清、`--file` 输入）与审批门禁（未批准 → 无 tag，批准 → 创建 annotated tag）。CI 每次 push/PR 运行。
 
 ### 各目录用途
 

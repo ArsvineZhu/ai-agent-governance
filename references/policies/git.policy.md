@@ -51,9 +51,20 @@ push/PR 前必须确认：
 `<type>(<scope>): <subject>`，如 `feat(auth): add login endpoint`。
 语言遵循项目 Commit Message Language 约定。
 
+## 分支工作流（Branch Workflow）
+
+策略由 `.governance/git-policy.json` 定义（默认：`protectedBranches: ["main","master"]`、`directPush: false`、`requireReview: true`、`allowForcePush: false`）。Agent 处理开发任务时：
+
+- **开始前**：运行 `scripts/check-git-policy.js`；当前分支在受保护列表且 `directPush=false` → 退出码 1，**必须先创建特性分支**再修改/提交。
+- **分支命名**：`feature/agent-<YYYYMMDD>-<summary>`。
+- **流程**：建分支 → 实现 → 测试 → commit → push 分支 → 创建 PR → 人工批准 → 合入受保护分支。
+- **禁止**：`directPush=false` 时在受保护分支上直接提交/推送；force push 一律禁止（`allowForcePush=false`）。
+- **小型改动豁免**：单文件、纯文档/typo 级修改且不涉及受保护分支的可跳过分支直接提交，但必须在报告中说明；涉及受保护分支的修改一律走分支流程。
+- **与发布流程的关系**：RELEASE 模式按 `references/workflows/release.md` 走 tag/push 流程，不受本分支工作流约束（发布是受控的、需批准的写操作）。
+
 ## 治理文件保护
 
-修改 `AGENTS.md`、`CLAUDE.md`、`docs/rules/**`、`.governance/manifest.json`、`.governance/preflight.json`、`scripts/verify-governance.js`、`opencode.json`、CI 配置（`.github/workflows/**`、`.gitlab-ci.yml`）需要特殊权限（清单以 `references/policies/governance-files.policy.md` 为准）：
+修改 `AGENTS.md`、`CLAUDE.md`、`docs/rules/**`、`.governance/manifest.json`、`.governance/preflight.json`、`.governance/git-policy.json`、`scripts/verify-governance.js`、`scripts/check-git-policy.js`、`opencode.json`、CI 配置（`.github/workflows/**`、`.gitlab-ci.yml`）需要特殊权限（清单以 `references/policies/governance-files.policy.md` 为准）：
 说明原因 → 更新 CHANGELOG → **更新 `.governance/manifest.json` 的 `governance_version`** → 运行 `scripts/verify-governance.js`。
 涉及权限/安全/删除保护/校验步骤的修改必须用户明确确认。
 未经用户明确同意不得放宽权限限制或移除校验步骤。普通业务任务不得隐式触发本流程。

@@ -125,6 +125,14 @@ Unlike static rule files, AI Agent Governance continuously protects project know
 
 Full mechanisms (permission matrix, deletion protection, rule priority, multi-agent locking): [docs/anti-regression.md](docs/anti-regression.md)
 
+#### Git Workflow Governance
+
+Guards the place where an agent can do the most irreversible damage — Git operations:
+
+- **Protected branches** — `.governance/git-policy.json` blocks direct pushes to `main`/`master` (`directPush: false`, `allowForcePush: false`)
+- **Branch-based development** — agents check the policy, create `feature/agent-<date>-<summary>`, and merge via PR with human approval
+- **Controlled rollback** — revert/reset/restore stay the tools, governed by confirmation gates
+
 #### Release Lifecycle
 
 Releases run as a human-in-the-loop flow — **the AI proposes, the developer approves**:
@@ -165,11 +173,14 @@ Claude Code · Cursor · Codex · opencode — and other AGENTS.md-based agents.
 - [x] Multi-language CI templates
 - [x] Multi-agent lock enforcement
 - [x] Validator content checks
-- [ ] Git workflow governance
+- [x] Git workflow governance
 - [ ] Skill lifecycle management
 - [ ] Multi-agent coordination protocol
-- [ ] IDE extension
 - [ ] Remote governance dashboard
+- [ ] Monorepo multi-governance domains (long-term)
+- [ ] INIT scripted generator (very long-term)
+- [ ] Demo repository (very long-term)
+- [ ] Ecosystem polish: IDE extension + Cursor compatibility testing (very long-term)
 
 Status details and design docs: [docs/roadmap.md](docs/roadmap.md)
 
@@ -293,6 +304,14 @@ my-project/
 
 完整机制（权限矩阵、删除保护、规则优先级、多 Agent 锁）：[docs/anti-regression.md](docs/anti-regression.md)
 
+#### Git 工作流治理（Git Workflow Governance）
+
+守卫 Agent 最易造成不可逆损害的地方 —— Git 操作：
+
+- **受保护分支** —— `.governance/git-policy.json` 阻止直推 `main`/`master`（`directPush: false`、`allowForcePush: false`）
+- **分支开发** —— Agent 检查策略、创建 `feature/agent-<日期>-<摘要>`、经 PR 人工批准后合入
+- **受控回滚** —— revert/reset/restore 仍是工具，由确认门禁治理
+
 #### 发布生命周期（Release Lifecycle）
 
 发布走 Human-in-the-loop 流程 —— **AI 提议，人确认**：
@@ -333,11 +352,14 @@ Claude Code · Cursor · Codex · opencode —— 以及其他基于 AGENTS.md �
 - [x] 多语言 CI 模板
 - [x] 多 Agent 锁强制
 - [x] 校验器内容检查
-- [ ] Git 工作流治理
+- [x] Git 工作流治理
 - [ ] Skill 生命周期管理
 - [ ] 多 Agent 协调协议
-- [ ] IDE 扩展
 - [ ] 远程治理看板
+- [ ] monorepo 多治理域（远期）
+- [ ] INIT 生成器脚本化（超远期）
+- [ ] demo 示例仓库（超远期）
+- [ ] 生态完善：IDE 扩展 + Cursor 兼容实测（超远期）
 
 状态详情与设计文档：[docs/roadmap.md](docs/roadmap.md)
 

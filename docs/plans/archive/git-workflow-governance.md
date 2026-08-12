@@ -2,7 +2,7 @@
 
 [English](#english) · [简体中文](#chinese)
 
-> **状态：设计计划，未实现。** 本页是路线图条目 `Git workflow governance` 的详细设计（见 [roadmap.md](../roadmap.md)），按 `docs/plans/TASK_<name>.md` 六字段模板组织。
+> **状态：已实现（v0.5.0，已归档）。** 本页是路线图条目 `Git workflow governance` 的 TASK 计划（见 [roadmap.md](../../roadmap.md)）；按归档规则随 v0.5.0 发布归档于此。
 
 ---
 
@@ -72,6 +72,8 @@ Initialize → Develop → Maintain → Release
 ```
 
 `Develop` governs: branch · commit · PR · rollback.
+
+(At the mode level the pipeline remains `INIT → Runtime → AUDIT → RELEASE` — `Develop` is the development phase inside Runtime, made explicit so Git workflow rules have a home.)
 
 #### 4. Commands impact
 
@@ -201,6 +203,8 @@ Agent → 创建分支（feature/agent-<日期>-<摘要>）
 ```
 
 `Develop` 管理：分支 · commit · PR · 回滚。
+
+（模式层面管线仍是 `INIT → Runtime → AUDIT → RELEASE` —— `Develop` 是运行期（Runtime）内的开发阶段，显式化后 Git 工作流规则有了归属。）
 
 #### 4. 命令影响
 

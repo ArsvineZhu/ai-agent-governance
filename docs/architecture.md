@@ -85,9 +85,10 @@ ai-agent-governance/
 │   ├── templates/
 │   │   ├── agents-md.template.md   # AGENTS.md template
 │   │   ├── feature-doc.template.md # feature doc template (anti-fabrication rules)
-│   │   ├── sub-skills.md           # generated agent modules (incl. drift-check, release-manager)
+│   │   ├── sub-skills.md           # generated agent modules (incl. drift-check, release-manager, plan-manager)
 │   │   ├── env-example.template.md # .env.example template (placeholders, dependency-trimmed)
-│   │   └── gitmessage.template.md  # .gitmessage.txt template (commit conventions)
+│   │   ├── gitmessage.template.md  # .gitmessage.txt template (commit conventions)
+│   │   └── git-policy.template.md  # .governance/git-policy.json template (Git workflow policy)
 │   ├── policies/
 │   │   ├── lifecycle.policy.md / git.policy.md / security.policy.md / coding.policy.md / testing.policy.md
 │   │   └── governance-files.policy.md   # protected files + .governance git-tracking policy
@@ -97,6 +98,7 @@ ai-agent-governance/
 ├── scripts/
 │   ├── verify_governance.js    # validator (manifest-driven paths + governance_version)
 │   ├── check-lock.js           # multi-agent lock check (read-only, exit 1 = lock held)
+│   ├── check-git-policy.js     # Git workflow gate (protected branch + directPush=false → exit 1)
 │   └── release-manager.js      # plan (read-only) + execute (approval-gated) release tool
 ├── docs/                       # knowledge layer (human documentation)
 │   ├── architecture.md         # this page
@@ -108,7 +110,7 @@ ai-agent-governance/
 │   ├── commands.md             # full prompt reference (user-facing commands)
 │   ├── bootstrap-output.md     # complete annotated initialization output
 │   ├── roadmap.md              # planned features and status
-│   ├── plans/                  # design plans (e.g. git-workflow-governance, unimplemented)
+│   ├── plans/                  # design plans (TASK format) + archive/ for completed plans
 │   └── design-decisions/       # architecture decision records
 ├── CONTRIBUTING.md             # development guide
 └── tests/
@@ -205,9 +207,10 @@ ai-agent-governance/
 │   ├── templates/
 │   │   ├── agents-md.template.md   # AGENTS.md 模板
 │   │   ├── feature-doc.template.md # Feature 文档模板（含反虚构规则）
-│   │   ├── sub-skills.md           # 生成的 Agent 模块（含 drift-check、release-manager）
+│   │   ├── sub-skills.md           # 生成的 Agent 模块（含 drift-check、release-manager、plan-manager）
 │   │   ├── env-example.template.md # .env.example 模板（占位符、按依赖裁剪）
-│   │   └── gitmessage.template.md  # .gitmessage.txt 模板（提交约定）
+│   │   ├── gitmessage.template.md  # .gitmessage.txt 模板（提交约定）
+│   │   └── git-policy.template.md  # .governance/git-policy.json 模板（Git 工作流策略）
 │   ├── policies/
 │   │   ├── lifecycle.policy.md / git.policy.md / security.policy.md / coding.policy.md / testing.policy.md
 │   │   └── governance-files.policy.md   # 受保护文件 + .governance Git 跟踪策略
@@ -217,6 +220,7 @@ ai-agent-governance/
 ├── scripts/
 │   ├── verify_governance.js    # 校验引擎（manifest 驱动路径 + governance_version）
 │   ├── check-lock.js           # 多 Agent 锁检查（只读，exit 1 = 持锁）
+│   ├── check-git-policy.js     # Git 工作流门禁（受保护分支 + directPush=false → exit 1）
 │   └── release-manager.js      # 发布工具：plan（只读）+ execute（审批门禁）
 ├── docs/                       # 知识层（人类文档）
 │   ├── architecture.md         # 本页
@@ -228,7 +232,7 @@ ai-agent-governance/
 │   ├── commands.md             # 完整提示词参考（用户入口命令）
 │   ├── bootstrap-output.md     # 完整带注释的初始化产物
 │   ├── roadmap.md              # 待开发功能与状态
-│   ├── plans/                  # 设计计划（如 git-workflow-governance，未实现）
+│   ├── plans/                  # 设计计划（TASK 格式）+ archive/ 已完成计划归档
 │   └── design-decisions/       # 架构决策记录（ADR）
 ├── CONTRIBUTING.md             # 开发指南
 └── tests/

@@ -20,13 +20,14 @@ Exit code 0 when every governance artifact exists, 1 otherwise.
 
 ### Behavior
 
-- **Manifest mode** — when `.governance/manifest.json` declares a non-empty `artifacts` array, paths are resolved from it (structure-adaptive). Adds checks: CHANGELOG format, Manifest schema, Manifest artifacts valid (`kind` ∈ file/dir), Governance version, and Release metadata (only when a `release` field is declared).
+- **Manifest mode** — when `.governance/manifest.json` declares a non-empty `artifacts` array, paths are resolved from it (structure-adaptive). Adds checks: CHANGELOG format, Git policy, Manifest schema, Manifest artifacts valid (`kind` ∈ file/dir), Governance version, and Release metadata (only when a `release` field is declared).
 - **Defaults mode** — without a manifest, built-in defaults are checked:
 
 ```
 AGENTS.md / CHANGELOG.md / CHANGELOG format / docs/ARCHITECTURE.md / docs/features/ / docs/plans/ /
 docs/rules/ / .gitignore / .env.example / CI workflow / scripts/verify-governance.js / scripts/check-lock.js /
-.governance/ directory / manifest.json / state.json / preflight.json / governance_version
+scripts/check-git-policy.js / .governance/ directory / manifest.json / state.json / preflight.json /
+git-policy.json / governance_version
 ```
 
 - `validation.json` / `drift-report.json` are runtime outputs, NOT required artifacts — a fresh checkout passes without them.
@@ -53,13 +54,14 @@ node scripts/verify-governance.js --help   # 用法
 
 ### 行为
 
-- **manifest 模式** — `.governance/manifest.json` 声明了非空 `artifacts` 数组时，路径以它为准（结构适配）。追加检查：CHANGELOG format、Manifest schema、Manifest artifacts valid（`kind` ∈ file/dir）、Governance version、Release metadata（仅当声明了 `release` 字段时）。
+- **manifest 模式** — `.governance/manifest.json` 声明了非空 `artifacts` 数组时，路径以它为准（结构适配）。追加检查：CHANGELOG format、Git policy、Manifest schema、Manifest artifacts valid（`kind` ∈ file/dir）、Governance version、Release metadata（仅当声明了 `release` 字段时）。
 - **默认模式** — 无 manifest 时检查内置默认项：
 
 ```
 AGENTS.md / CHANGELOG.md / CHANGELOG format / docs/ARCHITECTURE.md / docs/features/ / docs/plans/ /
 docs/rules/ / .gitignore / .env.example / CI workflow / scripts/verify-governance.js / scripts/check-lock.js /
-.governance/ 目录 / manifest.json / state.json / preflight.json / governance_version
+scripts/check-git-policy.js / .governance/ 目录 / manifest.json / state.json / preflight.json /
+git-policy.json / governance_version
 ```
 
 - `validation.json` / `drift-report.json` 是运行时输出，不是 required artifact —— fresh checkout 无它们也能通过。

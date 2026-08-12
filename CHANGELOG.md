@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented here.
 
+## [0.5.0] - 2026-08-12
+
+### Added
+
+- **Git Workflow Governance** — INIT generates `.governance/git-policy.json` (protected branches, no direct push, require review, no force push) and `scripts/check-git-policy.js` (read-only gate: blocked on protected branch when `directPush=false`); branch-based development (`feature/agent-<date>-<summary>`) with small-change exemption
+- `references/templates/git-policy.template.md` — git policy template + field semantics + generation rules
+- Validator default checks 17 → 19: adds Git policy (JSON valid + field types) and `scripts/check-git-policy.js`; manifest mode adds the Git policy check (12 total)
+- `git-policy.json` / `check-git-policy.js` added to the protected-files list and tracked `.governance` state
+
+### Changed
+
+- `references/policies/git.policy.md` gains the Branch Workflow section; `references/templates/agents-md.template.md` gains the Git Workflow Governance summary
+- New 7th generated sub-skill `plan-manager` (TASK creation, milestone check-off, completion marking; archiving stays in release-manager) — sub-skills template, SKILL.md Phase 1, commands.md runtime components
+- MIGRATE flow: explicit upgrade path for governed projects whose `governance_version` lags (migration list = validator missing artifacts + CHANGELOG entries; user-confirmed, never auto-upgrade; verified by validator exit 0) — SKILL.md AUDIT section, governance-model.md
+
+### Tests
+
+- Test suite 20 → 23: invalid git-policy exits 1, protected branch blocked exits 1, feature branch passes exits 0
+
 ## [0.4.1] - 2026-08-12
 
 ### Added

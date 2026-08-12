@@ -37,6 +37,8 @@ const DEFAULTS = [
   ["CI workflow", null, hasCI],
   ["Validator self", "scripts/verify-governance.js", isFile],
   ["Lock check", "scripts/check-lock.js", isFile],
+  ["Git policy", ".governance/git-policy.json", hasValidGitPolicy],
+  ["Git policy check", "scripts/check-git-policy.js", isFile],
   [".governance state dir", ".governance", isDir],
   [".governance manifest", ".governance/manifest.json", isFile],
   [".governance state", ".governance/state.json", isFile],
@@ -102,6 +104,21 @@ function hasValidArtifactKinds() {
   }
 }
 
+function hasValidGitPolicy() {
+  try {
+    const p = JSON.parse(fs.readFileSync(path.join(ROOT, ".governance", "git-policy.json"), "utf8"));
+    return (
+      Array.isArray(p.protectedBranches) &&
+      p.protectedBranches.length > 0 &&
+      typeof p.directPush === "boolean" &&
+      typeof p.requireReview === "boolean" &&
+      typeof p.allowForcePush === "boolean"
+    );
+  } catch {
+    return false;
+  }
+}
+
 function hasSchemaVersion() {
   try {
     const m = JSON.parse(fs.readFileSync(MANIFEST, "utf8"));
@@ -151,6 +168,7 @@ const results = manifestChecks
       const checks = [
         ...manifestChecks,
         { name: "CHANGELOG format", path: "CHANGELOG.md", ok: hasChangelogFormat() },
+        { name: "Git policy", path: ".governance/git-policy.json", ok: hasValidGitPolicy() },
         { name: "Manifest schema", path: "manifest.schema_version", ok: hasSchemaVersion() },
         { name: "Manifest artifacts valid", path: "manifest.artifacts[].kind", ok: hasValidArtifactKinds() },
         { name: "Governance version", path: "manifest.governance_version", ok: hasGovernanceVersion() },

@@ -156,9 +156,24 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
 2. 运行 `scripts/verify-governance.js --json`，比对声明与实际 → 得到偏差清单（缺失工件、版本漂移）
 3. 输出**治理健康报告**：通过项 / 缺失项 / 版本漂移，写入 `.governance/validation.json` 与 `.governance/drift-report.json`
 4. **最小补丁**：仅修复缺失项，不重建、不重构、不迁移结构；修复治理文件走「治理文件保护」流程（需用户确认）
-5. 若 `governance_version` 与基线不一致 → 报告版本漂移，说明差异，不擅自降级/升级
+5. 若 `governance_version` 与基线不一致 → 报告版本漂移，说明差异，**不擅自降级/升级**；用户要求升级时走「版本迁移（MIGRATE）」流程。
 
 **长期运行期**：INIT 完成后，日常任务的巡检由生成的 `.governance/generated/skills/drift-check` 子技能承担；AUDIT 模式用于定期人工健康检查。
+
+### 版本迁移（MIGRATE）
+
+被治理项目的 `governance_version` 落后于当前 skill 版本时，用户明确要求升级才执行（**绝不自动升级/降级**）：
+
+1. **生成迁移清单**：
+   - 运行 `scripts/verify-governance.js --json` → 缺失工件清单（新版本新增的 required artifact 会在此列出）
+   - 对照目标版本 CHANGELOG 的 Added / Changed 条目 → 规则与模板变更清单（每个版本的 Changed 条目就是迁移依据）
+2. **展示给用户确认**：新增文件 / 变更文件 / 规则变化 / 行为变化（如新门禁：check-git-policy、内容校验），逐项列出
+3. **执行迁移（用户确认后）**：
+   - 补齐缺失工件：复制新脚本（如 `scripts/check-git-policy.js`）、生成新模板（如 `.governance/git-policy.json`）、更新规则文件（`docs/rules/*`）
+   - 更新 `.governance/manifest.json` 的 `governance_version` → 目标版本
+   - CHANGELOG 记录迁移（`Changed`）
+4. **验证**：`scripts/verify-governance.js` 退出码必须为 0
+5. **安全规则**：迁移是写操作（需用户确认）；跨多个版本迁移时必须覆盖中间版本的工件变化；迁移失败 → 保持原版本，报告 ⚠️/❌，不得留下半迁移状态
 
 ### Release 流程（版本发布模式）
 
@@ -232,14 +247,14 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
    **防膨胀**：单文件超过约 300 行时拆分到 `docs/architecture/<module>.md`，主文件只留导航与摘要。
 8. **README.md** —— 若项目**无 README**：生成**基础 README**。**只生成一个文件 `README.md`**；**禁止**创建 `README.zh-CN.md`、`README-zh.md`、`README_cn.md` 或任何独立语言版本文件。采用**单文件双语布局**（与本 skill 的 README 一致）：`# 项目名` + CI 徽章 + 语言切换锚点 `[English](#english) · [简体中文](#chinese)`，前半段为**英文**（项目名 + 一句话简介 + 文档索引），`---` 分隔后后半段为**简体中文**（同一文件内）；文档索引链接 AGENTS.md / docs/ARCHITECTURE.md / docs/features/ 等治理文档。若已有：仅补文档索引与 CI 徽章，**合并不覆盖**已有内容，也**不拆分**为多个语言文件。另建提交信息模板 `.gitmessage.txt`（按 `references/templates/gitmessage.template.md`）并配置为仓库级默认。
 9. **安全基线** —— `.env.example`（按 `references/templates/env-example.template.md` 生成，占位无真实值、按检测到的依赖裁剪）、完善 `.gitignore`（.env、*.key、*.pem、构建产物、依赖目录）、按 CI 平台启用密钥扫描/dependabot（模板见 `references/workflows/ci.md`）。
-10. **.governance/** —— 机器可读状态目录（见下）；生成时附 `README.md`（见 `references/policies/governance-files.policy.md` 模板），说明各文件用途与 Git 跟踪策略，避免误删/混淆。
-11. **scripts/** —— 从本 Skill 复制 `scripts/verify-governance.js`（校验器）与 `scripts/check-lock.js`（锁检查）到项目 `scripts/`，注册为项目命令（如 `npm run governance-check`）。
+10. **.governance/** —— 机器可读状态目录（见下）；生成时附 `README.md`（见 `references/policies/governance-files.policy.md` 模板），说明各文件用途与 Git 跟踪策略，避免误删/混淆。同时生成 `.governance/git-policy.json`（按 `references/templates/git-policy.template.md`，Git 工作流策略：受保护分支 / 禁止直推 / 要求审核 / 禁止 force push）。
+11. **scripts/** —— 从本 Skill 复制 `scripts/verify-governance.js`（校验器）、`scripts/check-lock.js`（锁检查）与 `scripts/check-git-policy.js`（Git 策略门禁）到项目 `scripts/`，注册为项目命令（如 `npm run governance-check`）。
 12. **CI workflow** —— 按检测到的平台/栈从 `references/workflows/ci.md` 选择模板生成；推送与 PR 自动运行。**管线步骤按 CI Pipeline Capability Detection 决定，不强制全部存在**：
     - 每种栈管线统一：安装 → **format 检查** → lint → typecheck（如适用）→ test → build → 产物上传。format 用各栈标准工具：Node/TS → Prettier（`pnpm format`）；Python → `ruff format --check`；Rust → `cargo fmt --check`；Go → `gofmt -l`；Java(Maven) → `spotless:check`；C++ → `clang-format --dry-run --Werror`；纯文档项目 → markdown lint + 链接检查，无构建。
     - 栈模板：Node/TS（+typecheck）、Python（ruff check + mypy 可选）、Rust（clippy）、Go（go vet）、Java（spotless + google-java-format **必配**，INIT 写入 pom.xml）、C++（clang-tidy 可选，CMake/CTest 或 Make 按检测选择；同时生成 `.clang-format` 风格基线）。
     - format 配置策略：**必须带配置才能检查**的栈（Java spotless、C++ clang-format）由 INIT 生成配置；**默认即可运行**的栈（Node/Python）默认用工具默认值，定制才生成 `.prettierrc` / `[tool.ruff]`；Go（gofmt）、Rust（rustfmt）零配置。
     - 若项目脚本缺失，对应步骤只保留 `echo "No <tool> configured yet"`（黄字警告），**不得强行编写无法执行的命令**；包管理器以锁文件为准（见默认值约定）。
-13. **.governance/generated/skills/** —— 按 `references/templates/sub-skills.md` 生成子技能（repository-inspection / ci-generator / governance-validator / state-manager / **drift-check** / **release-manager**），并写入 `opencode.json` 的 `skills.paths` 使其被加载（如项目用 opencode）。其中 `drift-check` 承担长期巡检（治理健康报告、版本漂移检测），`release-manager` 承担版本发布（RELEASE 模式）。
+13. **.governance/generated/skills/** —— 按 `references/templates/sub-skills.md` 生成子技能（repository-inspection / ci-generator / governance-validator / state-manager / **drift-check** / **release-manager** / **plan-manager**），并写入 `opencode.json` 的 `skills.paths` 使其被加载（如项目用 opencode）。其中 `drift-check` 承担长期巡检（治理健康报告、版本漂移检测），`release-manager` 承担版本发布（RELEASE 模式），`plan-manager` 承担开发计划管理（TASK 创建 / 里程碑勾选 / 完成标记）。
 
 ### .governance/ 机器可读状态
 
@@ -295,7 +310,7 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
 ```
 AGENTS.md / CHANGELOG.md / CHANGELOG format / docs/ARCHITECTURE.md / docs/features/ / docs/plans/ /
 docs/rules/ / .gitignore / .env.example / CI workflow / scripts/verify-governance.js / scripts/check-lock.js /
-.governance/ 目录 / manifest.json / state.json / preflight.json / governance_version
+scripts/check-git-policy.js / .governance/ 目录 / manifest.json / state.json / preflight.json / git-policy.json / governance_version
 ```
 
 ### Phase 3：交付报告

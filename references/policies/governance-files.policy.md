@@ -12,8 +12,10 @@
 | `docs/rules/**` | 规则文件 |
 | `.governance/manifest.json` | 治理工件清单（期望态） |
 | `.governance/preflight.json` | 回滚快照 |
+| `.governance/git-policy.json` | Git 工作流策略 |
 | `scripts/verify-governance.js` | 校验门禁 |
 | `scripts/check-lock.js` | 锁检查 |
+| `scripts/check-git-policy.js` | Git 策略门禁 |
 | `opencode.json` | Agent 配置 |
 | `.github/workflows/**` | CI 配置 |
 
@@ -26,6 +28,7 @@
 | `manifest.json` | 期望态（唯一索引） | 提交 |
 | `state.json` | 治理状态（当前态） | 提交 |
 | `preflight.json` | 回滚快照 | 提交 |
+| `git-policy.json` | Git 工作流策略 | 提交 |
 | `generated/skills/` | 治理产物 | 提交 |
 
 **Runtime outputs（validator 不要求，git 忽略）**：
@@ -50,6 +53,8 @@ This directory stores AI Agent Governance state.
 Tracked:
 - manifest.json
 - state.json
+- preflight.json
+- git-policy.json
 - generated/
 
 Ignored:

@@ -28,6 +28,17 @@ A Kubernetes-like Spec / Status / Health split:
 
 They are separate. Bumping the framework does not require a schema change.
 
+### Upgrading (MIGRATE)
+
+When a governed project's `governance_version` lags behind the skill version, AUDIT reports the drift but never auto-upgrades. On explicit user request, the MIGRATE flow applies:
+
+1. Build the migration list — validator `--json` missing artifacts + the target versions' CHANGELOG Added/Changed entries
+2. Confirm with the user — new files, changed files, rule changes, behavior changes
+3. Apply — copy new scripts/templates, update rules, bump `governance_version`, record in CHANGELOG
+4. Verify — validator exit 0; on failure keep the old version, no half-migrated state
+
+Each version's CHANGELOG entries are the migration basis; multi-version jumps must cover intermediate artifact changes.
+
 ### Path Resolution
 
 The validator resolves artifact paths from `manifest.json` when present (structure-adaptive — existing doc layouts are respected, no forced migration); otherwise built-in defaults are used. The `type` field is governance semantics for classification and reporting and does not participate in filesystem checks — only `kind` (file/dir) does.
@@ -61,6 +72,17 @@ The validator resolves artifact paths from `manifest.json` when present (structu
 - `governance_version` —— 治理框架版本
 
 二者分离；升框架版本不需要改 schema。
+
+### 升级（MIGRATE）
+
+被治理项目的 `governance_version` 落后于 skill 版本时，AUDIT 只报告漂移、绝不自动升级。用户明确要求升级时，MIGRATE 流程执行：
+
+1. 生成迁移清单 —— 校验器 `--json` 的缺失工件 + 目标版本 CHANGELOG 的 Added/Changed 条目
+2. 与用户确认 —— 新增文件、变更文件、规则变化、行为变化
+3. 执行 —— 复制新脚本/模板、更新规则、升 `governance_version`、CHANGELOG 记录
+4. 验证 —— 校验器退出码 0；失败则保持原版本，不留半迁移状态
+
+每个版本的 CHANGELOG 条目就是迁移依据；跨多个版本迁移必须覆盖中间版本的工件变化。
 
 ### 路径解析
 

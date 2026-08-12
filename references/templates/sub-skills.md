@@ -226,3 +226,63 @@ If you cannot determine whether a change is breaking or a feature: mark it Poten
 
 `plan` is read-only and may run automatically. Git tag, push, and `gh release create` are write operations — they run ONLY after an explicit developer approval (the approval covers this release's write sequence); state intent and wait for confirmation. Modifying `references/workflows/release.md` or manifest `release` fields follows the Governance File Protection flow.
 ````
+
+---
+
+## 7. plan-manager
+
+````
+---
+name: plan-manager
+description: Use to manage this repo's development plans — create TASK_<name>.md before medium/large changes, check off milestones in docs/plans/DEVELOPMENT_PLAN.md and mark TASK Status when work completes. Triggers on "create task plan", "update development plan", "check off milestone", "mark task completed", "plan this task".
+---
+
+# Plan Manager
+
+Operates the plan lifecycle (rules live in `@docs/rules/lifecycle.md` — this sub-skill only encapsulates the workflow, it does not duplicate the rules).
+
+## Phase 2 — Create a TASK plan
+
+For medium/large changes, create `docs/plans/TASK_<name>.md` (before writing code) with:
+
+```
+## Status
+Active
+
+## Task Purpose
+...
+
+## Current Problem
+...
+
+## Proposed Solution
+...
+
+## Affected Files
+...
+
+## Risks
+...
+
+## Validation Method
+...
+```
+
+Small changes (typo, single-function tweak) may skip the TASK file but must state the reason in the final report.
+
+## Phase 5 — Update plans on completion
+
+After the task passes validation and its knowledge sync:
+
+1. Check off the corresponding milestone in `docs/plans/DEVELOPMENT_PLAN.md` — mark status + acceptance result (if a milestone exists).
+2. Set the TASK file's `## Status` to `Completed` (with completion date).
+3. Update CHANGELOG.md / Feature Registry / ARCHITECTURE.md per lifecycle Phase 5.
+
+Archiving happens at RELEASE (release-manager), NOT here.
+
+## Rules
+
+- Plans go in `docs/plans/`; completed changes go in `CHANGELOG.md` — no overlap.
+- Never delete a completed milestone or TASK file; archiving preserves originals.
+- If a previous session left a TASK file or state, resume from it instead of recreating.
+````

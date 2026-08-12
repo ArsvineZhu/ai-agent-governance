@@ -9,6 +9,7 @@ const path = require("path");
 
 const VALIDATOR = path.join(__dirname, "..", "scripts", "verify_governance.js");
 const LOCK_CHECK = path.join(__dirname, "..", "scripts", "check-lock.js");
+const GIT_POLICY_CHECK = path.join(__dirname, "..", "scripts", "check-git-policy.js");
 const TMP_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), "ai-agent-governance-test-"));
 
 function tmp(name) {
@@ -59,8 +60,10 @@ function buildFullDefault(dir) {
   ];
   for (const [p, c] of files) write(path.join(dir, p), c);
   write(path.join(dir, ".governance/manifest.json"), JSON.stringify({ governance_version: "1.0.0", artifacts: [] }));
+  write(path.join(dir, ".governance/git-policy.json"), JSON.stringify({ protectedBranches: ["main", "master"], directPush: false, requireReview: true, allowForcePush: false }));
   fs.copyFileSync(VALIDATOR, path.join(dir, "scripts/verify-governance.js"));
   fs.copyFileSync(LOCK_CHECK, path.join(dir, "scripts/check-lock.js"));
+  fs.copyFileSync(GIT_POLICY_CHECK, path.join(dir, "scripts/check-git-policy.js"));
 }
 
 test("full default structure exits 0 (defaults mode)", () => {
@@ -68,7 +71,7 @@ test("full default structure exits 0 (defaults mode)", () => {
   buildFullDefault(dir);
 
   const r = run(dir);
-  return r.status === 0 && r.stdout.includes("17/17 checks passed.");
+  return r.status === 0 && r.stdout.includes("19/19 checks passed.");
 });
 
 // ---------- 3. Custom structure via manifest ----------
@@ -105,10 +108,11 @@ test("custom doc root (documentation/) follows manifest (manifest mode)", () => 
     ],
   };
   write(path.join(dir, ".governance/manifest.json"), JSON.stringify(manifest));
+  write(path.join(dir, ".governance/git-policy.json"), JSON.stringify({ protectedBranches: ["main"], directPush: false, requireReview: true, allowForcePush: false }));
   fs.copyFileSync(VALIDATOR, path.join(dir, "scripts/verify-governance.js"));
 
   const r = run(dir);
-  return r.status === 0 && r.stdout.includes("mode: manifest") && r.stdout.includes("11/11 checks passed.");
+  return r.status === 0 && r.stdout.includes("mode: manifest") && r.stdout.includes("12/12 checks passed.");
 });
 
 // ---------- 4. Manifest without governance_version ----------
@@ -136,7 +140,7 @@ test("--json reports passedAll, mode and governance_version", () => {
     out.passedAll === true &&
     out.governance_version === "1.0.0" &&
     Array.isArray(out.results) &&
-    out.results.length === 17
+    out.results.length === 19
   );
 });
 
@@ -167,7 +171,7 @@ test("validation.json present is optional and still passes", () => {
   const r = run(dir);
   return (
     r.status === 0 &&
-    r.stdout.includes("17/17 checks passed.") &&
+    r.stdout.includes("19/19 checks passed.") &&
     !r.stdout.includes(".governance validation")
   );
 });
@@ -200,6 +204,31 @@ test("validator: CHANGELOG without version section exits 1", () => {
   write(path.join(dir, "CHANGELOG.md"), "no version section here");
   const r = run(dir);
   return r.status === 1 && r.stdout.includes("CHANGELOG format");
+});
+
+test("validator: invalid git-policy.json exits 1", () => {
+  const dir = tmp("badgitpolicy");
+  buildFullDefault(dir);
+  write(path.join(dir, ".governance/git-policy.json"), JSON.stringify({ directPush: false }));
+  const r = run(dir);
+  return r.status === 1 && r.stdout.includes("Git policy");
+});
+
+test("check-git-policy: protected branch with directPush=false exits 1", () => {
+  const dir = tmp("gitpolicy-blocked");
+  gitInit(dir);
+  write(path.join(dir, ".governance/git-policy.json"), JSON.stringify({ protectedBranches: ["main", "master"], directPush: false, requireReview: true, allowForcePush: false }));
+  const r = spawnSync(process.execPath, [GIT_POLICY_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 1 && r.stderr.includes("BLOCKED");
+});
+
+test("check-git-policy: feature branch exits 0", () => {
+  const dir = tmp("gitpolicy-ok");
+  gitInit(dir);
+  spawnSync("git", ["checkout", "-q", "-b", "feature/agent-20260812-fix"], { cwd: dir });
+  write(path.join(dir, ".governance/git-policy.json"), JSON.stringify({ protectedBranches: ["main", "master"], directPush: false, requireReview: true, allowForcePush: false }));
+  const r = spawnSync(process.execPath, [GIT_POLICY_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 0;
 });
 
 // ---------- 9-15. Release planning & approval gate (scripts/release-manager.js) ----------

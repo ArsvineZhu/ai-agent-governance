@@ -82,8 +82,13 @@ Note: users may request governance changes via explicit instruction (through the
 - Confirm: `git add .` (after checking .gitignore), `git commit`, `git push`, `git reset`, `git rebase`, destructive commands
 - Full detail: @docs/rules/git-policy.md
 
+## Git Workflow Governance
+- Before starting work run `scripts/check-git-policy.js`; on a protected branch with `directPush: false` (see `.governance/git-policy.json`), create a feature branch `feature/agent-<YYYYMMDD>-<summary>` first.
+- Flow: feature branch → implement → test → commit → push branch → PR → human approval → merge into the protected branch.
+- Never force push; never push directly to protected branches. Small single-file doc/typo changes may skip the branch, but must be reported.
+
 ## Governance File Protection
-Modifying AGENTS.md, CLAUDE.md, docs/rules/**, .governance/manifest.json, .governance/preflight.json, scripts/verify-governance.js, opencode.json, or CI config (.github/workflows/**, .gitlab-ci.yml) requires: reason → CHANGELOG update → bump `.governance/manifest.json` governance_version → run verify-governance.js. Never loosen permission limits or remove validation without explicit user approval.
+Modifying AGENTS.md, CLAUDE.md, docs/rules/**, .governance/manifest.json, .governance/preflight.json, .governance/git-policy.json, scripts/verify-governance.js, scripts/check-git-policy.js, opencode.json, or CI config (.github/workflows/**, .gitlab-ci.yml) requires: reason → CHANGELOG update → bump `.governance/manifest.json` governance_version → run verify-governance.js. Never loosen permission limits or remove validation without explicit user approval.
 
 ## Mandatory Pre-commit Checklist
 CHANGELOG must be updated before push/PR. No CHANGELOG update → no push.
