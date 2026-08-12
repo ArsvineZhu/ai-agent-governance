@@ -8,6 +8,7 @@ const os = require("os");
 const path = require("path");
 
 const VALIDATOR = path.join(__dirname, "..", "scripts", "verify_governance.js");
+const LOCK_CHECK = path.join(__dirname, "..", "scripts", "check-lock.js");
 const TMP_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), "ai-agent-governance-test-"));
 
 function tmp(name) {
@@ -45,7 +46,7 @@ function buildFullDefault(dir) {
   for (const d of dirs) fs.mkdirSync(path.join(dir, d), { recursive: true });
   const files = [
     ["AGENTS.md", "x"],
-    ["CHANGELOG.md", "x"],
+    ["CHANGELOG.md", "## [Unreleased]\n"],
     ["docs/ARCHITECTURE.md", "x"],
     ["docs/features/auth.md", "x"],
     ["docs/plans/DEVELOPMENT_PLAN.md", "x"],
@@ -59,6 +60,7 @@ function buildFullDefault(dir) {
   for (const [p, c] of files) write(path.join(dir, p), c);
   write(path.join(dir, ".governance/manifest.json"), JSON.stringify({ governance_version: "1.0.0", artifacts: [] }));
   fs.copyFileSync(VALIDATOR, path.join(dir, "scripts/verify-governance.js"));
+  fs.copyFileSync(LOCK_CHECK, path.join(dir, "scripts/check-lock.js"));
 }
 
 test("full default structure exits 0 (defaults mode)", () => {
@@ -66,7 +68,7 @@ test("full default structure exits 0 (defaults mode)", () => {
   buildFullDefault(dir);
 
   const r = run(dir);
-  return r.status === 0 && r.stdout.includes("15/15 checks passed.");
+  return r.status === 0 && r.stdout.includes("17/17 checks passed.");
 });
 
 // ---------- 3. Custom structure via manifest ----------
@@ -76,7 +78,7 @@ test("custom doc root (documentation/) follows manifest (manifest mode)", () => 
   for (const d of dirs) fs.mkdirSync(path.join(dir, d), { recursive: true });
   const files = [
     ["AGENTS.md", "x"],
-    ["CHANGELOG.md", "x"],
+    ["CHANGELOG.md", "## [Unreleased]\n"],
     ["documentation/ARCHITECTURE.md", "x"],
     ["documentation/features/auth.md", "x"],
     ["documentation/plans/DEVELOPMENT_PLAN.md", "x"],
@@ -106,7 +108,7 @@ test("custom doc root (documentation/) follows manifest (manifest mode)", () => 
   fs.copyFileSync(VALIDATOR, path.join(dir, "scripts/verify-governance.js"));
 
   const r = run(dir);
-  return r.status === 0 && r.stdout.includes("mode: manifest") && r.stdout.includes("9/9 checks passed.");
+  return r.status === 0 && r.stdout.includes("mode: manifest") && r.stdout.includes("11/11 checks passed.");
 });
 
 // ---------- 4. Manifest without governance_version ----------
@@ -134,7 +136,7 @@ test("--json reports passedAll, mode and governance_version", () => {
     out.passedAll === true &&
     out.governance_version === "1.0.0" &&
     Array.isArray(out.results) &&
-    out.results.length === 15
+    out.results.length === 17
   );
 });
 
@@ -165,9 +167,39 @@ test("validation.json present is optional and still passes", () => {
   const r = run(dir);
   return (
     r.status === 0 &&
-    r.stdout.includes("15/15 checks passed.") &&
+    r.stdout.includes("17/17 checks passed.") &&
     !r.stdout.includes(".governance validation")
   );
+});
+
+// ---------- 8b-8c. Lock check & changelog format ----------
+
+test("check-lock: no state exits 0", () => {
+  const dir = tmp("lock-none");
+  const r = spawnSync(process.execPath, [LOCK_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 0;
+});
+
+test("check-lock: held lock exits 1", () => {
+  const dir = tmp("lock-held");
+  write(path.join(dir, ".governance/state.json"), JSON.stringify({ locked: "agent-2", agent_id: "agent-2", task_id: "t-9" }));
+  const r = spawnSync(process.execPath, [LOCK_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 1 && r.stderr.includes("LOCK HELD");
+});
+
+test("check-lock: unlocked state exits 0", () => {
+  const dir = tmp("lock-free");
+  write(path.join(dir, ".governance/state.json"), JSON.stringify({ locked: null }));
+  const r = spawnSync(process.execPath, [LOCK_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 0;
+});
+
+test("validator: CHANGELOG without version section exits 1", () => {
+  const dir = tmp("badchangelog");
+  buildFullDefault(dir);
+  write(path.join(dir, "CHANGELOG.md"), "no version section here");
+  const r = run(dir);
+  return r.status === 1 && r.stdout.includes("CHANGELOG format");
 });
 
 // ---------- 9-15. Release planning & approval gate (scripts/release-manager.js) ----------
@@ -237,6 +269,16 @@ test("release plan: uncertain breaking change requests clarification (exit 2)", 
   if (r.status !== 2) return false;
   const out = JSON.parse(r.stdout);
   return out.needsClarification === true && out.releaseType === "unknown";
+});
+
+test("release plan: --file reads JSON input from a file", () => {
+  const dir = tmp("rel-file");
+  const inputPath = path.join(dir, "input.json");
+  write(inputPath, JSON.stringify({ current: "1.2.3", changes: [{ type: "feature", description: "new CLI command" }] }));
+  const r = runRelease(dir, ["plan", "--file", inputPath]);
+  if (r.status !== 0) return false;
+  const out = JSON.parse(r.stdout);
+  return out.releaseType === "minor" && out.recommended === "1.3.0";
 });
 
 test("release execute: unapproved release creates no tag", () => {

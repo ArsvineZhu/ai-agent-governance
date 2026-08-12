@@ -27,6 +27,7 @@ const MANIFEST = path.join(ROOT, ".governance", "manifest.json");
 const DEFAULTS = [
   ["AGENTS.md", "AGENTS.md", isFile],
   ["CHANGELOG.md", "CHANGELOG.md", isFile],
+  ["CHANGELOG format", "CHANGELOG.md", hasChangelogFormat],
   ["Architecture doc", "docs/ARCHITECTURE.md", isFile],
   ["Feature registry", "docs/features", isDir],
   ["Plans", "docs/plans", isDir],
@@ -35,6 +36,7 @@ const DEFAULTS = [
   [".env.example", ".env.example", isFile],
   ["CI workflow", null, hasCI],
   ["Validator self", "scripts/verify-governance.js", isFile],
+  ["Lock check", "scripts/check-lock.js", isFile],
   [".governance state dir", ".governance", isDir],
   [".governance manifest", ".governance/manifest.json", isFile],
   [".governance state", ".governance/state.json", isFile],
@@ -79,6 +81,25 @@ function getGovernanceVersion() {
 
 function hasGovernanceVersion() {
   return getGovernanceVersion() !== null;
+}
+
+function hasChangelogFormat() {
+  try {
+    const c = fs.readFileSync(path.join(ROOT, "CHANGELOG.md"), "utf8");
+    return /## \[(Unreleased|\d+\.\d+\.\d+)\]/.test(c);
+  } catch {
+    return false;
+  }
+}
+
+function hasValidArtifactKinds() {
+  try {
+    const m = JSON.parse(fs.readFileSync(MANIFEST, "utf8"));
+    if (!Array.isArray(m.artifacts) || m.artifacts.length === 0) return false;
+    return m.artifacts.every((a) => a.kind === "file" || a.kind === "dir");
+  } catch {
+    return false;
+  }
 }
 
 function hasSchemaVersion() {
@@ -129,7 +150,9 @@ const results = manifestChecks
   ? (() => {
       const checks = [
         ...manifestChecks,
+        { name: "CHANGELOG format", path: "CHANGELOG.md", ok: hasChangelogFormat() },
         { name: "Manifest schema", path: "manifest.schema_version", ok: hasSchemaVersion() },
+        { name: "Manifest artifacts valid", path: "manifest.artifacts[].kind", ok: hasValidArtifactKinds() },
         { name: "Governance version", path: "manifest.governance_version", ok: hasGovernanceVersion() },
       ];
       const relOk = checkReleaseMeta();

@@ -83,7 +83,9 @@ node scripts/release-manager.js plan --json '{"current":"X.Y.Z","changes":[{"typ
 - 内部重构不属于 Breaking Change。
 - 文件移动、代码重构、架构调整不能触发 Major。
 
-### Minor —— 仅当增加向后兼容的新能力
+### Minor —— 仅当增加向后兼容的、用户可感知的新能力
+
+**判定标准**：新能力必须**用户可感知**——开发者或被治理项目能直接感知其存在或效果（如新命令、新公开 API、新可见行为）。仅内部机制/工具完善不算 Minor。
 
 包括：
 
@@ -91,16 +93,17 @@ node scripts/release-manager.js plan --json '{"current":"X.Y.Z","changes":[{"typ
 - 新增公开 API
 - 新增 CLI 命令
 - 新增配置能力
-- 新增 Agent 能力
+- 新增 Agent 能力（用户可感知的行为变化）
 
 以下**不得**触发 Minor（归入 Patch）：
 
 - README 修改、文档增加、测试增加、CI 修改
 - 重构、性能优化、日志优化、类型注释增加
+- 内部工具/机制完善（如锁检查、内容校验、模板补齐、流程顺序修正、内部参数增强）
 
 ### Patch —— 其余全部
 
-包括：Bug 修复、重构、性能优化、文档更新、测试调整、配置调整、依赖更新。
+包括：Bug 修复、重构、性能优化、文档更新、测试调整、配置调整、依赖更新、**内部工具与机制完善**。
 
 ### 禁止的启发式判断
 
@@ -149,18 +152,21 @@ Proceed with release?
 开发者确认后，AI 执行：
 
 1. **再次检查仓库状态**：`git status`、`git rev-parse HEAD`。要求工作区干净、HEAD 与 Proposal 中 `headSha` 一致；若检测到变化 → **停止执行并重新分析版本**（重新走 Phase 1-3）。
-2. **创建 annotated tag**：
+2. **版本同步**：更新 `package.json` → CHANGELOG（`[Unreleased]` 移入 `[X.Y.Z]`）→ `.governance/manifest.json` 的 `governance_version` 与 `release` 字段。
+3. **归档计划**：本版本已完成的里程碑条目（含勾选状态与验收结果）聚合写入 `docs/plans/archive/vX.Y.Z.md`（一个版本一个文件）；已完成的 `TASK_<name>.md` 以独立文件原样移入 `docs/plans/archive/`（保留原文件名）。**保留原文，绝不删除**。未完成的里程碑继续留在 `docs/plans/`。
+4. **提交 release commit**：`git add`（仅版本同步与归档相关文件）→ `git commit -m "release: vX.Y.Z - <summary>"`。**版本变更与归档必须进入同一个提交**——tag 稍后指向的 HEAD 必须包含它们。
+5. **校验**：运行 `scripts/verify-governance.js`，退出码必须为 0。
+6. **生成/更新 Proposal**：把 Proposal 的 `headSha` 更新为新 HEAD、`recommended` 为 `X.Y.Z`，写入 `.governance/release-proposal.json`（execute 依此做发布前重新验证）。
+7. **创建 annotated tag**：
 
    ```bash
    node scripts/release-manager.js execute --proposal .governance/release-proposal.json --yes
    ```
 
-   `--yes` 是开发者批准的记录标记；**没有 `--yes` 该工具拒绝一切写操作**（等价于手工 `git tag -a vX.Y.Z -m "Release vX.Y.Z: <summary>"`）。
-3. **推送 tag**：`git push origin vX.Y.Z`（推 main 与推 tag 均需用户确认，见权限）。
-4. **创建 Release**：GitHub 项目执行 `gh release create vX.Y.Z --title "vX.Y.Z" --notes "<Release Notes>"`（gh 未登录/未安装 → ⚠️ Blocked，提示用户）。
-5. **版本同步**：更新 `package.json` → CHANGELOG（`[Unreleased]` 移入 `[X.Y.Z]`）→ `.governance/manifest.json` 的 `governance_version` 与 `release` 字段 → 提交 `release: vX.Y.Z - <summary>`。
-6. **校验**：运行 `scripts/verify-governance.js`，退出码必须为 0。
-7. **更新状态**：把 `.governance/manifest.json` 的 `release.validated` 置为 `true`，重新校验并记录到 `validation.json`。
+   `--yes` 是开发者批准的记录标记；**没有 `--yes` 该工具拒绝一切写操作**（等价于手工 `git tag -a vX.Y.Z -m "Release vX.Y.Z: <summary>"`）。execute 会再次检查工作区干净且 HEAD == proposal `headSha`。
+8. **推送**：`git push origin main` → `git push origin vX.Y.Z`（写操作均需用户确认，见权限）。
+9. **创建 Release**：GitHub 项目执行 `gh release create vX.Y.Z --title "vX.Y.Z" --notes "<Release Notes>"`（gh 未登录/未安装 → ⚠️ Blocked，提示用户）。
+10. **更新状态**：把 `.governance/manifest.json` 的 `release.validated` 置为 `true`，重新校验并记录到 `validation.json`。
 
 ## 安全规则
 
@@ -173,13 +179,14 @@ AI 不得自动创建 tag、自动 push tag、自动创建 release，除非：
 
 ### 发布前重新验证
 
-Approval 与 Execute 之间必须重新检查：
+批准后、开始执行写操作前，必须重新检查（Phase 4 第 1 步）：
 
-- git HEAD（与 Proposal `headSha` 比对）
+- git HEAD（与批准时 Proposal 的 `headSha` 比对）
 - git status（工作区干净）
-- version state（版本一致）
 
 任一发生变化 → **取消当前 release 流程**，重新分析。
+
+流程内的版本同步、归档与 release commit 是**预期变化**；`execute` 打 tag 前会再次检查工作区干净且 HEAD 与刷新后的 Proposal `headSha` 一致（Phase 4 第 6-7 步）。
 
 ## 不确定性处理
 
@@ -203,9 +210,9 @@ Approval 与 Execute 之间必须重新检查：
 
 发布操作必须**事务化**，任何失败都不得留下半完成状态：
 
-- 任何前置检查失败 → 在**创建 tag 之前**中止，不触碰仓库（不 commit、不 tag、不 push）。
-- Approval 与 Execute 之间工作区/HEAD 变化 → 取消流程，重新 plan。
-- 进入写操作后必须连续完成；任一步失败立即停止，报告 ⚠️/❌ 与已完成/未完成清单。
+- 任何前置检查失败 → 在**开始写操作之前**中止，不触碰仓库（不版本同步、不 commit、不 tag、不 push）。
+- 批准后、执行前的工作区/HEAD 意外变化 → 取消流程，重新 plan。
+- 进入写操作后（版本同步 → 归档 → release commit → tag → push → GitHub Release）必须连续完成；任一步失败立即停止，报告 ⚠️/❌ 与已完成/未完成清单。
 - tag 已创建但 GitHub Release 创建失败 → **不删除 tag、不强制重来**；报告 ⚠️ Blocked，说明差异（tag 已推、release 待建），由用户决定补建 release 或清理。
 - 恢复：依据 `.governance/validation.json` 与 `git log` 判断已完成步骤，仅重做未完成部分。
 

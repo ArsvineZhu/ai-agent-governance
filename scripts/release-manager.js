@@ -8,9 +8,11 @@ const { spawnSync } = require("child_process");
 
 const USAGE = `Usage:
   release-manager.js plan --json <input>          Analyze changes, propose a version (read-only)
+  release-manager.js plan --file <path>           Same as --json, reading the input from a file
   release-manager.js execute --proposal <file> [--yes] [--push]
 Options:
   --json <input>     JSON: {"current":"X.Y.Z","changes":[{"type":"breaking|feature|fix|docs|refactor|test|ci|chore","description":"...","uncertain":false}]}
+  --file <path>      JSON input read from a file (avoids shell quoting issues)
   --proposal <file>  Proposal JSON file produced by 'plan'
   --yes              Record of developer approval — REQUIRED for any write operation
   --push             Also push the tag (requires approval, network access)
@@ -117,8 +119,16 @@ function decide(input) {
 }
 
 function plan(argv) {
-  const raw = argValue(argv, "--json");
-  if (!raw) fail("plan: --json <input> is required", 1);
+  let raw = argValue(argv, "--json");
+  const filePath = argValue(argv, "--file");
+  if (!raw && filePath) {
+    try {
+      raw = fs.readFileSync(filePath, "utf8");
+    } catch (e) {
+      fail("plan: cannot read --file input: " + e.message, 1);
+    }
+  }
+  if (!raw) fail("plan: --json <input> or --file <path> is required", 1);
   let input;
   try {
     input = JSON.parse(raw);

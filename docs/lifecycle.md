@@ -14,6 +14,7 @@ Every development task performed by any agent in a governed project MUST follow 
 
 **Phase 2 — Plan.** Medium/large changes MUST first create `docs/plans/TASK_<name>.md` with:
 
+- Status (Active / Completed — Active on creation)
 - Task Purpose
 - Current Problem
 - Proposed Solution
@@ -27,7 +28,7 @@ Small changes (typo, single-function tweak) may skip planning but must state the
 
 **Phase 4 — Validate.** Run tests, lint, typecheck and build with the bare commands from AGENTS.md; record REAL output (never "should be fine").
 
-**Phase 5 — Synchronize.** Update CHANGELOG.md (completed changes), the Feature Registry (docs/features/), Architecture docs if changed, and check off the corresponding milestone in docs/plans/DEVELOPMENT_PLAN.md (if one exists).
+**Phase 5 — Synchronize.** Update CHANGELOG.md (completed changes), the Feature Registry (docs/features/), Architecture docs if changed, check off the corresponding milestone in docs/plans/DEVELOPMENT_PLAN.md (if one exists), and set the completed TASK_<name>.md Status to Completed. Archiving happens at RELEASE, not here.
 
 **Phase 6 — Report.** Final output: modified files, new features, deleted content, validation results, doc updates.
 
@@ -71,6 +72,7 @@ Code + tests + all quality gates + CHANGELOG + docs sync. Anything missing = not
 
 **阶段 2 —— Plan（计划）**。任何中大型修改必须先创建 `docs/plans/TASK_<name>.md`，包含：
 
+- Status（Active / Completed —— 创建时为 Active）
 - Task Purpose（任务目的）
 - Current Problem（当前问题）
 - Proposed Solution（提议方案）
@@ -84,7 +86,7 @@ Code + tests + all quality gates + CHANGELOG + docs sync. Anything missing = not
 
 **阶段 4 —— Validate（验证）**。用 AGENTS.md 的裸命令跑测试、静态检查、类型检查与构建，记录**真实输出**（不是"应该没问题"）。
 
-**阶段 5 —— Synchronize（同步知识）**。更新 CHANGELOG.md（已完成变更）、Feature 登记（docs/features/）、架构文档（如有变化），并勾选 `docs/plans/DEVELOPMENT_PLAN.md` 中对应里程碑（如存在）。
+**阶段 5 —— Synchronize（同步知识）**。更新 CHANGELOG.md（已完成变更）、Feature 登记（docs/features/）、架构文档（如有变化），勾选 `docs/plans/DEVELOPMENT_PLAN.md` 中对应里程碑（如存在），并把已完成 `TASK_<name>.md` 的 `## Status` 更新为 `Completed`。归档在发布（RELEASE）时统一执行，不在本阶段。
 
 **阶段 6 —— Report（报告）**。最终输出：修改文件列表、新增功能列表、删除内容列表、验证结果、文档更新情况。
 

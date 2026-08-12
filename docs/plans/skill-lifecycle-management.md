@@ -2,7 +2,7 @@
 
 [English](#english) · [简体中文](#chinese)
 
-> **状态：设计计划，未实现。** 本页是路线图条目 `Skill lifecycle management` 的详细设计（见 [roadmap.md](../roadmap.md)），按 `docs/plans/TASK_<name>.md` 六字段模板组织。目标版本：v0.4.0。
+> **状态：设计计划，未实现。** 本页是路线图条目 `Skill lifecycle management` 的详细设计（见 [roadmap.md](../roadmap.md)），按 `docs/plans/TASK_<name>.md` 六字段模板组织。目标版本：v0.5.0。
 
 ---
 
@@ -93,7 +93,7 @@ Inspect (read local version from SKILL.md frontmatter)
 #### 5. Version roadmap
 
 - **v0.3.x** — not implemented (stabilize governance model / release / CI first)
-- **v0.4.0** — implement Skill Lifecycle Management (INSTALL → UPDATE → ROLLBACK)
+- **v0.5.0** — implement Skill Lifecycle Management (INSTALL → UPDATE → ROLLBACK)
 
 ### Affected Files
 
@@ -209,7 +209,7 @@ Inspect（读取 SKILL.md frontmatter 的本地版本）
 #### 5. 版本路线
 
 - **v0.3.x** —— 不做（优先稳定治理模型 / release / CI）
-- **v0.4.0** —— 实现 Skill 生命周期管理（INSTALL → UPDATE → ROLLBACK）
+- **v0.5.0** —— 实现 Skill 生命周期管理（INSTALL → UPDATE → ROLLBACK）
 
 ### 受影响文件
 

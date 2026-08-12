@@ -112,7 +112,7 @@ At the end of every task (or on interruption), update `.governance/state.json`:
 - `completed`: list of done items (docs, agents, rules, security, ci, state)
 - `blocked`: external blockers with reason (e.g. "github_permission")
 
-Multi-agent rule: before starting, read state.json; if `locked` is set for the phase you need, wait or coordinate — never edit the same file in parallel. Never remove a completed entry. If a previous run left state, resume from it instead of restarting.
+Multi-agent rule: before starting, run `node scripts/check-lock.js` (exit 1 = another agent holds `locked`) or read state.json — wait or coordinate, never edit the same file in parallel. Never remove a completed entry. If a previous run left state, resume from it instead of restarting.
 ````
 
 ---
@@ -178,8 +178,8 @@ It outputs the Release Proposal JSON (current / recommended / releaseType / reas
 ## Phase 2 — Version Decision (SemVer 2.0.0)
 
 - **Major** only for real breaking changes (removed public API, breaking API change, removed config, CLI behavior breaking scripts, incompatible protocol/data format). Internal refactors, file moves, architecture changes never trigger Major.
-- **Minor** only for backward-compatible new capabilities (new user feature, public API, CLI command, config capability, agent capability). README/docs/tests/CI changes, refactors, perf and logging tweaks never trigger Minor.
-- **Patch** for everything else (fixes, refactors, perf, docs, tests, config, dependency updates).
+- **Minor** only for backward-compatible, **user-perceivable** new capabilities (new user feature, public API, CLI command, config capability, or user-visible agent behavior). README/docs/tests/CI changes, refactors, perf/logging tweaks, and internal tooling/mechanism improvements (lock checks, content validation, template additions, flow ordering, internal flags) never trigger Minor.
+- **Patch** for everything else (fixes, refactors, perf, docs, tests, config, dependency updates, internal tooling/mechanism improvements).
 - NEVER decide by diff size, commit count, file count or added code volume.
 
 ## Phase 3 — Approval Gate
@@ -204,12 +204,15 @@ Wait for explicit confirmation. Write the approved proposal to `.governance/rele
 Only after explicit approval:
 
 1. Re-verify: `git status` clean AND `git rev-parse HEAD` equals the proposal `headSha`; any change → abort and re-run Analyze.
-2. `node scripts/release-manager.js execute --proposal .governance/release-proposal.json --yes` (creates the annotated tag; `--yes` is the recorded approval — without it the tool refuses all writes).
-3. `git push origin vX.Y.Z` (and `git push origin main`) — write operations, user confirmation required.
-4. `gh release create vX.Y.Z --title "vX.Y.Z" --notes "<Release Notes>"`. gh missing/unauthenticated → ⚠️ Blocked with reason.
-5. Sync versions: `package.json` → CHANGELOG (move `[Unreleased]` into `[X.Y.Z]`) → `.governance/manifest.json` (`governance_version` + `release` field) → commit `release: vX.Y.Z - <summary>`.
-6. Run `node scripts/verify-governance.js`; exit code must be 0.
-7. Set `manifest.release.validated` to `true`, re-run validator, record into `.governance/validation.json`.
+2. Sync versions: `package.json` → CHANGELOG (move `[Unreleased]` into `[X.Y.Z]`) → `.governance/manifest.json` (`governance_version` + `release` field).
+3. Archive completed milestones (aggregated into `docs/plans/archive/vX.Y.Z.md`, one file per version) and completed `TASK_<name>.md` files (moved as individual files, original names). Keep the original entries, never delete. Unfinished milestones stay in `docs/plans/`.
+4. Commit: `git add` (version sync + archive files only) → `git commit -m "release: vX.Y.Z - <summary>"`. Version changes and the archive MUST be in the same commit — the tag must point to a HEAD that contains them.
+5. Run `node scripts/verify-governance.js`; exit code must be 0.
+6. Refresh the proposal: update `headSha` to the new HEAD, write `.governance/release-proposal.json`.
+7. `node scripts/release-manager.js execute --proposal .governance/release-proposal.json --yes` (creates the annotated tag; `--yes` is the recorded approval — without it the tool refuses all writes; it re-verifies clean tree + `headSha`).
+8. `git push origin main` → `git push origin vX.Y.Z` — write operations, user confirmation required.
+9. `gh release create vX.Y.Z --title "vX.Y.Z" --notes "<Release Notes>"`. gh missing/unauthenticated → ⚠️ Blocked with reason.
+10. Set `manifest.release.validated` to `true`, re-run validator, record into `.governance/validation.json`.
 
 ## Uncertainty
 

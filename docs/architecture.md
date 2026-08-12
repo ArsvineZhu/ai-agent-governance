@@ -85,7 +85,9 @@ ai-agent-governance/
 │   ├── templates/
 │   │   ├── agents-md.template.md   # AGENTS.md template
 │   │   ├── feature-doc.template.md # feature doc template (anti-fabrication rules)
-│   │   └── sub-skills.md           # generated agent modules (incl. drift-check, release-manager)
+│   │   ├── sub-skills.md           # generated agent modules (incl. drift-check, release-manager)
+│   │   ├── env-example.template.md # .env.example template (placeholders, dependency-trimmed)
+│   │   └── gitmessage.template.md  # .gitmessage.txt template (commit conventions)
 │   ├── policies/
 │   │   ├── lifecycle.policy.md / git.policy.md / security.policy.md / coding.policy.md / testing.policy.md
 │   │   └── governance-files.policy.md   # protected files + .governance git-tracking policy
@@ -94,6 +96,7 @@ ai-agent-governance/
 │       └── release.md          # release preconditions + version consistency
 ├── scripts/
 │   ├── verify_governance.js    # validator (manifest-driven paths + governance_version)
+│   ├── check-lock.js           # multi-agent lock check (read-only, exit 1 = lock held)
 │   └── release-manager.js      # plan (read-only) + execute (approval-gated) release tool
 ├── docs/                       # knowledge layer (human documentation)
 │   ├── architecture.md         # this page
@@ -202,7 +205,9 @@ ai-agent-governance/
 │   ├── templates/
 │   │   ├── agents-md.template.md   # AGENTS.md 模板
 │   │   ├── feature-doc.template.md # Feature 文档模板（含反虚构规则）
-│   │   └── sub-skills.md           # 生成的 Agent 模块（含 drift-check、release-manager）
+│   │   ├── sub-skills.md           # 生成的 Agent 模块（含 drift-check、release-manager）
+│   │   ├── env-example.template.md # .env.example 模板（占位符、按依赖裁剪）
+│   │   └── gitmessage.template.md  # .gitmessage.txt 模板（提交约定）
 │   ├── policies/
 │   │   ├── lifecycle.policy.md / git.policy.md / security.policy.md / coding.policy.md / testing.policy.md
 │   │   └── governance-files.policy.md   # 受保护文件 + .governance Git 跟踪策略
@@ -211,6 +216,7 @@ ai-agent-governance/
 │       └── release.md          # 发布前置检查 + 版本一致性
 ├── scripts/
 │   ├── verify_governance.js    # 校验引擎（manifest 驱动路径 + governance_version）
+│   ├── check-lock.js           # 多 Agent 锁检查（只读，exit 1 = 持锁）
 │   └── release-manager.js      # 发布工具：plan（只读）+ execute（审批门禁）
 ├── docs/                       # 知识层（人类文档）
 │   ├── architecture.md         # 本页

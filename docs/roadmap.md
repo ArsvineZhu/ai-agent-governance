@@ -15,10 +15,12 @@ Status: **Done** / **In progress** / **Planned**
 - Governance validator
 - Release workflow
 - Multi-language CI templates
+- Multi-agent lock enforcement — `scripts/check-lock.js` (read-only lock check, INIT copies it, validator requires it)
+- Validator content checks — CHANGELOG format + manifest `artifacts[].kind` validity
 
 ### In progress
 
-- **Skill lifecycle management** — dedicated [`ai-skill-manager`](https://github.com/Consciencieux/ai-skill-manager) skill (INSTALL → UPDATE → ROLLBACK for all skills in `.agents/skills/`, including this skill). Target: v0.4.0. Design: [plans/skill-lifecycle-management.md](plans/skill-lifecycle-management.md)
+- **Skill lifecycle management** — dedicated [`ai-skill-manager`](https://github.com/Consciencieux/ai-skill-manager) skill (INSTALL → UPDATE → ROLLBACK for all skills in `.agents/skills/`, including this skill). Target: v0.5.0. Design: [plans/skill-lifecycle-management.md](plans/skill-lifecycle-management.md)
 
 ### Planned
 
@@ -42,10 +44,12 @@ Note: design plans for unimplemented features live in `docs/plans/` (e.g. `git-w
 - 治理校验器
 - 发布工作流
 - 多语言 CI 模板
+- 多 Agent 锁强制 —— `scripts/check-lock.js`（只读锁检查；INIT 复制、校验器必查）
+- 校验器内容检查 —— CHANGELOG 格式 + manifest `artifacts[].kind` 有效性
 
 ### 进行中
 
-- **Skill 生命周期管理** —— 独立 [`ai-skill-manager`](https://github.com/Consciencieux/ai-skill-manager) skill（管理 `.agents/skills/` 下所有 skill 的 INSTALL → UPDATE → ROLLBACK，含本 skill）。目标版本：v0.4.0。设计：[plans/skill-lifecycle-management.md](plans/skill-lifecycle-management.md)
+- **Skill 生命周期管理** —— 独立 [`ai-skill-manager`](https://github.com/Consciencieux/ai-skill-manager) skill（管理 `.agents/skills/` 下所有 skill 的 INSTALL → UPDATE → ROLLBACK，含本 skill）。目标版本：v0.5.0。设计：[plans/skill-lifecycle-management.md](plans/skill-lifecycle-management.md)
 
 ### 规划中
 

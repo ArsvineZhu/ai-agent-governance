@@ -13,6 +13,7 @@
 | `.governance/manifest.json` | 治理工件清单（期望态） |
 | `.governance/preflight.json` | 回滚快照 |
 | `scripts/verify-governance.js` | 校验门禁 |
+| `scripts/check-lock.js` | 锁检查 |
 | `opencode.json` | Agent 配置 |
 | `.github/workflows/**` | CI 配置 |
 

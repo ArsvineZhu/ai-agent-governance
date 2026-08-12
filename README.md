@@ -163,6 +163,8 @@ Claude Code · Cursor · Codex · opencode — and other AGENTS.md-based agents.
 - [x] Governance validator
 - [x] Release workflow
 - [x] Multi-language CI templates
+- [x] Multi-agent lock enforcement
+- [x] Validator content checks
 - [ ] Git workflow governance
 - [ ] Skill lifecycle management
 - [ ] Multi-agent coordination protocol
@@ -329,6 +331,8 @@ Claude Code · Cursor · Codex · opencode —— 以及其他基于 AGENTS.md �
 - [x] 治理校验器
 - [x] 发布工作流
 - [x] 多语言 CI 模板
+- [x] 多 Agent 锁强制
+- [x] 校验器内容检查
 - [ ] Git 工作流治理
 - [ ] Skill 生命周期管理
 - [ ] 多 Agent 协调协议

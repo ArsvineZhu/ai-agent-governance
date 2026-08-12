@@ -24,10 +24,10 @@ Do NOT maintain a fixed inventory here. Two docs are mandatory and must stay fre
 ## Agent Operating Lifecycle
 All agents MUST follow this lifecycle for every dev task:
 - **Phase 1 Understand**: read AGENTS.md, docs/ARCHITECTURE.md, docs/features/, recent CHANGELOG.md before acting.
-- **Phase 2 Plan**: medium/large changes MUST first create `docs/plans/TASK_<name>.md` (Task Purpose, Current Problem, Proposed Solution, Affected Files, Risks, Validation Method).
+- **Phase 2 Plan**: medium/large changes MUST first create `docs/plans/TASK_<name>.md` (Status, Task Purpose, Current Problem, Proposed Solution, Affected Files, Risks, Validation Method).
 - **Phase 3 Implement**: respect architecture, keep backward compatibility, do not restructure without reason.
 - **Phase 4 Validate**: run tests, lint, build; record real output.
-- **Phase 5 Synchronize Knowledge**: update CHANGELOG.md, Feature Registry, ARCHITECTURE.md (if changed), and check off the corresponding milestone in docs/plans/DEVELOPMENT_PLAN.md (if one exists).
+- **Phase 5 Synchronize Knowledge**: update CHANGELOG.md, Feature Registry, ARCHITECTURE.md (if changed), check off the corresponding milestone in docs/plans/DEVELOPMENT_PLAN.md (if one exists), and set the completed TASK_<name>.md Status to Completed. Archiving happens at RELEASE, not here.
 - **Phase 6 Report**: modified files, new features, deleted content, validation results, doc updates.
 - Forbidden: changing code without updating project knowledge.
 - Full detail: @docs/rules/lifecycle.md

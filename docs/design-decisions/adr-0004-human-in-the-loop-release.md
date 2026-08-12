@@ -24,7 +24,7 @@ Analyze → Release Proposal → Developer Approval → Create Git Tag → Creat
 ## Consequences
 
 - No tag, push or release can happen without a recorded, explicit approval.
-- State drift between approval and execution aborts the flow (HEAD/status re-verification).
+- Unexpected workspace/HEAD drift after approval but before the first write aborts the flow; version sync, archival and the release commit are expected in-flow changes — `execute` re-verifies against the refreshed `headSha` before tagging.
 - Version judgment is deterministic and testable: classification rules and gates are covered by `tests/run-tests.js`.
 - Permission model unchanged: analysis is automatic; every write operation still surfaces to the user.
 
@@ -56,6 +56,6 @@ Analyze → Release Proposal → Developer Approval → Create Git Tag → Creat
 ## 后果
 
 - 没有记录在案的明确批准，任何 tag/push/release 都不会发生。
-- 批准与执行之间的状态漂移会中止流程（HEAD/status 重新验证）。
+- 批准后、执行写操作前的工作区/HEAD 意外变化会中止流程；流程内的版本同步、归档与 release commit 是预期变化，`execute` 打 tag 前用刷新后的 `headSha` 重新验证。
 - 版本判断确定化、可测试：分类规则与门禁由 `tests/run-tests.js` 覆盖。
 - 权限模型不变：分析自动执行；每个写操作仍向用户显式呈现。

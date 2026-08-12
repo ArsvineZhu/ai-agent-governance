@@ -15,6 +15,7 @@ AGENTS.md 只保留生命周期摘要，本文件是完整执行规范。所有 
 ## Phase 2 — Plan（计划）
 
 任何中大型修改必须先创建 `docs/plans/TASK_<name>.md`，必须包含：
+- **Status**：Active / Completed（创建时为 Active）
 - **Task Purpose**：任务目的
 - **Current Problem**：当前问题
 - **Proposed Solution**：提议方案
@@ -43,7 +44,8 @@ AGENTS.md 只保留生命周期摘要，本文件是完整执行规范。所有 
 - 更新 CHANGELOG.md（已完成变更，[Unreleased]）
 - 更新 Feature Registry（docs/features/，如涉及功能）
 - 更新 Architecture Documentation（如架构变化）
-- 更新 `docs/plans/DEVELOPMENT_PLAN.md`：勾选对应里程碑、更新状态标记与验收结果（如存在对应里程碑）
+- 更新 `docs/plans/DEVELOPMENT_PLAN.md`：勾选对应里程碑、更新状态标记与验收结果（如存在对应里程碑）；归档在发布（RELEASE）时统一执行（见发布流程）
+- 已完成任务的 `TASK_<name>.md`：把文档顶部 `## Status` 更新为 `Completed` 并附完成日期；归档仍在发布（RELEASE）时统一执行
 
 **Change Classification（CHANGELOG 何时写）**：
 

@@ -202,24 +202,85 @@ SpacesInAngles: Never
 Standard: Latest
 ```
 
-## GitLab CI（示例骨架）
+## GitLab CI
 
 ```yaml
-stages: [lint, test, build]
+stages: [format, lint, test, build]
+
+format:
+  stage: format
+  image: node:20
+  script:
+    - npx prettier --check .
+  # Python: ruff format --check . | Rust: cargo fmt --check | Go: gofmt -l . | Java: mvn -B spotless:check | C++: clang-format --dry-run --Werror
+
 lint:
   stage: lint
-  script: [...]
+  image: node:20
+  script:
+    - npm run lint
+  # Rust: cargo clippy -- -D warnings | Python: ruff check . | Go: go vet ./...
+
 test:
   stage: test
-  script: [...]
+  image: node:20
+  script:
+    - npm test
+
 build:
   stage: build
-  script: [...]
+  image: node:20
+  script:
+    - npm run build
+
+governance:
+  stage: test
+  image: node:20
+  script:
+    - node scripts/verify-governance.js
+```
+
+> 按检测到的包管理器/栈替换 image 与 script（包管理器以锁文件为准）；项目脚本缺失的步骤只保留 `echo "No <tool> configured yet"` 警告（见 SKILL.md「CI 降级策略」）。治理门禁 job 与 GitHub Actions 版一致。
+
+## 纯文档项目（无构建）
+
+```yaml
+name: CI
+on:
+  push:
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npx markdownlint-cli2 "**/*.md"
+      - run: npx markdown-link-check README.md docs/**/*.md
+      - run: node scripts/verify-governance.js
 ```
 
 ## 配套
 
-- 若启用 GitHub：开启 **secret scanning** 与 **Dependabot**（`dependabot.yml`），并把治理校验作为门禁：
+- 若启用 GitHub：开启 **secret scanning** 与 **Dependabot**，并把治理校验作为门禁：
+
+`.github/dependabot.yml`：
+
+```yaml
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+```
 
 ```yaml
 # 可选：治理门禁 job
@@ -229,3 +290,5 @@ governance:
     - uses: actions/checkout@v4
     - run: node scripts/verify-governance.js
 ```
+
+> dependabot 的 package-ecosystem 按检测到的包管理器替换（npm / pip / cargo / gomod / maven）；未用到的 ecosystem 区块删除。

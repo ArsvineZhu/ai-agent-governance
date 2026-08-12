@@ -118,7 +118,7 @@ opencode.json / .github/workflows/**
 
 多 Agent 同时工作时（Claude / Codex / Cursor / opencode）：
 - 每次任务在 `.governance/state.json` 记录 `agent_id` + `task_id` + 起始时间戳。
-- 开始任务前先读 `state.json`：若某阶段被其他 Agent 标记 `locked`，等待或协商，**不得并行修改同一文件**。
+- 开始任务前运行 `scripts/check-lock.js`：退出码 1 = 其他 Agent 持锁（`locked` 非 null），等待或协商，**不得并行修改同一文件**。
 - 完成时释放锁（`locked: null`）并写入完成清单。
 
 ### 错误分类（Error Classification）
@@ -166,10 +166,10 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
 
 1. **前置检查**（release_requirements，全部通过才允许发布）：工作区干净 / 测试通过 / CHANGELOG 已更新 / 版本一致（package.json · CHANGELOG · `manifest.governance_version` · tag）/ 目标 tag 不存在 / Proposal 已批准 / 校验器通过。任一失败 → 输出 ⚠️/❌ 清单并停止。
 2. **分析 + Release Proposal（Human-in-the-Loop）**：分析变更（`git log`/`git diff`、API/用户可见变化），运行 `scripts/release-manager.js plan --json ...`（只读）生成 Proposal（当前版本 / 推荐版本 / 类型 / 理由 / Release Notes），展示给开发者并**等待明确确认**；写操作（tag/push/gh release）在批准前一律禁止。不确定性（Potential Breaking/Feature）→ 暂停请求确认；0.x 版本不自动升 1.0.0（详见 `references/workflows/release.md`）。
-3. **版本同步**：`package.json` → CHANGELOG（`[Unreleased]` 移入 `[X.Y.Z]`）→ `.governance/manifest.json` 的 `governance_version` 与 `release` 字段。
-4. **校验**：运行 `scripts/verify-governance.js`，退出码必须为 0。
-5. **提交与 tag**：批准后执行 `scripts/release-manager.js execute --proposal .governance/release-proposal.json --yes`（等价 `git tag -a`）→ 提交 `git commit -m "release: vX.Y.Z - <summary>"` → push（写操作均需用户确认）。
-6. **GitHub Release**：`gh release create vX.Y.Z --title "vX.Y.Z" --notes "<Release Notes>"`；gh 未装/未登录 → ⚠️ Blocked 并提示。
+3. **版本同步 + 归档计划**：`package.json` → CHANGELOG（`[Unreleased]` 移入 `[X.Y.Z]`）→ `.governance/manifest.json` 的 `governance_version` 与 `release` 字段；完成里程碑聚合写入 `docs/plans/archive/vX.Y.Z.md`、已完成 `TASK_<name>.md` 原样移入 `docs/plans/archive/`（保留原文不删除）。
+4. **提交 release commit**：`git add`（版本同步与归档文件）→ `git commit -m "release: vX.Y.Z - <summary>"`（版本与归档同一提交）→ 校验（`verify-governance.js` 退出码 0）。
+5. **打 tag**：更新 Proposal 的 `headSha` 为新 HEAD → `scripts/release-manager.js execute --proposal .governance/release-proposal.json --yes`（annotated tag 指向 release commit；重新验证工作区干净 + HEAD 一致）。
+6. **推送与 GitHub Release**：`git push origin main` → `git push origin vX.Y.Z` → `gh release create vX.Y.Z --title "vX.Y.Z" --notes "<Release Notes>"`（写操作均需用户确认；gh 未装/未登录 → ⚠️ Blocked 并提示）。
 7. **收尾**：`manifest.release.validated` 置 `true`，重跑校验并写入 `validation.json`。
 
 ### Phase 0：环境检测（Repository Inspection）
@@ -220,7 +220,7 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
    - Bug 修复 → `Fixed`
    - 新能力 → `Added`
    - 架构/行为/破坏性变更 → `Changed`
-5. **docs/plans/DEVELOPMENT_PLAN.md** —— 里程碑计划（勾选框 + 状态标记 + 验收标准）；提供单任务模板 `TASK_<name>.md`（Task Purpose / Current Problem / Proposed Solution / Affected Files / Risks / Validation Method）供 Lifecycle Phase 2 使用。
+5. **docs/plans/DEVELOPMENT_PLAN.md** —— 里程碑计划（勾选框 + 状态标记 + 验收标准）；提供单任务模板 `TASK_<name>.md`（Status / Task Purpose / Current Problem / Proposed Solution / Affected Files / Risks / Validation Method）供 Lifecycle Phase 2 使用。同时生成 `docs/plans/archive/` 归档目录（完成的里程碑与 TASK 归档于此，见生命周期 Phase 5 规则——归档而非删除）。
 6. **docs/features/** —— Feature Registry，按 `references/templates/feature-doc.template.md` 生成；**只登记真实功能**（见反虚构规则与 Feature 占位策略）。
    **登记对象判定**：
    - 必须登记：用户可见能力、独立业务模块、核心基础设施（数据库适配层等）、对外 API。
@@ -230,10 +230,10 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
    - Level 1 必须登记：服务、模块、子系统、数据流节点。
    - Level 2 不登记：普通类、工具函数、UI 组件（如 Button/Modal）。
    **防膨胀**：单文件超过约 300 行时拆分到 `docs/architecture/<module>.md`，主文件只留导航与摘要。
-8. **README.md** —— 若项目**无 README**：生成**基础 README**。**只生成一个文件 `README.md`**；**禁止**创建 `README.zh-CN.md`、`README-zh.md`、`README_cn.md` 或任何独立语言版本文件。采用**单文件双语布局**（与本 skill 的 README 一致）：`# 项目名` + CI 徽章 + 语言切换锚点 `[English](#english) · [简体中文](#chinese)`，前半段为**英文**（项目名 + 一句话简介 + 文档索引），`---` 分隔后后半段为**简体中文**（同一文件内）；文档索引链接 AGENTS.md / docs/ARCHITECTURE.md / docs/features/ 等治理文档。若已有：仅补文档索引与 CI 徽章，**合并不覆盖**已有内容，也**不拆分**为多个语言文件。另建提交信息模板 `.gitmessage.txt` 并配置为仓库级默认。
-9. **安全基线** —— `.env.example`（占位无真实值）、完善 `.gitignore`（.env、*.key、*.pem、构建产物、依赖目录）、按 CI 平台启用密钥扫描/dependabot。
+8. **README.md** —— 若项目**无 README**：生成**基础 README**。**只生成一个文件 `README.md`**；**禁止**创建 `README.zh-CN.md`、`README-zh.md`、`README_cn.md` 或任何独立语言版本文件。采用**单文件双语布局**（与本 skill 的 README 一致）：`# 项目名` + CI 徽章 + 语言切换锚点 `[English](#english) · [简体中文](#chinese)`，前半段为**英文**（项目名 + 一句话简介 + 文档索引），`---` 分隔后后半段为**简体中文**（同一文件内）；文档索引链接 AGENTS.md / docs/ARCHITECTURE.md / docs/features/ 等治理文档。若已有：仅补文档索引与 CI 徽章，**合并不覆盖**已有内容，也**不拆分**为多个语言文件。另建提交信息模板 `.gitmessage.txt`（按 `references/templates/gitmessage.template.md`）并配置为仓库级默认。
+9. **安全基线** —— `.env.example`（按 `references/templates/env-example.template.md` 生成，占位无真实值、按检测到的依赖裁剪）、完善 `.gitignore`（.env、*.key、*.pem、构建产物、依赖目录）、按 CI 平台启用密钥扫描/dependabot（模板见 `references/workflows/ci.md`）。
 10. **.governance/** —— 机器可读状态目录（见下）；生成时附 `README.md`（见 `references/policies/governance-files.policy.md` 模板），说明各文件用途与 Git 跟踪策略，避免误删/混淆。
-11. **scripts/verify-governance.js** —— 从本 Skill 的 `scripts/verify_governance.js` 复制到项目 `scripts/verify-governance.js`，注册为项目命令（如 `npm run governance-check`）。
+11. **scripts/** —— 从本 Skill 复制 `scripts/verify-governance.js`（校验器）与 `scripts/check-lock.js`（锁检查）到项目 `scripts/`，注册为项目命令（如 `npm run governance-check`）。
 12. **CI workflow** —— 按检测到的平台/栈从 `references/workflows/ci.md` 选择模板生成；推送与 PR 自动运行。**管线步骤按 CI Pipeline Capability Detection 决定，不强制全部存在**：
     - 每种栈管线统一：安装 → **format 检查** → lint → typecheck（如适用）→ test → build → 产物上传。format 用各栈标准工具：Node/TS → Prettier（`pnpm format`）；Python → `ruff format --check`；Rust → `cargo fmt --check`；Go → `gofmt -l`；Java(Maven) → `spotless:check`；C++ → `clang-format --dry-run --Werror`；纯文档项目 → markdown lint + 链接检查，无构建。
     - 栈模板：Node/TS（+typecheck）、Python（ruff check + mypy 可选）、Rust（clippy）、Go（go vet）、Java（spotless + google-java-format **必配**，INIT 写入 pom.xml）、C++（clang-tidy 可选，CMake/CTest 或 Make 按检测选择；同时生成 `.clang-format` 风格基线）。
@@ -271,7 +271,7 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
 ```json
 {
   "maturity": "LEVEL_0_EMPTY",
-  "phase": "CI_SETUP",
+  "phase": "implement",
   "agent_id": "",
   "task_id": "",
   "locked": null,
@@ -293,8 +293,8 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
 > 校验项集合由 `verify-governance.js` 定义，可能随 schema 版本演进，**以校验器实际输出为准**。`validation.json` / `drift-report.json` 是**运行时输出，不作为 required artifact**（fresh-checkout CI 必须无它们也通过）。当前默认项：
 
 ```
-AGENTS.md / CHANGELOG.md / docs/ARCHITECTURE.md / docs/features/ / docs/plans/ /
-docs/rules/ / .gitignore / .env.example / CI workflow / scripts/verify-governance.js /
+AGENTS.md / CHANGELOG.md / CHANGELOG format / docs/ARCHITECTURE.md / docs/features/ / docs/plans/ /
+docs/rules/ / .gitignore / .env.example / CI workflow / scripts/verify-governance.js / scripts/check-lock.js /
 .governance/ 目录 / manifest.json / state.json / preflight.json / governance_version
 ```
 
