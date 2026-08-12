@@ -21,6 +21,7 @@
 - `git add .` / `git add -A`（全量暂存，必须先检查 `git status` 与 `.gitignore`，确认无 `.env`/密钥/构建产物）
 - `git commit`
 - `git push`
+- `git tag`（创建/删除 tag；发布流程中须先经 Approval Gate，见 `references/workflows/release.md`）
 - `git reset` / `git rebase` / `git revert`
 - `git merge`
 - `git stash`
@@ -52,7 +53,7 @@ push/PR 前必须确认：
 
 ## 治理文件保护
 
-修改 `AGENTS.md`、`CLAUDE.md`、`docs/rules/**`、`.governance/manifest.json`、`.governance/preflight.json`、`scripts/verify-governance.js`、`opencode.json`、CI 配置（`.github/workflows/**`、`.gitlab-ci.yml`）需要特殊权限（清单以 `references/governance-files.md` 为准）：
+修改 `AGENTS.md`、`CLAUDE.md`、`docs/rules/**`、`.governance/manifest.json`、`.governance/preflight.json`、`scripts/verify-governance.js`、`opencode.json`、CI 配置（`.github/workflows/**`、`.gitlab-ci.yml`）需要特殊权限（清单以 `references/policies/governance-files.policy.md` 为准）：
 说明原因 → 更新 CHANGELOG → **更新 `.governance/manifest.json` 的 `governance_version`** → 运行 `scripts/verify-governance.js`。
 涉及权限/安全/删除保护/校验步骤的修改必须用户明确确认。
 未经用户明确同意不得放宽权限限制或移除校验步骤。普通业务任务不得隐式触发本流程。

@@ -2,6 +2,7 @@ node_modules/
 # Governance runtime outputs (desired/current state stays tracked)
 .governance/validation.json
 .governance/drift-report.json
+.governance/release-proposal.json
 .env
 .env.*
 *.pem

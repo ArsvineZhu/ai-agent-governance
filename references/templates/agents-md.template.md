@@ -27,7 +27,7 @@ All agents MUST follow this lifecycle for every dev task:
 - **Phase 2 Plan**: medium/large changes MUST first create `docs/plans/TASK_<name>.md` (Task Purpose, Current Problem, Proposed Solution, Affected Files, Risks, Validation Method).
 - **Phase 3 Implement**: respect architecture, keep backward compatibility, do not restructure without reason.
 - **Phase 4 Validate**: run tests, lint, build; record real output.
-- **Phase 5 Synchronize Knowledge**: update CHANGELOG.md, Feature Registry, ARCHITECTURE.md (if changed).
+- **Phase 5 Synchronize Knowledge**: update CHANGELOG.md, Feature Registry, ARCHITECTURE.md (if changed), and check off the corresponding milestone in docs/plans/DEVELOPMENT_PLAN.md (if one exists).
 - **Phase 6 Report**: modified files, new features, deleted content, validation results, doc updates.
 - Forbidden: changing code without updating project knowledge.
 - Full detail: @docs/rules/lifecycle.md

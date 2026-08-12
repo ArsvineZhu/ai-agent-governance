@@ -43,6 +43,7 @@ AGENTS.md 只保留生命周期摘要，本文件是完整执行规范。所有 
 - 更新 CHANGELOG.md（已完成变更，[Unreleased]）
 - 更新 Feature Registry（docs/features/，如涉及功能）
 - 更新 Architecture Documentation（如架构变化）
+- 更新 `docs/plans/DEVELOPMENT_PLAN.md`：勾选对应里程碑、更新状态标记与验收结果（如存在对应里程碑）
 
 **Change Classification（CHANGELOG 何时写）**：
 

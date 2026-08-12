@@ -170,6 +170,111 @@ test("validation.json present is optional and still passes", () => {
   );
 });
 
+// ---------- 9-15. Release planning & approval gate (scripts/release-manager.js) ----------
+
+const RELEASE_TOOL = path.join(__dirname, "..", "scripts", "release-manager.js");
+
+function runRelease(dir, args = []) {
+  return spawnSync(process.execPath, [RELEASE_TOOL, ...args], { cwd: dir, encoding: "utf8" });
+}
+
+function planChanges(current, changes) {
+  return runRelease(TMP_ROOT, ["plan", "--json", JSON.stringify({ current, changes })]);
+}
+
+function gitInit(dir) {
+  spawnSync("git", ["init", "-q"], { cwd: dir });
+  spawnSync("git", ["config", "user.email", "test@example.com"], { cwd: dir });
+  spawnSync("git", ["config", "user.name", "Test"], { cwd: dir });
+  write(path.join(dir, ".gitignore"), ".governance/\n");
+  write(path.join(dir, "file.txt"), "x");
+  spawnSync("git", ["add", "."], { cwd: dir });
+  spawnSync("git", ["commit", "-q", "-m", "init"], { cwd: dir });
+}
+
+function gitHead(dir) {
+  const r = spawnSync("git", ["rev-parse", "HEAD"], { cwd: dir, encoding: "utf8" });
+  return String(r.stdout || "").trim();
+}
+
+function gitTags(dir) {
+  const r = spawnSync("git", ["tag", "-l"], { cwd: dir, encoding: "utf8" });
+  return String(r.stdout || "").trim();
+}
+
+test("release plan: README-scale doc changes recommend patch", () => {
+  const r = planChanges("1.2.3", [{ type: "docs", description: "rewrite README" }]);
+  if (r.status !== 0) return false;
+  const out = JSON.parse(r.stdout);
+  return out.releaseType === "patch" && out.recommended === "1.2.4" && out.needsClarification === false;
+});
+
+test("release plan: large internal refactor recommends patch", () => {
+  const r = planChanges("1.2.3", [{ type: "refactor", description: "restructure modules" }]);
+  if (r.status !== 0) return false;
+  const out = JSON.parse(r.stdout);
+  return out.releaseType === "patch" && out.recommended === "1.2.4";
+});
+
+test("release plan: new CLI command recommends minor", () => {
+  const r = planChanges("1.2.3", [{ type: "feature", description: "add CLI command" }]);
+  if (r.status !== 0) return false;
+  const out = JSON.parse(r.stdout);
+  return out.releaseType === "minor" && out.recommended === "1.3.0";
+});
+
+test("release plan: deleted public API recommends major", () => {
+  const r = planChanges("1.2.3", [{ type: "breaking", description: "remove public API" }]);
+  if (r.status !== 0) return false;
+  const out = JSON.parse(r.stdout);
+  return out.releaseType === "major" && out.recommended === "2.0.0";
+});
+
+test("release plan: uncertain breaking change requests clarification (exit 2)", () => {
+  const r = planChanges("1.2.3", [
+    { type: "breaking", description: "maybe external impact?", uncertain: true },
+  ]);
+  if (r.status !== 2) return false;
+  const out = JSON.parse(r.stdout);
+  return out.needsClarification === true && out.releaseType === "unknown";
+});
+
+test("release execute: unapproved release creates no tag", () => {
+  const dir = tmp("rel-noapprove");
+  gitInit(dir);
+  const head = gitHead(dir);
+  const proposal = {
+    current: "1.0.0",
+    recommended: "1.0.1",
+    releaseType: "patch",
+    headSha: head,
+    summary: "test patch",
+  };
+  const proposalPath = path.join(dir, ".governance", "release-proposal.json");
+  write(proposalPath, JSON.stringify(proposal));
+  const r = runRelease(dir, ["execute", "--proposal", proposalPath]);
+  return r.status !== 0 && gitTags(dir) === "";
+});
+
+test("release execute: approved release creates annotated tag", () => {
+  const dir = tmp("rel-approved");
+  gitInit(dir);
+  const head = gitHead(dir);
+  const proposal = {
+    current: "1.0.0",
+    recommended: "1.0.1",
+    releaseType: "patch",
+    headSha: head,
+    summary: "test patch",
+  };
+  const proposalPath = path.join(dir, ".governance", "release-proposal.json");
+  write(proposalPath, JSON.stringify(proposal));
+  const r = runRelease(dir, ["execute", "--proposal", proposalPath, "--yes"]);
+  if (r.status !== 0) return false;
+  const type = spawnSync("git", ["cat-file", "-t", "v1.0.1"], { cwd: dir, encoding: "utf8" });
+  return gitTags(dir) === "v1.0.1" && String(type.stdout).trim() === "tag";
+});
+
 // ---------- runner ----------
 let failed = 0;
 for (const t of tests) {

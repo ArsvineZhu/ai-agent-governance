@@ -18,7 +18,7 @@ description: >-
 | AUDIT（巡检） | 已有 `.governance/manifest.json` / 成熟度 L2-L3 / 用户说"巡检/健康检查/治理偏差" | 只读巡检 + 最小补丁修复（见下方 Audit 流程） |
 | RELEASE（发布） | 用户说"发布 / release / publish"、或版本推进需求 | 前置检查 → 版本同步 → 校验 → tag → push → GitHub Release（见下方 Release 流程） |
 
-判定优先级：**用户明确指令 > `.governance/manifest.json` 存在性 > 成熟度**。INIT / AUDIT / RELEASE 都先走 Phase 0 环境检测。AUDIT 不重建、不重构、不迁移，只输出差距报告与最小补丁；RELEASE 由生成的 `release-manager` 子技能执行（见 `references/release-policy.md`）；涉及治理文件改动走「治理文件保护」流程。
+判定优先级：**用户明确指令 > `.governance/manifest.json` 存在性 > 成熟度**。INIT / AUDIT / RELEASE 都先走 Phase 0 环境检测。AUDIT 不重建、不重构、不迁移，只输出差距报告与最小补丁；RELEASE 由生成的 `release-manager` 子技能执行（见 `references/workflows/release.md`）；涉及治理文件改动走「治理文件保护」流程。
 
 > 定位：INIT 完成的项目进入**长期运行期**，日常任务由生成的 `.governance/generated/skills/` 子技能接管（含 `drift-check` 巡检）；本 skill 可随时以 AUDIT 模式回来做健康检查。
 
@@ -75,7 +75,7 @@ description: >-
 
 ### Feature 占位策略（无业务代码时）
 
-- 若 `src/` / `app/` 等目录下无任何业务代码：`docs/features/` 下仅创建 `_TEMPLATE.md`（复制 `references/feature-doc.template.md`）与 `README.md`（说明"待业务模块确定后按模板逐个登记"）。
+- 若 `src/` / `app/` 等目录下无任何业务代码：`docs/features/` 下仅创建 `_TEMPLATE.md`（复制 `references/templates/feature-doc.template.md`）与 `README.md`（说明"待业务模块确定后按模板逐个登记"）。
 - 若已有代码（如存在 `auth`、`pdf` 目录）：才逆推创建 `authentication.md` 等具体文档，且 `Implementation` 路径必须与 `find` / `rg` 查到的真实路径一致，**严禁虚构路径**。
 - 任何真实文档中暂缺的字段一律标 `[PLACEHOLDER]` + `# TODO: 业务确定后填充`。
 
@@ -101,7 +101,7 @@ description: >-
 
 ### 治理文件保护（Governance Protection）
 
-以下文件是**治理体系本身**，修改需要特殊权限（防止 Agent 自我解除限制）。**完整清单见 `references/governance-files.md`（单一事实源）**，此处为摘要：
+以下文件是**治理体系本身**，修改需要特殊权限（防止 Agent 自我解除限制）。**完整清单见 `references/policies/governance-files.policy.md`（单一事实源）**，此处为摘要：
 
 ```
 AGENTS.md / CLAUDE.md
@@ -162,14 +162,14 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
 
 ### Release 流程（版本发布模式）
 
-仅当进入模式判定为 RELEASE 时执行（Phase 0 环境检测仍执行）。发布由生成的 `release-manager` 子技能承担，详细规范见 `references/release-policy.md`（单一事实源）：
+仅当进入模式判定为 RELEASE 时执行（Phase 0 环境检测仍执行）。发布由生成的 `release-manager` 子技能承担，详细规范见 `references/workflows/release.md`（单一事实源）：
 
-1. **前置检查**（release_requirements，全部通过才允许发布）：工作区干净 / 测试通过 / CHANGELOG 已更新 / 版本一致（package.json · CHANGELOG · `manifest.governance_version` · tag）/ 目标 tag 不存在 / 校验器通过。任一失败 → 输出 ⚠️/❌ 清单并停止。
-2. **确认目标版本**：按 SemVer 与用户确认（破坏性 → MAJOR，新能力 → MINOR，修复 → PATCH）。
+1. **前置检查**（release_requirements，全部通过才允许发布）：工作区干净 / 测试通过 / CHANGELOG 已更新 / 版本一致（package.json · CHANGELOG · `manifest.governance_version` · tag）/ 目标 tag 不存在 / Proposal 已批准 / 校验器通过。任一失败 → 输出 ⚠️/❌ 清单并停止。
+2. **分析 + Release Proposal（Human-in-the-Loop）**：分析变更（`git log`/`git diff`、API/用户可见变化），运行 `scripts/release-manager.js plan --json ...`（只读）生成 Proposal（当前版本 / 推荐版本 / 类型 / 理由 / Release Notes），展示给开发者并**等待明确确认**；写操作（tag/push/gh release）在批准前一律禁止。不确定性（Potential Breaking/Feature）→ 暂停请求确认；0.x 版本不自动升 1.0.0（详见 `references/workflows/release.md`）。
 3. **版本同步**：`package.json` → CHANGELOG（`[Unreleased]` 移入 `[X.Y.Z]`）→ `.governance/manifest.json` 的 `governance_version` 与 `release` 字段。
 4. **校验**：运行 `scripts/verify-governance.js`，退出码必须为 0。
-5. **提交与 tag**：`git commit -m "release: vX.Y.Z - <summary>"` → `git tag vX.Y.Z` → push（写操作均需用户确认）。
-6. **GitHub Release**：`gh release create vX.Y.Z --title "vX.Y.Z" --notes "<CHANGELOG 摘要>"`；gh 未装/未登录 → ⚠️ Blocked 并提示。
+5. **提交与 tag**：批准后执行 `scripts/release-manager.js execute --proposal .governance/release-proposal.json --yes`（等价 `git tag -a`）→ 提交 `git commit -m "release: vX.Y.Z - <summary>"` → push（写操作均需用户确认）。
+6. **GitHub Release**：`gh release create vX.Y.Z --title "vX.Y.Z" --notes "<Release Notes>"`；gh 未装/未登录 → ⚠️ Blocked 并提示。
 7. **收尾**：`manifest.release.validated` 置 `true`，重跑校验并写入 `validation.json`。
 
 ### Phase 0：环境检测（Repository Inspection）
@@ -206,13 +206,13 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
 
 **目录结构适配规则**：以下结构是**默认布局**，不是强制迁移目标。若项目已有成熟结构（如已有 `documentation/`、`docs/` 被产品文档占用、monorepo 用 `packages/*/docs`），**适配现有体系**：把治理文件放进既有文档根，并把实际路径写入 `.governance/manifest.json`。`verify-governance.js` 以 manifest 声明的路径为准。禁止创建第二个平行文档中心。
 
-1. **docs/rules/** —— 先建规则文件（AGENTS.md 要 `@` 引用它们）；内容从本 Skill 的 `references/rules/` 模板生成，替换 `{{...}}` 占位符：
-   - `references/rules/lifecycle.md` → `docs/rules/lifecycle.md`
-   - `references/rules/git-policy.md` → `docs/rules/git-policy.md`
-   - `references/rules/security.md` → `docs/rules/security.md`
-   - `references/rules/coding.md` → `docs/rules/coding.md`
-   - `references/rules/testing.md` → `docs/rules/testing.md`
-2. **AGENTS.md** —— 按 `references/agents-md.template.md` 生成。保持精简（≤150 行），章节内嵌、规范 `@` 引用 rules 文件。语言：默认英文，除非项目约定另指。
+1. **docs/rules/** —— 先建规则文件（AGENTS.md 要 `@` 引用它们）；内容从本 Skill 的 `references/policies/` 生成，替换 `{{...}}` 占位符：
+   - `references/policies/lifecycle.policy.md` → `docs/rules/lifecycle.md`
+   - `references/policies/git.policy.md` → `docs/rules/git-policy.md`
+   - `references/policies/security.policy.md` → `docs/rules/security.md`
+   - `references/policies/coding.policy.md` → `docs/rules/coding.md`
+   - `references/policies/testing.policy.md` → `docs/rules/testing.md`
+2. **AGENTS.md** —— 按 `references/templates/agents-md.template.md` 生成。保持精简（≤150 行），章节内嵌、规范 `@` 引用 rules 文件。语言：默认英文，除非项目约定另指。
 3. **CLAUDE.md** —— `@AGENTS.md` 引用即可。按检测到的工具生成对应入口文件（如 `.cursorrules`、`.github/copilot-instructions.md`、`opencode.json`）。
 4. **CHANGELOG.md** —— Keep a Changelog 格式；`[Unreleased]` 只记已完成变更；SemVer 版本号。
    **Change Classification（何时写 CHANGELOG）**：
@@ -221,7 +221,7 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
    - 新能力 → `Added`
    - 架构/行为/破坏性变更 → `Changed`
 5. **docs/plans/DEVELOPMENT_PLAN.md** —— 里程碑计划（勾选框 + 状态标记 + 验收标准）；提供单任务模板 `TASK_<name>.md`（Task Purpose / Current Problem / Proposed Solution / Affected Files / Risks / Validation Method）供 Lifecycle Phase 2 使用。
-6. **docs/features/** —— Feature Registry，按 `references/feature-doc.template.md` 生成；**只登记真实功能**（见反虚构规则与 Feature 占位策略）。
+6. **docs/features/** —— Feature Registry，按 `references/templates/feature-doc.template.md` 生成；**只登记真实功能**（见反虚构规则与 Feature 占位策略）。
    **登记对象判定**：
    - 必须登记：用户可见能力、独立业务模块、核心基础设施（数据库适配层等）、对外 API。
    - 不登记：普通工具函数（如 `utils/date.ts`）、测试辅助代码、临时脚本。防止 Feature 文档爆炸。
@@ -232,14 +232,14 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
    **防膨胀**：单文件超过约 300 行时拆分到 `docs/architecture/<module>.md`，主文件只留导航与摘要。
 8. **README.md** —— 若项目**无 README**：生成**基础 README**。**只生成一个文件 `README.md`**；**禁止**创建 `README.zh-CN.md`、`README-zh.md`、`README_cn.md` 或任何独立语言版本文件。采用**单文件双语布局**（与本 skill 的 README 一致）：`# 项目名` + CI 徽章 + 语言切换锚点 `[English](#english) · [简体中文](#chinese)`，前半段为**英文**（项目名 + 一句话简介 + 文档索引），`---` 分隔后后半段为**简体中文**（同一文件内）；文档索引链接 AGENTS.md / docs/ARCHITECTURE.md / docs/features/ 等治理文档。若已有：仅补文档索引与 CI 徽章，**合并不覆盖**已有内容，也**不拆分**为多个语言文件。另建提交信息模板 `.gitmessage.txt` 并配置为仓库级默认。
 9. **安全基线** —— `.env.example`（占位无真实值）、完善 `.gitignore`（.env、*.key、*.pem、构建产物、依赖目录）、按 CI 平台启用密钥扫描/dependabot。
-10. **.governance/** —— 机器可读状态目录（见下）；生成时附 `README.md`（见 `references/governance-files.md` 模板），说明各文件用途与 Git 跟踪策略，避免误删/混淆。
+10. **.governance/** —— 机器可读状态目录（见下）；生成时附 `README.md`（见 `references/policies/governance-files.policy.md` 模板），说明各文件用途与 Git 跟踪策略，避免误删/混淆。
 11. **scripts/verify-governance.js** —— 从本 Skill 的 `scripts/verify_governance.js` 复制到项目 `scripts/verify-governance.js`，注册为项目命令（如 `npm run governance-check`）。
-12. **CI workflow** —— 按检测到的平台/栈从 `references/ci-workflows.md` 选择模板生成；推送与 PR 自动运行。**管线步骤按 CI Pipeline Capability Detection 决定，不强制全部存在**：
+12. **CI workflow** —— 按检测到的平台/栈从 `references/workflows/ci.md` 选择模板生成；推送与 PR 自动运行。**管线步骤按 CI Pipeline Capability Detection 决定，不强制全部存在**：
     - 每种栈管线统一：安装 → **format 检查** → lint → typecheck（如适用）→ test → build → 产物上传。format 用各栈标准工具：Node/TS → Prettier（`pnpm format`）；Python → `ruff format --check`；Rust → `cargo fmt --check`；Go → `gofmt -l`；Java(Maven) → `spotless:check`；C++ → `clang-format --dry-run --Werror`；纯文档项目 → markdown lint + 链接检查，无构建。
     - 栈模板：Node/TS（+typecheck）、Python（ruff check + mypy 可选）、Rust（clippy）、Go（go vet）、Java（spotless + google-java-format **必配**，INIT 写入 pom.xml）、C++（clang-tidy 可选，CMake/CTest 或 Make 按检测选择；同时生成 `.clang-format` 风格基线）。
     - format 配置策略：**必须带配置才能检查**的栈（Java spotless、C++ clang-format）由 INIT 生成配置；**默认即可运行**的栈（Node/Python）默认用工具默认值，定制才生成 `.prettierrc` / `[tool.ruff]`；Go（gofmt）、Rust（rustfmt）零配置。
     - 若项目脚本缺失，对应步骤只保留 `echo "No <tool> configured yet"`（黄字警告），**不得强行编写无法执行的命令**；包管理器以锁文件为准（见默认值约定）。
-13. **.governance/generated/skills/** —— 按 `references/sub-skills.md` 生成子技能（repository-inspection / ci-generator / governance-validator / state-manager / **drift-check** / **release-manager**），并写入 `opencode.json` 的 `skills.paths` 使其被加载（如项目用 opencode）。其中 `drift-check` 承担长期巡检（治理健康报告、版本漂移检测），`release-manager` 承担版本发布（RELEASE 模式）。
+13. **.governance/generated/skills/** —— 按 `references/templates/sub-skills.md` 生成子技能（repository-inspection / ci-generator / governance-validator / state-manager / **drift-check** / **release-manager**），并写入 `opencode.json` 的 `skills.paths` 使其被加载（如项目用 opencode）。其中 `drift-check` 承担长期巡检（治理健康报告、版本漂移检测），`release-manager` 承担版本发布（RELEASE 模式）。
 
 ### .governance/ 机器可读状态
 
@@ -259,12 +259,12 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
 }
 ```
 
-> `release`（可选）把发布本身纳入治理对象：`version` 与 `governance_version` 一致，`tag` 为 `v<version>`，`validated` 发布通过校验后置 `true`（见 `references/release-policy.md`）。
+> `release`（可选）把发布本身纳入治理对象：`version` 与 `governance_version` 一致，`tag` 为 `v<version>`，`validated` 发布通过校验后置 `true`（见 `references/workflows/release.md`）。
 
 > 分层语义：`manifest.json` = 期望态（desired state），`state.json` = 当前态（current state），`validation.json` = 观测态（observed state）。
 > `type` 是治理语义元数据，用于分类与报告，**不参与文件系统校验**（文件系统判断只看 `kind`）。
 
-**Git 跟踪策略**：`manifest.json`、`state.json`、`generated/` 必须提交（治理即代码）；`validation.json`、`drift-report.json` 为临时运行输出，忽略（见 `.gitignore` 与 `references/governance-files.md`）。
+**Git 跟踪策略**：`manifest.json`、`state.json`、`generated/` 必须提交（治理即代码）；`validation.json`、`drift-report.json`、`release-proposal.json` 为临时运行输出，忽略（见 `.gitignore` 与 `references/policies/governance-files.policy.md`）。
 
 - `state.json` —— 当前任务/成熟度/Agent 身份/阶段（示例）：
 
@@ -281,6 +281,7 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
 ```
 
 - `validation.json` —— 最近一次治理校验结果（逐项 ✅/❌ + 时间戳）。**运行时输出**：由 AUDIT/校验产生，被 git 忽略、**不作为 required artifact**（fresh-checkout CI 不依赖它）
+- `release-proposal.json` —— 最近一次 Release Proposal（审批证据）。**运行时输出**：由 RELEASE 的 Approval Gate 产生，被 git 忽略、**不作为 required artifact**
 - `preflight.json` —— **初始化前快照**（回滚依据）：`git status` 摘要、已存在文件清单、时间戳。失败/Fatal 时输出 "Rollback recommended" 并给出如何恢复（如 `git checkout` 已改动文件、删除本次新建清单）。
 
 **状态机**：`state.json` 的 `phase` 取值 = 生命周期六阶段 `understand / plan / implement / validate / synchronize / report` + 终止态 `completed / blocked / failed`。任意阶段异常 → `blocked`/`failed`；崩溃/中断后恢复时先读 `phase` 确定断点，**不得重跑已完成项**，也不得跳步。

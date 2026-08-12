@@ -1,39 +1,55 @@
 # AI Agent Governance
 
+> Treat AI agent behavior as repository infrastructure.  
+> 将 AI Agent 行为作为仓库基础设施进行版本控制和生命周期管理。
+
 [![CI](https://github.com/Consciencieux/ai-agent-governance/actions/workflows/ci.yml/badge.svg)](https://github.com/Consciencieux/ai-agent-governance/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/Consciencieux/ai-agent-governance)](https://github.com/Consciencieux/ai-agent-governance/releases)
 
 [English](#english) · [简体中文](#chinese)
 
-Bootstrap a complete governance system for AI coding agents — then keep it healthy throughout the project lifecycle.
-
 ---
 
 ## English
 
-**AI Agent Governance** — a one-command workflow to bootstrap a complete software engineering governance environment for AI coding agents on day one, then maintain it through validation and audit workflows.
+**One command bootstraps a complete AI coding agent environment for your repository — AGENTS.md, rules, feature registry, CI and validator — then keeps it validated and maintained for the whole project lifecycle.**
 
-Designed for the AGENTS.md ecosystem, compatible with Claude Code, Cursor, Codex, opencode, and other coding agents.
+### Why?
 
-### Why
+AI coding agents can generate and modify code quickly, but they do not automatically inherit a project's engineering context, architectural constraints, or long-term maintenance mechanisms.
 
-AI coding agents are powerful, but every new project starts without context.
-
-Developers repeatedly need to create, by hand:
+Every new project still requires developers to set up by hand:
 
 - AGENTS.md
+- CHANGELOG.md
 - Architecture docs
 - Feature registry
 - Coding rules
-- Git policies
+- Git workflow
 - CI checks
 - Security baseline
 
-This skill bootstraps these governance foundations **automatically** on day one — then keeps them healthy for the rest of the project lifecycle.
+These rules usually live only in documentation or chat context — and decay with time, team and agent turnover.
+
+This project turns these capabilities into repository-level infrastructure: it bootstraps the governance system on day one and continuously validates, maintains and prevents drift across the whole project lifecycle.
+
+### The Solution
+
+The generated artifacts are repository infrastructure, not static templates — tracked like code (`manifest.json` desired state · `state.json` current state · `validation.json` observed state) and validated continuously by drift detection, validation gates, anti-regression and release lifecycle.
+
+**Initialize first, govern continuously.**
+
+| Existing approach | Limitation |
+| --- | --- |
+| Prompt packs (CLAUDE.md) | instruction only — no validation, no lifecycle |
+| AGENTS.md templates | static bootstrap — no maintenance |
+| CI rules | code only |
+| Enterprise AI governance | outside the repository |
+| **AI Agent Governance** | **one-command bootstrap + lifecycle validation + drift prevention, as repo infrastructure** |
 
 ### Install
 
-Install the skill where your agent can discover it. For cross-agent use, `.agents/skills` is the recommended location:
+This is an AI agent skill, not a CLI — install it where your coding agent discovers skills:
 
 ```
 .agents/skills/ai-agent-governance/SKILL.md
@@ -41,27 +57,19 @@ Install the skill where your agent can discover it. For cross-agent use, `.agent
 
 ```bash
 git clone https://github.com/Consciencieux/ai-agent-governance
-# copy or symlink the repo into your chosen directory
+# copy or symlink the ai-agent-governance skill directory
+# into your agent skill location
 ```
 
-| Location | Auto-discovered by | Best for |
-| --- | --- | --- |
-| `.agents/skills` | opencode + Claude-compatible agents | cross-agent sharing |
-| `.claude/skills` | opencode, Claude Code | Claude Code ecosystem |
-| `.opencode/skills` | opencode | opencode-only |
-| `~/.config/opencode/skills` | opencode (global) | machine-wide for opencode |
-
-opencode auto-scans `.opencode/skills`, `.claude/skills`, and `.agents/skills` (project and global). Claude Code reads `.claude/skills`.
+The skill is discovered through each agent's native skill/rule discovery mechanism. Agent-specific install paths (`.claude/skills`, `.opencode/skills`, ...): [docs/skill-discovery.md](docs/skill-discovery.md)
 
 ### Quick Start
 
-In your AI coding agent's chat session, run:
+**This is a chat prompt, not a shell command.** In your AI coding agent chat, ask:
 
-```bash
+```text
 initialize project governance
 ```
-
-Works with: Claude Code · Cursor · Codex · opencode
 
 **Before:**
 
@@ -76,6 +84,7 @@ my-project/
 ```
 my-project/
 ├── AGENTS.md
+├── CLAUDE.md
 ├── CHANGELOG.md
 ├── README.md
 ├── docs/
@@ -83,171 +92,69 @@ my-project/
 │   ├── plans/
 │   ├── features/
 │   └── rules/
+├── .env.example
 ├── .governance/
 ├── scripts/
 └── .github/workflows/
 ```
 
-One prompt, and your project has a complete governance environment: AGENTS.md, rule system, feature registry, Git policy, CI validation, and security baseline — ready for any AGENTS.md-compatible agent.
+One prompt — your project now has a complete governance environment, ready for any AGENTS.md-compatible agent. See the full generated file set: [docs/bootstrap-output.md](docs/bootstrap-output.md).
 
-Already governed? Run a health check instead:
+All available prompts (audit, release, drift check, ...) and what they do: [docs/commands.md](docs/commands.md).
 
-```bash
-audit governance
-```
+### Core Capabilities
 
-### What INIT Builds
+#### Bootstrap & Runtime Governance
 
-One prompt produces a complete governance environment:
+- **Governance bootstrap** — one INIT builds the skeleton: repository inspection → rules → AGENTS.md → feature registry → CI → validator → state
+- **Runtime governance** — the generated AGENTS.md + per-tool adapters govern every session; multi-language CI with format baselines (Node/TS, Python, Rust, Go, Java, C++)
+- **Structural adaptivity** — maturity-adaptive strategy (L0 empty repo → L3 production), merge-only, no forced migration
 
-```
-my-project/
-├── AGENTS.md                    runtime rule source
-├── CLAUDE.md                    agent entry file (@AGENTS.md), per detected tool
-├── CHANGELOG.md                 Keep a Changelog
-├── README.md                    basic project README (name + badge + doc index)
-├── docs/
-│   ├── ARCHITECTURE.md          data flow + ADR + component registry
-│   ├── plans/                   development plan + task templates
-│   ├── features/                feature registry (real features only)
-│   └── rules/                   lifecycle / git-policy / security / coding / testing
-├── .env.example                 security baseline
-├── .governance/                 manifest / state / preflight + generated/skills
-├── scripts/verify-governance.js validation gate (exit code = pass/fail)
-└── .github/workflows/           CI pipeline (capability-detected, degrades gracefully)
-```
+#### Drift Detection & Validation
 
-Plus generated agent modules under `.governance/generated/skills/` (incl. drift-check, release-manager) that keep daily agent work and releases inside the framework.
+- **Drift detection** — `drift-check` compares manifest against reality and reports governance decay
+- **Validation gates** — a zero-dependency validator fails CI when governance artifacts are missing
 
-### Features
+#### Anti-Regression
 
-**Bootstrap — governance in one prompt:**
+Unlike static rule files, AI Agent Governance continuously protects project knowledge from drift:
 
-- **Single-prompt initialization** — build the complete governance skeleton from one instruction
-- **Repository inspection** — detects language, package manager, build tool, test framework, and project maturity before touching anything
-- **AGENTS.md generation** — the runtime rule source, concise and tool-agnostic
-- **Rule system generation** — lifecycle / Git policy / security / coding / testing rules, referenced from AGENTS.md
-- **Validation setup** — installs a governance validation command into the project (zero dependencies)
-- **CI generation** — capability-detected workflows for 6 stacks (Node/TS, Python, Rust, Go, Java, C++), each with an explicit format step (Prettier / ruff / cargo fmt / gofmt / spotless / clang-format)
-- **Format baselines** — config-required stacks (C++ `.clang-format`, Java spotless) get real style configs; default-config stacks (Node/Python) use tool defaults; Go/Rust are zero-config
-- **README bootstrap** — generates a bilingual basic README (English then 简体中文, anchor-linked) when the project has none (merge-only if one exists)
+- **Lifecycle enforcement** — every change follows Understand → Plan → Implement → Validate → Synchronize → Report
+- **Protected governance** — governance files cannot be weakened silently (reason → CHANGELOG → version bump → validator run)
+- **Evidence-based reporting** — status is based on real validation output, never fabricated
 
-**Long-term — keep it healthy:**
+Full mechanisms (permission matrix, deletion protection, rule priority, multi-agent locking): [docs/anti-regression.md](docs/anti-regression.md)
 
-- **Validation gates** — prevent governance drift through automated checks
-- **Drift detection** — catch governance decay before it becomes technical debt
-- **Audit mode** — health-check any governed project, apply minimal fixes (no rebuild, no restructure)
-- **Release lifecycle** — the `release-manager` sub-skill enforces release preconditions and cuts validated, version-synced releases (tag + GitHub Release)
-- **Maturity-adaptive** — adjusts create/merge/audit strategy: L0 empty repo · L1 early development · L2 active project · L3 production system
-- **Multi-agent state** — `.governance/state.json` tracks `agent_id` / `task_id` / `locked` for coordination
+#### Release Lifecycle
 
-**Design principles:**
-
-- **Single source of truth** — the skill is the init-spec source; the generated AGENTS.md is the runtime source
-- **Anti-fabrication** — the feature registry only registers real features; empty projects get placeholder templates, never fake paths
-- **Structure-adaptive** — existing doc layouts are respected via `manifest.json`, no forced migration
-- **Self-protection** — governance policy changes require reason + CHANGELOG + version bump + validator run
-
-### Governance as Code
-
-Instead of keeping AI rules in chat history, this project stores governance as version-controlled files inside the repository — `manifest.json` (desired state), `state.json` (current state), versioned rules, and a verifiable validator. Everything is reviewable, diffable, and auditable like code. Runtime outputs (`validation.json`, `drift-report.json`) are git-ignored and never required for a fresh checkout.
-
-### How It Works
-
-The workflow **starts with INIT** — it creates the governance foundation. Runtime, AUDIT and RELEASE extend it:
-
-- **INIT (primary)** — new project: build the governance skeleton once.
-  `Inspect → Build → Validate → Report` (evidence-based, ✅/⚠️/❌ completion checklist).
-- **Runtime** — daily tasks run inside the generated framework: the generated agent modules validate governance integrity, resume sessions across crashes, and check for drift.
-- **AUDIT** — revisit any governed project for a health check: read manifest → run validator `--json` → governance health report → minimal fixes (no rebuild, no restructure).
-- **RELEASE** — cut a versioned, validated release via the generated `release-manager` sub-skill: enforce preconditions (clean status, tests, CHANGELOG, version consistency, tag free, validator pass) → sync versions → tag → push → create a GitHub Release.
-
-Runs in a single pass with an optional phased pause; blocked items are reported as ⚠️ Blocked, never faked.
-
-### Repository Structure
+Releases run as a human-in-the-loop flow — **the AI proposes, the developer approves**:
 
 ```
-ai-agent-governance/
-├── SKILL.md                    # policy + INIT/AUDIT orchestration
-├── references/
-│   ├── agents-md.template.md   # AGENTS.md template
-│   ├── feature-doc.template.md # feature doc template (anti-fabrication rules)
-│   ├── ci-workflows.md         # CI templates (capability detection + degradation)
-│   ├── sub-skills.md           # generated agent modules (incl. drift-check, release-manager)
-│   ├── governance-files.md     # protected files + .governance git-tracking policy
-│   ├── release-policy.md       # release preconditions + version consistency
-│   └── rules/                  # lifecycle / git-policy / security / coding / testing
-├── scripts/
-│   └── verify_governance.js    # validator (manifest-driven paths + governance_version)
-└── tests/
-    └── run-tests.js            # test suite (default / custom / missing-version / json / help / no-legacy / optional-validation)
+Analyze changes → Generate SemVer proposal → Developer approval → Create tag → GitHub Release
 ```
 
-### Governance Flow
-
-```
-SKILL.md (policy + INIT/AUDIT orchestration)
-    |
-    v
-INIT — Inspect → Build → Validate → Report
-    |
-    v
-Generated Project Governance
-    +-- AGENTS.md                   runtime rule source
-    +-- docs/rules/                 detailed policies (referenced from AGENTS.md)
-    +-- .governance/state.json           machine state (maturity / phase / locks)
-    +-- scripts/verify-governance.js  validation gate (exit code = pass/fail)
-    |
-    v
-Runtime — agent modules validate integrity, resume sessions, check drift
-    |
-    v
-AUDIT — health check + minimal fixes (no rebuild)
-    |
-    v
-RELEASE — preconditions → version sync → tag → push → GitHub Release
-```
-
-### Concept Map
-
-```
-.agents/skills
-    Agent capability distribution (installation)
-
-        ↓
-
-SKILL.md
-    Governance orchestration layer
-
-        ↓
-
-AGENTS.md
-    Human-readable behavioral contract
-
-        ↓
-
-.governance/
-    Machine-readable governance state (manifest / state / validation)
-```
-
-- `.agents` tells agents what they can do.
-- `AGENTS.md` tells agents how they should behave.
-- `.governance` tells the system what has been established and verified.
-
-Manifest layers follow a Kubernetes-like Spec / Status / Health split:
-`manifest.json` = desired state · `state.json` = current state · `validation.json` = observed state.
+- **Analyze** — `release-manager` inspects git history and change classifications (SemVer 2.0.0), produces a Release Proposal (current / recommended / release type / reasons / Release Notes) — read-only
+- **Approve** — explicit developer confirmation before any write operation; uncertainty (Potential Breaking Change) pauses the flow and requests clarification
+- **Execute** — after approval: annotated tag → push → GitHub Release, with synchronized versions. Spec: [references/workflows/release.md](references/workflows/release.md)
 
 ### Supported Agents
 
-Compatible with Claude Code, Cursor, Codex, opencode, and other AGENTS.md-based coding agents.
+Claude Code · Cursor · Codex · opencode — and other AGENTS.md-based agents. The core is tool-neutral; compatibility comes from per-tool adapters (CLAUDE.md, .cursor/rules, copilot-instructions.md, opencode.json).
 
-### Development
+### Documentation
 
-```bash
-npm test        # or node tests/run-tests.js
-```
-
-Covers: empty project, full default structure, custom doc root via manifest, missing governance_version, `--json` output, `--help`, no legacy `.agent` leakage, and optional `validation.json`. CI runs it on every push/PR.
+- [docs/skill-discovery.md](docs/skill-discovery.md) — how agents discover and trigger the skill
+- [docs/commands.md](docs/commands.md) — user-facing prompts + runtime components
+- [docs/bootstrap-output.md](docs/bootstrap-output.md) — complete annotated initialization output
+- [docs/governance-model.md](docs/governance-model.md) — the Spec / Status / Health state model
+- [docs/architecture.md](docs/architecture.md) — concept map, operating modes, lifecycle pipeline, repository layout, design principles
+- [docs/anti-regression.md](docs/anti-regression.md) — anti-regression mechanisms in full
+- [docs/lifecycle.md](docs/lifecycle.md) — the 6-phase agent operating lifecycle
+- [docs/validator.md](docs/validator.md) — validator usage and checks
+- [docs/design-decisions/](docs/design-decisions/) — architecture decision records
+- [docs/roadmap.md](docs/roadmap.md) — planned features and status
+- [CONTRIBUTING.md](CONTRIBUTING.md) — development guide
+- [CHANGELOG.md](CHANGELOG.md) — release history
 
 ### Roadmap
 
@@ -256,10 +163,13 @@ Covers: empty project, full default structure, custom doc root via manifest, mis
 - [x] Governance validator
 - [x] Release workflow
 - [x] Multi-language CI templates
-- [ ] Skill lifecycle management — dedicated [`ai-skill-manager`](https://github.com/Consciencieux/ai-skill-manager) skill (INSTALL → UPDATE → ROLLBACK for all skills in `.agents/skills/`, incl. this one). Design: #1
-- [ ] IDE extension
+- [ ] Git workflow governance
+- [ ] Skill lifecycle management
 - [ ] Multi-agent coordination protocol
+- [ ] IDE extension
 - [ ] Remote governance dashboard
+
+Status details and design docs: [docs/roadmap.md](docs/roadmap.md)
 
 ### License
 
@@ -269,29 +179,44 @@ Covers: empty project, full default structure, custom doc root via manifest, mis
 
 ## Chinese
 
-**AI Agent 治理** —— 一键为 AI 编码 Agent 建立完整治理体系，并在项目生命周期中持续维护。
-
-为 AGENTS.md 生态设计，兼容 Claude Code、Cursor、Codex、opencode 及其他读取 AGENTS.md 的编码 Agent。
+**一条命令为你的仓库搭建完整的 AI 编码 Agent 工程环境 —— AGENTS.md、规则、Feature 登记、CI 与校验器 —— 并在整个项目生命周期中持续校验与维护。**
 
 ### 为什么需要
 
-AI 编码 Agent 能力很强，但每个新项目都是从零开始、没有上下文。
+AI 编码 Agent 能快速生成和修改代码，但它不会自动拥有项目的工程上下文、架构约束和长期维护机制。
 
-开发者每次都要手动创建：
+每个新项目开始时，开发者仍然需要手动建立：
 
 - AGENTS.md
+- CHANGELOG.md
 - 架构文档
 - Feature 登记
 - 编码规范
-- Git 规范
+- Git 工作流
 - CI 检查
 - 安全基线
 
-本 Skill 在第一天**自动**搭建好这些治理地基 —— 并在项目整个生命周期里持续维护它们。
+这些规则通常只存在于文档或聊天上下文中，容易随着时间、人员和 Agent 更替而失效。
+
+本 Skill 将这些治理能力转化为仓库级基础设施：第一天自动搭建治理体系，并在项目整个生命周期中持续验证、维护和防止漂移。
+
+### 解决方案
+
+生成的产物是仓库基础设施，而非静态模板 —— 像代码一样被跟踪（`manifest.json` 期望态 · `state.json` 当前态 · `validation.json` 观测态），并由漂移检测、验证门禁、防乱改与发布生命周期持续校验。
+
+**先初始化，再持续治理（Initialize first, govern continuously）。**
+
+| 现有方案 | 局限 |
+| --- | --- |
+| Prompt 包（CLAUDE.md） | 仅指令 —— 无校验、无生命周期 |
+| AGENTS.md 模板 | 一次性静态引导 —— 无人维护 |
+| CI 规则 | 只管代码 |
+| 企业级 AI 治理 | 在仓库之外 |
+| **AI Agent Governance** | **一键引导 + 生命周期校验 + 漂移防护，作为仓库基础设施** |
 
 ### 安装
 
-把 skill 放到你的 Agent 能发现的位置。跨 Agent 共享推荐 `.agents/skills`：
+这是 AI Agent skill，不是 CLI —— 把它放到你的编码 Agent 能发现 skill 的位置：
 
 ```
 .agents/skills/ai-agent-governance/SKILL.md
@@ -299,27 +224,18 @@ AI 编码 Agent 能力很强，但每个新项目都是从零开始、没有上�
 
 ```bash
 git clone https://github.com/Consciencieux/ai-agent-governance
-# 将仓库复制或软链到你选择的目录
+# 将 ai-agent-governance skill 目录复制或软链到你的 Agent skill 位置
 ```
 
-| 位置 | 自动发现方 | 适合 |
-| --- | --- | --- |
-| `.agents/skills` | opencode 及 Claude 兼容 Agent | 跨 Agent 共享 |
-| `.claude/skills` | opencode、Claude Code | Claude Code 生态 |
-| `.opencode/skills` | opencode | 仅 opencode |
-| `~/.config/opencode/skills` | opencode（全局） | 全机器 opencode 使用 |
-
-opencode 自动扫描 `.opencode/skills`、`.claude/skills`、`.agents/skills`（项目级与全局级）；Claude Code 读取 `.claude/skills`。
+skill 通过各 Agent 原生的 skill/rule discovery 机制被发现。按 Agent 的安装路径（`.claude/skills`、`.opencode/skills` 等）：[docs/skill-discovery.md](docs/skill-discovery.md)
 
 ### 快速开始
 
-在你的 AI 编码 Agent 会话中运行：
+**这是聊天提示语（chat prompt），不是 shell 命令。** 在你的 AI 编码 Agent 聊天窗口里说：
 
-```bash
+```text
 initialize project governance
 ```
-
-支持：Claude Code · Cursor · Codex · opencode
 
 **之前：**
 
@@ -334,6 +250,7 @@ my-project/
 ```
 my-project/
 ├── AGENTS.md
+├── CLAUDE.md
 ├── CHANGELOG.md
 ├── README.md
 ├── docs/
@@ -341,171 +258,69 @@ my-project/
 │   ├── plans/
 │   ├── features/
 │   └── rules/
+├── .env.example
 ├── .governance/
 ├── scripts/
 └── .github/workflows/
 ```
 
-一条指令，项目就拥有了完整治理环境：AGENTS.md、规则体系、Feature 登记、Git 规范、CI 校验、安全基线 —— 任何兼容 AGENTS.md 的 Agent 都能直接使用。
+一句话 —— 你的项目就拥有完整治理环境，任何兼容 AGENTS.md 的 Agent 都能直接使用。完整生成文件集见 [docs/bootstrap-output.md](docs/bootstrap-output.md)。
 
-已有治理体系？改用巡检：
+全部可用提示词（巡检、发布、漂移检查等）及其行为：[docs/commands.md](docs/commands.md)。
 
-```bash
-audit governance
-```
+### 核心能力（Core Capabilities）
 
-### 初始化产物
+#### 引导与运行期治理（Bootstrap & Runtime Governance）
 
-一条指令生成完整治理环境：
+- **治理引导（Governance bootstrap）** — 一次 INIT 搭好骨架：仓库检测 → 规则 → AGENTS.md → Feature 登记 → CI → 校验器 → 状态
+- **运行期治理（Runtime governance）** — 生成的 AGENTS.md + 按工具生成的适配层约束每个会话；多语言 CI + 格式基线（Node/TS、Python、Rust、Go、Java、C++）
+- **结构适配（Structural adaptivity）** — 成熟度自适应策略（L0 空仓库 → L3 生产），只合并不迁移
 
-```
-my-project/
-├── AGENTS.md                    运行期规则源头
-├── CLAUDE.md                    Agent 入口文件（@AGENTS.md，按检测到的工具生成）
-├── CHANGELOG.md                 Keep a Changelog
-├── README.md                    基础项目 README（名称 + 徽章 + 文档索引）
-├── docs/
-│   ├── ARCHITECTURE.md          数据流 + ADR + 组件登记
-│   ├── plans/                   开发计划 + 任务模板
-│   ├── features/                Feature 登记（只登记真实功能）
-│   └── rules/                   lifecycle / git-policy / security / coding / testing
-├── .env.example                 安全基线
-├── .governance/                 manifest / state / preflight + generated/skills
-├── scripts/verify-governance.js 校验门禁（退出码 = 通过/失败）
-└── .github/workflows/           CI 管线（能力检测式，优雅降级）
-```
+#### 漂移检测与验证（Drift Detection & Validation）
 
-同时生成 `.governance/generated/skills/` 下的 Agent 模块（含 drift-check、release-manager），接管日常任务的持续巡检与版本发布。
+- **漂移检测（Drift detection）** — `drift-check` 将 manifest 与现实比对，报告治理腐化
+- **验证门禁（Validation gates）** — 零依赖校验器在治理工件缺失时让 CI 失败
 
-### 特性
+#### 防乱改（Anti-Regression）
 
-**初始化 —— 一条指令建立治理：**
+与静态规则文件不同，AI Agent Governance 持续保护项目知识不漂移，让后续使用的 Agent 或开发者不会破坏已有治理成果：
 
-- **一键初始化** — 单条指令搭好完整治理骨架
-- **仓库检测** — 动手前先识别语言、包管理器、构建工具、测试框架与项目成熟度
-- **AGENTS.md 生成** — 运行期规则源头，精简且与工具无关
-- **规则体系生成** — lifecycle / Git 规范 / 安全 / 编码 / 测试规则，AGENTS.md 按章节 `@` 引用
-- **校验搭建** — 安装治理校验命令（零依赖校验器）
-- **CI 生成** — 6 种栈的能力检测式流水线（Node/TS、Python、Rust、Go、Java、C++），每种带显式 format 步骤（Prettier / ruff / cargo fmt / gofmt / spotless / clang-format）
-- **格式基线** — 必须配的栈（C++ `.clang-format`、Java spotless）生成真实风格配置；默认即可的栈（Node/Python）用工具默认；Go/Rust 零配置
-- **README 引导** — 项目无 README 时生成双语基础 README（英文在前 + 简体中文在后，锚点切换；已有则只合并不覆盖）
+- **生命周期强制** — 每次变更都遵循 Understand → Plan → Implement → Validate → Synchronize → Report
+- **受保护治理** — 治理文件无法被静默削弱（说明原因 → CHANGELOG → 升版本 → 跑校验器）
+- **基于证据的报告** — 状态基于真实校验输出，绝不伪造
 
-**长期维护 —— 持续保鲜：**
+完整机制（权限矩阵、删除保护、规则优先级、多 Agent 锁）：[docs/anti-regression.md](docs/anti-regression.md)
 
-- **验证门禁** — 通过自动化检查阻止治理漂移
-- **漂移检测** — 在治理腐化变成技术债之前发现
-- **AUDIT 巡检** — 随时健康检查已治理项目，最小补丁修复（不重建、不重构）
-- **发布生命周期** — `release-manager` 子技能执行发布前置检查，产出已验证、版本一致的发布（tag + GitHub Release）
-- **成熟度适配** — 自动调整"创建/合并/审计"策略：L0 空仓库 · L1 早期开发 · L2 活跃项目 · L3 生产系统
-- **多 Agent 状态** — `.governance/state.json` 跟踪 `agent_id` / `task_id` / `locked`，为协作做准备
+#### 发布生命周期（Release Lifecycle）
 
-**设计原则：**
-
-- **单一事实源** — Skill 是初始化规范唯一源头；生成后的 AGENTS.md 是运行期唯一源头
-- **反虚构** — Feature 登记只记录真实功能；空项目生成占位模板，绝不虚构功能或路径
-- **结构适配** — 经 `manifest.json` 尊重既有文档布局，不强制迁移
-- **防篡改** — 治理策略变更需说明原因 + 更新 CHANGELOG + 升版本 + 跑校验
-
-### Governance as Code（治理即代码）
-
-不再依赖聊天记录保存 AI 行为规则，而是将治理体系作为仓库内可版本控制的代码资产 —— `manifest.json`（期望态）、`state.json`（当前态）、带版本的规则文件与可验证的校验器。一切如代码一样可评审、可 diff、可审计。运行时输出（`validation.json`、`drift-report.json`）被 git 忽略，fresh checkout 不依赖它们。
-
-### 工作原理
-
-流程**从 INIT 开始** —— 它建立治理地基；运行期、AUDIT 与 RELEASE 在此基础上延伸：
-
-- **INIT（主流程）** — 新项目：一次性搭好治理骨架。
-  `Inspect → Build → Validate → Report`（基于真实证据，✅/⚠️/❌ 完成度核对表）。
-- **运行期** — 日常任务在生成的框架内运行：生成的 Agent 模块校验治理完整性、跨崩溃断点续跑、检测漂移。
-- **AUDIT** — 随时对已治理项目做健康检查：读 manifest → 跑校验器 `--json` → 治理健康报告 → 最小补丁（不重建、不重构）。
-- **RELEASE** — 由生成的 `release-manager` 子技能发布带版本、已验证的版本：前置检查（工作区干净 / 测试通过 / CHANGELOG 更新 / 版本一致 / tag 空闲 / 校验器通过）→ 版本同步 → tag → push → 创建 GitHub Release。
-
-单次运行内完成，上下文不足时允许**阶段化暂停**；外部阻塞标 ⚠️ Blocked，绝不伪造完成。
-
-### 仓库结构
+发布走 Human-in-the-loop 流程 —— **AI 提议，人确认**：
 
 ```
-ai-agent-governance/
-├── SKILL.md                    # 策略层 + INIT/AUDIT 编排
-├── references/
-│   ├── agents-md.template.md   # AGENTS.md 模板
-│   ├── feature-doc.template.md # Feature 文档模板（含反虚构规则）
-│   ├── ci-workflows.md         # CI 模板（能力检测 + 降级）
-│   ├── sub-skills.md           # 生成的 Agent 模块（含 drift-check、release-manager）
-│   ├── governance-files.md     # 受保护文件 + .governance Git 跟踪策略
-│   ├── release-policy.md       # 发布前置检查 + 版本一致性
-│   └── rules/                  # lifecycle / git-policy / security / coding / testing
-├── scripts/
-│   └── verify_governance.js    # 校验引擎（manifest 驱动路径 + governance_version）
-└── tests/
-    └── run-tests.js            # 验证套件（default / custom / 缺版本 / json / help / 无残留 / validation 可选）
+分析变更 → 生成 SemVer Proposal → 开发者批准 → 创建 tag → GitHub Release
 ```
 
-### 治理流程
-
-```
-SKILL.md（策略层 + INIT/AUDIT 编排）
-    |
-    v
-INIT — Inspect → Build → Validate → Report
-    |
-    v
-生成的项目治理
-    +-- AGENTS.md                  运行期规则源头
-    +-- docs/rules/                详细策略（AGENTS.md 按章节 @ 引用）
-    +-- .governance/state.json          机器状态（成熟度 / 阶段 / 锁）
-    +-- scripts/verify-governance.js  校验门禁（退出码 = 通过/失败）
-    |
-    v
-运行期 — Agent 模块校验完整性、断点续跑、检测漂移
-    |
-    v
-AUDIT — 健康检查 + 最小补丁（不重建）
-    |
-    v
-RELEASE — 前置检查 → 版本同步 → tag → push → GitHub Release
-```
-
-### 概念关系
-
-```
-.agents/skills
-    能力分发层（安装）
-
-        ↓
-
-SKILL.md
-    治理编排层
-
-        ↓
-
-AGENTS.md
-    人类可读的行为契约
-
-        ↓
-
-.governance/
-    机器可读的治理状态（manifest / state / validation）
-```
-
-- `.agents` 告诉 Agent 它能做什么。
-- `AGENTS.md` 告诉 Agent 它应该如何表现。
-- `.governance` 告诉系统已建立并验证了什么。
-
-状态分层参照 Kubernetes 的 Spec / Status / Health：
-`manifest.json` = 期望态 · `state.json` = 当前态 · `validation.json` = 观测态。
+- **分析** — `release-manager` 检查 git 历史与变更分类（SemVer 2.0.0），产出 Release Proposal（当前版本 / 推荐版本 / 发布类型 / 理由 / Release Notes）—— 只读
+- **批准** — 任何写操作前开发者必须明确确认；不确定性（Potential Breaking Change）暂停流程并请求澄清
+- **执行** — 批准后执行：annotated tag → push → GitHub Release，版本一致（synchronized versions）。规范：[references/workflows/release.md](references/workflows/release.md)
 
 ### 支持的 Agent
 
-兼容 Claude Code、Cursor、Codex、opencode 及其他基于 AGENTS.md 的编码 Agent。
+Claude Code · Cursor · Codex · opencode —— 以及其他基于 AGENTS.md 的 Agent。内核与工具无关；兼容性来自按工具生成的适配层（CLAUDE.md、.cursor/rules、copilot-instructions.md、opencode.json）。
 
-### 开发
+### 文档
 
-```bash
-npm test        # 或 node tests/run-tests.js
-```
-
-覆盖：空项目（exit 1）、完整默认结构（exit 0）、自定义文档根经 manifest（manifest 模式）、缺 governance_version（exit 1）、`--json` 输出、`--help`、无 `.agent` 残留、`validation.json` 可选。CI 已接入。
+- [docs/skill-discovery.md](docs/skill-discovery.md) — Agent 如何发现并触发 skill
+- [docs/commands.md](docs/commands.md) — 用户提示词 + 运行时组件
+- [docs/bootstrap-output.md](docs/bootstrap-output.md) — 完整带注释的初始化产物
+- [docs/governance-model.md](docs/governance-model.md) — Spec / Status / Health 状态模型
+- [docs/architecture.md](docs/architecture.md) — 概念图、运行模式、生命周期管线、仓库布局、设计原则
+- [docs/anti-regression.md](docs/anti-regression.md) — 防乱改机制完整明细
+- [docs/lifecycle.md](docs/lifecycle.md) — Agent 六阶段操作生命周期
+- [docs/validator.md](docs/validator.md) — 校验器用法与检查项
+- [docs/design-decisions/](docs/design-decisions/) — 架构决策记录（ADR）
+- [docs/roadmap.md](docs/roadmap.md) — 待开发功能与状态
+- [CONTRIBUTING.md](CONTRIBUTING.md) — 开发指南
+- [CHANGELOG.md](CHANGELOG.md) — 发布历史
 
 ### Roadmap
 
@@ -514,10 +329,13 @@ npm test        # 或 node tests/run-tests.js
 - [x] 治理校验器
 - [x] 发布工作流
 - [x] 多语言 CI 模板
-- [ ] Skill 生命周期管理 —— 独立 [`ai-skill-manager`](https://github.com/Consciencieux/ai-skill-manager) skill（管理 `.agents/skills/` 下所有 skill 的 INSTALL → UPDATE → ROLLBACK，含本 skill）。设计见 Issue #1
-- [ ] IDE 扩展
+- [ ] Git 工作流治理
+- [ ] Skill 生命周期管理
 - [ ] 多 Agent 协调协议
+- [ ] IDE 扩展
 - [ ] 远程治理看板
+
+状态详情与设计文档：[docs/roadmap.md](docs/roadmap.md)
 
 ### License
 

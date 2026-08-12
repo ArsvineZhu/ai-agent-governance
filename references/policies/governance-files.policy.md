@@ -1,6 +1,6 @@
 # 治理文件清单（单一事实源）
 
-本文件是「治理文件保护」与 `.governance/` Git 跟踪策略的**唯一清单来源**。SKILL.md 的「治理文件保护」节、生成的 AGENTS.md（`references/agents-md.template.md`）、`docs/rules/git-policy.md` 中的清单均以本文件为准；生成物必须内嵌同一份清单（目标项目不引用本仓库文件）。
+本文件是「治理文件保护」与 `.governance/` Git 跟踪策略的**唯一清单来源**。SKILL.md 的「治理文件保护」节、生成的 AGENTS.md（`references/templates/agents-md.template.md`）、`docs/rules/git-policy.md` 中的清单均以本文件为准；生成物必须内嵌同一份清单（目标项目不引用本仓库文件）。
 
 ## 受保护文件（修改需走「治理文件保护」流程）
 
@@ -33,8 +33,9 @@
 | --- | --- | --- |
 | `validation.json` | 临时观测结果 | 忽略 |
 | `drift-report.json` | 运行报告 | 忽略 |
+| `release-proposal.json` | Release Proposal 审批证据 | 忽略 |
 
-`validation.json` / `drift-report.json` 由 AUDIT/校验产生，**不作为 required artifact**——fresh-checkout CI 必须无它们也通过。
+`validation.json` / `drift-report.json` / `release-proposal.json` 由 AUDIT/RELEASE 产生，**不作为 required artifact**——fresh-checkout CI 必须无它们也通过。
 
 ## .governance/README.md 生成模板
 
@@ -53,6 +54,7 @@ Tracked:
 Ignored:
 - validation.json
 - drift-report.json
+- release-proposal.json
 
 Do not delete manually.
 ```
