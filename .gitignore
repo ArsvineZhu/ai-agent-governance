@@ -3,6 +3,7 @@ node_modules/
 .governance/validation.json
 .governance/drift-report.json
 .governance/release-proposal.json
+.governance/activity.jsonl
 .env
 .env.*
 *.pem

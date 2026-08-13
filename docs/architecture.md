@@ -99,6 +99,7 @@ ai-agent-governance/
 │   ├── verify_governance.js    # validator (manifest-driven paths + governance_version)
 │   ├── check-lock.js           # multi-agent lock check (read-only, exit 1 = lock held)
 │   ├── check-git-policy.js     # Git workflow gate (protected branch + directPush=false → exit 1)
+│   ├── check-secrets.js        # secret scan gate (staged diff, never prints the secret)
 │   └── release-manager.js      # plan (read-only) + execute (approval-gated) release tool
 ├── docs/                       # knowledge layer (human documentation)
 │   ├── architecture.md         # this page
@@ -221,6 +222,7 @@ ai-agent-governance/
 │   ├── verify_governance.js    # 校验引擎（manifest 驱动路径 + governance_version）
 │   ├── check-lock.js           # 多 Agent 锁检查（只读，exit 1 = 持锁）
 │   ├── check-git-policy.js     # Git 工作流门禁（受保护分支 + directPush=false → exit 1）
+│   ├── check-secrets.js        # 密钥扫描门禁（暂存区扫描，绝不打印密钥）
 │   └── release-manager.js      # 发布工具：plan（只读）+ execute（审批门禁）
 ├── docs/                       # 知识层（人类文档）
 │   ├── architecture.md         # 本页

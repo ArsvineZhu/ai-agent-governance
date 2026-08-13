@@ -114,6 +114,8 @@ All available prompts (audit, release, drift check, ...) and what they do: [docs
 
 - **Drift detection** — `drift-check` compares manifest against reality and reports governance decay
 - **Validation gates** — a zero-dependency validator fails CI when governance artifacts are missing
+- **Activity audit** — append-only `.governance/activity.jsonl` per-task trail ("which agent did what, when, with what result"), consumable by drift-check reports
+- **Secret scanning gate** — `scripts/check-secrets.js` blocks commits containing secret-like material (read-only, never prints the secret)
 
 #### Anti-Regression
 
@@ -174,18 +176,18 @@ Claude Code · Cursor · Codex · opencode — and other AGENTS.md-based agents.
 - [x] Multi-agent lock enforcement
 - [x] Validator content checks
 - [x] Git workflow governance
-- [ ] Skill lifecycle management *(near-term, v0.6.0)*
-- [ ] Agent activity audit *(near-term, v0.6.0)*
-- [ ] Secret scanning gate *(near-term, v0.6.0)*
-- [ ] Knowledge freshness detection *(mid-term, v0.7.0)*
-- [ ] Content consistency check *(mid-term, v0.7.0)*
-- [ ] Governance score & badge *(mid-term, v0.7.0)*
-- [ ] INIT scripted generator *(mid-term, v0.8.0)*
-- [ ] Multi-agent coordination protocol *(long-term)*
-- [ ] Remote governance dashboard *(long-term)*
-- [ ] Monorepo multi-governance domains *(long-term)*
-- [ ] Demo repository *(very long-term)*
-- [ ] Ecosystem polish: IDE extension + Cursor compatibility testing *(very long-term)*
+- [ ] Skill lifecycle management *(mid-term, v0.8.0+)*
+- [x] Agent activity audit
+- [x] Secret scanning gate
+- [ ] Knowledge freshness detection *(near-term, v0.7.0)*
+- [ ] Content consistency check *(near-term, v0.7.0)*
+- [ ] Governance score & badge *(near-term, v0.7.0)*
+- [ ] INIT scripted generator *(near-term, v0.7.0)*
+- [ ] Multi-agent coordination protocol *(mid-term, v0.8.0+)*
+- [ ] Remote governance dashboard *(mid-term, v0.8.0+)*
+- [ ] Monorepo multi-governance domains *(mid-term, v0.8.0+)*
+- [ ] Demo repository *(long-term)*
+- [ ] Ecosystem polish: IDE extension + Cursor compatibility testing *(long-term)*
 
 Status details and design docs: [docs/roadmap.md](docs/roadmap.md)
 
@@ -298,6 +300,8 @@ my-project/
 
 - **漂移检测（Drift detection）** — `drift-check` 将 manifest 与现实比对，报告治理腐化
 - **验证门禁（Validation gates）** — 零依赖校验器在治理工件缺失时让 CI 失败
+- **行为审计（Activity audit）** — 追加式 `.governance/activity.jsonl` 逐任务轨迹（"哪个 Agent 何时、做了什么、结果如何"），可由 drift-check 报告消费
+- **密钥扫描门禁（Secret scanning gate）** — `scripts/check-secrets.js` 阻止含密钥材料的提交（只读，绝不打印密钥）
 
 #### 防乱改（Anti-Regression）
 
@@ -358,18 +362,18 @@ Claude Code · Cursor · Codex · opencode —— 以及其他基于 AGENTS.md �
 - [x] 多 Agent 锁强制
 - [x] 校验器内容检查
 - [x] Git 工作流治理
-- [ ] Skill 生命周期管理（*近期，v0.6.0*）
-- [ ] Agent 行为审计（*近期，v0.6.0*）
-- [ ] 密钥扫描门禁（*近期，v0.6.0*）
-- [ ] 知识新鲜度检测（*中期，v0.7.0*）
-- [ ] 内容一致性检查（*中期，v0.7.0*）
-- [ ] 治理健康分与徽章（*中期，v0.7.0*）
-- [ ] INIT 生成器脚本化（*中期，v0.8.0*）
-- [ ] 多 Agent 协调协议（*远期*）
-- [ ] 远程治理看板（*远期*）
-- [ ] monorepo 多治理域（*远期*）
-- [ ] demo 示例仓库（*超远期*）
-- [ ] 生态完善：IDE 扩展 + Cursor 兼容实测（*超远期*）
+- [ ] Skill 生命周期管理（*中期，v0.8.0+*）
+- [x] Agent 行为审计
+- [x] 密钥扫描门禁
+- [ ] 知识新鲜度检测（*近期，v0.7.0*）
+- [ ] 内容一致性检查（*近期，v0.7.0*）
+- [ ] 治理健康分与徽章（*近期，v0.7.0*）
+- [ ] INIT 生成器脚本化（*近期，v0.7.0*）
+- [ ] 多 Agent 协调协议（*中期，v0.8.0+*）
+- [ ] 远程治理看板（*中期，v0.8.0+*）
+- [ ] monorepo 多治理域（*中期，v0.8.0+*）
+- [ ] demo 示例仓库（*远期*）
+- [ ] 生态完善：IDE 扩展 + Cursor 兼容实测（*远期*）
 
 状态详情与设计文档：[docs/roadmap.md](docs/roadmap.md)
 

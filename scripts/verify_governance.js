@@ -39,6 +39,7 @@ const DEFAULTS = [
   ["Lock check", "scripts/check-lock.js", isFile],
   ["Git policy", ".governance/git-policy.json", hasValidGitPolicy],
   ["Git policy check", "scripts/check-git-policy.js", isFile],
+  ["Secret scan gate", "scripts/check-secrets.js", isFile],
   [".governance state dir", ".governance", isDir],
   [".governance manifest", ".governance/manifest.json", isFile],
   [".governance state", ".governance/state.json", isFile],

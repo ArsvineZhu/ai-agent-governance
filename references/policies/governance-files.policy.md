@@ -16,6 +16,7 @@
 | `scripts/verify-governance.js` | 校验门禁 |
 | `scripts/check-lock.js` | 锁检查 |
 | `scripts/check-git-policy.js` | Git 策略门禁 |
+| `scripts/check-secrets.js` | 密钥扫描门禁 |
 | `opencode.json` | Agent 配置 |
 | `.github/workflows/**` | CI 配置 |
 
@@ -38,8 +39,9 @@
 | `validation.json` | 临时观测结果 | 忽略 |
 | `drift-report.json` | 运行报告 | 忽略 |
 | `release-proposal.json` | Release Proposal 审批证据 | 忽略 |
+| `activity.jsonl` | Agent 行为审计轨迹（追加式） | 忽略 |
 
-`validation.json` / `drift-report.json` / `release-proposal.json` 由 AUDIT/RELEASE 产生，**不作为 required artifact**——fresh-checkout CI 必须无它们也通过。
+`validation.json` / `drift-report.json` / `release-proposal.json` / `activity.jsonl` 由 AUDIT/RELEASE/任务运行产生，**不作为 required artifact**——fresh-checkout CI 必须无它们也通过。
 
 ## .governance/README.md 生成模板
 

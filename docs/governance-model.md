@@ -47,6 +47,15 @@ The validator resolves artifact paths from `manifest.json` when present (structu
 
 `validation.json` and `drift-report.json` are produced by AUDIT/release runs. They are git-ignored and never required artifacts: a fresh checkout must pass CI without them.
 
+### Activity Audit
+
+`.governance/activity.jsonl` — append-only JSON Lines, one entry per task end (written by the generated state-manager sub-skill):
+
+- Fields: `ts` / `agent_id` / `task_id` / `phase` / `action` / `files` / `commands` / `result` / `summary`
+- `action` vocabulary (v1): `init / inspect / plan / implement / modify / delete / commit / release / audit / migrate`
+- Git-ignored runtime output; never overwritten; secret-like tokens are redacted before writing
+- Consumed read-only by drift-check's `activity-report` mode (per agent / per action / failed only)
+
 ---
 
 ## Chinese
@@ -91,3 +100,12 @@ The validator resolves artifact paths from `manifest.json` when present (structu
 ### 运行时输出
 
 `validation.json` 与 `drift-report.json` 由 AUDIT/发布运行产生，被 git 忽略、不作为 required artifact：fresh checkout 无它们也必须通过 CI。
+
+### 行为审计（Activity Audit）
+
+`.governance/activity.jsonl` —— 追加式 JSON Lines，每个任务结束写一行（由生成的 state-manager 子技能写入）：
+
+- 字段：`ts` / `agent_id` / `task_id` / `phase` / `action` / `files` / `commands` / `result` / `summary`
+- `action` 词表（v1）：`init / inspect / plan / implement / modify / delete / commit / release / audit / migrate`
+- git 忽略的运行时输出；绝不覆写；密钥类 token 写入前强制脱敏
+- 由 drift-check 的 `activity-report` 模式只读消费（按 Agent / 按动作 / 只看失败）

@@ -35,6 +35,7 @@
 ## Mandatory Pre-commit Checklist
 
 push/PR 前必须确认：
+- [ ] `node scripts/check-secrets.js` 退出码 0（`git commit` 确认前必须；命中 → 清理暂存区后重跑）
 - [ ] CHANGELOG.md 已更新（未更新禁止 push）
 - [ ] 测试/静态检查/构建已通过并记录输出
 - [ ] 无敏感信息（密钥、token）进入提交

@@ -80,6 +80,7 @@ Note: users may request governance changes via explicit instruction (through the
 ## Git Write Policy
 - Auto: `git status`, `git diff`, `git add <specific files>`
 - Confirm: `git add .` (after checking .gitignore), `git commit`, `git push`, `git reset`, `git rebase`, destructive commands
+- Before any `git commit`: run `node scripts/check-secrets.js` — exit 0 required (never commit secret-like material)
 - Full detail: @docs/rules/git-policy.md
 
 ## Git Workflow Governance

@@ -10,6 +10,7 @@ const path = require("path");
 const VALIDATOR = path.join(__dirname, "..", "scripts", "verify_governance.js");
 const LOCK_CHECK = path.join(__dirname, "..", "scripts", "check-lock.js");
 const GIT_POLICY_CHECK = path.join(__dirname, "..", "scripts", "check-git-policy.js");
+const SECRET_CHECK = path.join(__dirname, "..", "scripts", "check-secrets.js");
 const TMP_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), "ai-agent-governance-test-"));
 
 function tmp(name) {
@@ -64,6 +65,7 @@ function buildFullDefault(dir) {
   fs.copyFileSync(VALIDATOR, path.join(dir, "scripts/verify-governance.js"));
   fs.copyFileSync(LOCK_CHECK, path.join(dir, "scripts/check-lock.js"));
   fs.copyFileSync(GIT_POLICY_CHECK, path.join(dir, "scripts/check-git-policy.js"));
+  fs.copyFileSync(SECRET_CHECK, path.join(dir, "scripts/check-secrets.js"));
 }
 
 test("full default structure exits 0 (defaults mode)", () => {
@@ -71,7 +73,7 @@ test("full default structure exits 0 (defaults mode)", () => {
   buildFullDefault(dir);
 
   const r = run(dir);
-  return r.status === 0 && r.stdout.includes("19/19 checks passed.");
+  return r.status === 0 && r.stdout.includes("20/20 checks passed.");
 });
 
 // ---------- 3. Custom structure via manifest ----------
@@ -140,7 +142,7 @@ test("--json reports passedAll, mode and governance_version", () => {
     out.passedAll === true &&
     out.governance_version === "1.0.0" &&
     Array.isArray(out.results) &&
-    out.results.length === 19
+    out.results.length === 20
   );
 });
 
@@ -171,7 +173,7 @@ test("validation.json present is optional and still passes", () => {
   const r = run(dir);
   return (
     r.status === 0 &&
-    r.stdout.includes("19/19 checks passed.") &&
+    r.stdout.includes("20/20 checks passed.") &&
     !r.stdout.includes(".governance validation")
   );
 });
@@ -229,6 +231,32 @@ test("check-git-policy: feature branch exits 0", () => {
   write(path.join(dir, ".governance/git-policy.json"), JSON.stringify({ protectedBranches: ["main", "master"], directPush: false, requireReview: true, allowForcePush: false }));
   const r = spawnSync(process.execPath, [GIT_POLICY_CHECK], { cwd: dir, encoding: "utf8" });
   return r.status === 0;
+});
+
+test("check-secrets: staged fake secret exits 1 without leaking the token", () => {
+  const dir = tmp("secrets-hit");
+  gitInit(dir);
+  write(path.join(dir, "app.js"), "const apiKey = 'AKIAIOSFODNN7EXAMPLE';");
+  spawnSync("git", ["add", "app.js"], { cwd: dir });
+  const r = spawnSync(process.execPath, [SECRET_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 1 && r.stderr.includes("aws-access-key") && !r.stderr.includes("AKIAIOSFODNN7EXAMPLE");
+});
+
+test("check-secrets: clean staged diff exits 0", () => {
+  const dir = tmp("secrets-clean");
+  gitInit(dir);
+  write(path.join(dir, "app.js"), "const greeting = 'hello';");
+  spawnSync("git", ["add", "app.js"], { cwd: dir });
+  const r = spawnSync(process.execPath, [SECRET_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 0;
+});
+
+test("validator: missing check-secrets.js exits 1", () => {
+  const dir = tmp("nosecrets");
+  buildFullDefault(dir);
+  fs.rmSync(path.join(dir, "scripts/check-secrets.js"));
+  const r = run(dir);
+  return r.status === 1 && r.stdout.includes("Secret scan gate");
 });
 
 // ---------- 9-15. Release planning & approval gate (scripts/release-manager.js) ----------

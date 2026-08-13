@@ -86,7 +86,7 @@ These components are automatically invoked by the lifecycle prompts. Users norma
 
 | Component | Prompts | Responsibility |
 | --- | --- | --- |
-| drift-check | `check governance drift` · `governance health report` · `is governance intact` | compares manifest against reality, reports drift |
+| drift-check | `check governance drift` · `governance health report` · `is governance intact` | compares manifest against reality, reports drift; `activity-report` mode aggregates the audit trail |
 | governance-validator | `governance check` · `verify governance` · `validate AGENTS` | runs the validator, records `validation.json` |
 | ci-generator | `setup CI` · `add CI` · `create workflow` | generates the CI pipeline for the detected stack |
 | repository-inspection | `inspect the repo` · `what is the stack` · `check environment` | inspects the environment, returns the stack report |
@@ -182,7 +182,7 @@ Git 工作流治理没有独立提示词 —— 它作为运行期规则自动�
 
 | 组件 | 提示词 | 职责 |
 | --- | --- | --- |
-| drift-check | `check governance drift` · `governance health report` · `is governance intact` | 将 manifest 与现实比对，报告漂移 |
+| drift-check | `check governance drift` · `governance health report` · `is governance intact` | 将 manifest 与现实比对，报告漂移；`activity-report` 模式聚合审计轨迹 |
 | governance-validator | `governance check` · `verify governance` · `validate AGENTS` | 运行校验器，记录 `validation.json` |
 | ci-generator | `setup CI` · `add CI` · `create workflow` | 为检测到的技术栈生成 CI 管线 |
 | repository-inspection | `inspect the repo` · `what is the stack` · `check environment` | 检测环境，返回技术栈报告 |

@@ -113,6 +113,16 @@ At the end of every task (or on interruption), update `.governance/state.json`:
 - `blocked`: external blockers with reason (e.g. "github_permission")
 
 Multi-agent rule: before starting, run `node scripts/check-lock.js` (exit 1 = another agent holds `locked`) or read state.json — wait or coordinate, never edit the same file in parallel. Never remove a completed entry. If a previous run left state, resume from it instead of restarting.
+
+**Audit trail (activity log):** at the same end-of-task point, append exactly ONE line to `.governance/activity.jsonl` (append-only JSON Lines, git-ignored runtime output):
+
+```json
+{"ts":"<ISO>","agent_id":"<id>","task_id":"<id>","phase":"<phase>","action":"<action>","files":["<paths>"],"commands":["<cmd>"],"result":"ok|blocked|failed","summary":"<one line>"}
+```
+
+- `action` vocabulary (v1): `init / inspect / plan / implement / modify / delete / commit / release / audit / migrate`
+- **Redaction (mandatory):** mask any secret-like token in `summary` / `commands` (same pattern classes as `scripts/check-secrets.js`) before writing — never log secret material
+- Never overwrite or rewrite existing lines (append-only); rotation is deferred
 ````
 
 ---
@@ -137,6 +147,13 @@ description: Use to detect governance drift in this repo — compare declared ar
    {"timestamp":"<ISO>","governance_version":"<X>","missing":[],"versionDrift":false}
    ```
 5. Propose minimal fixes only — no rebuild, no restructure, no migration. Governance-file changes require user confirmation (see Governance File Protection).
+
+**activity-report mode** — aggregate the audit trail (`.governance/activity.jsonl`):
+
+- Read the last N entries (default 50): group by `agent_id` / by `action` / failed-only (`result != "ok"`)
+- Output a summary table + the failed entries with `ts` / `agent_id` / `task_id` / `summary`
+- Never print `commands` / `files` from failed entries verbatim when they may contain secret material (apply the same redaction as state-manager)
+- Exit 0 always (reporting, not a gate)
 ````
 
 ---

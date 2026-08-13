@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented here.
 
+## [0.6.0] - 2026-08-13
+
+### Added
+
+- **Agent activity audit** — `.governance/activity.jsonl` append-only per-task audit trail (written by state-manager; `action` vocabulary v1; secret redaction mandatory); drift-check gains `activity-report` mode (per agent / per action / failed only)
+- **Secret scanning gate** — `scripts/check-secrets.js` read-only staged-diff scanner (AWS/GitHub/OpenAI-style/private-key/credential-assignment patterns; reports `file:line` + pattern class, never the secret); validator default checks 19 → 20; mandatory pre-commit step in git policy
+
+### Changed
+
+- `activity.jsonl` declared as git-ignored runtime output; `scripts/check-secrets.js` added to the protected-files list
+
+### Tests
+
+- Test suite 23 → 26 (secret hit exit 1 without leaking token, clean diff exit 0, missing check-secrets validator failure)
+
 ## [0.5.2] - 2026-08-13
 
 ### Added

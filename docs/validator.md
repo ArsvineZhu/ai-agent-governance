@@ -26,8 +26,8 @@ Exit code 0 when every governance artifact exists, 1 otherwise.
 ```
 AGENTS.md / CHANGELOG.md / CHANGELOG format / docs/ARCHITECTURE.md / docs/features/ / docs/plans/ /
 docs/rules/ / .gitignore / .env.example / CI workflow / scripts/verify-governance.js / scripts/check-lock.js /
-scripts/check-git-policy.js / .governance/ directory / manifest.json / state.json / preflight.json /
-git-policy.json / governance_version
+scripts/check-git-policy.js / scripts/check-secrets.js / .governance/ directory / manifest.json / state.json /
+preflight.json / git-policy.json / governance_version
 ```
 
 - `validation.json` / `drift-report.json` are runtime outputs, NOT required artifacts — a fresh checkout passes without them.
@@ -60,8 +60,8 @@ node scripts/verify-governance.js --help   # 用法
 ```
 AGENTS.md / CHANGELOG.md / CHANGELOG format / docs/ARCHITECTURE.md / docs/features/ / docs/plans/ /
 docs/rules/ / .gitignore / .env.example / CI workflow / scripts/verify-governance.js / scripts/check-lock.js /
-scripts/check-git-policy.js / .governance/ 目录 / manifest.json / state.json / preflight.json /
-git-policy.json / governance_version
+scripts/check-git-policy.js / scripts/check-secrets.js / .governance/ 目录 / manifest.json / state.json /
+preflight.json / git-policy.json / governance_version
 ```
 
 - `validation.json` / `drift-report.json` 是运行时输出，不是 required artifact —— fresh checkout 无它们也能通过。
