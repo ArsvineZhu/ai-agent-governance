@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented here.
 
+## [0.5.2] - 2026-08-13
+
+### Added
+
+- SKILL.md frontmatter gains `version` (synced with releases) and update-check triggers (`check skill update` / `update this skill`): the agent reads the local version, compares against the latest GitHub release, and reports the CHANGELOG delta — never auto-updates
+- Version consistency rule extended to five places: package.json · CHANGELOG · manifest `governance_version` · SKILL.md frontmatter `version` · tag
+
 ## [0.5.1] - 2026-08-13
 
 ### Fixed

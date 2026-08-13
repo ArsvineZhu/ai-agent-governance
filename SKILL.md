@@ -1,7 +1,8 @@
 ---
 name: ai-agent-governance
+version: 0.5.2
 description: >-
-  Use when initializing, retrofitting, auditing, OR releasing a project's AI-agent governance framework. Init mode: one-shot bootstrap of AGENTS.md, feature registry, lifecycle, CI validation, security baseline. Audit mode: health-check an already-governed project, detect drift vs .governance/manifest.json, apply minimal fixes. Release mode: version-synced, validated releases via the generated release-manager sub-skill. Triggers on "initialize governance", "setup project for AI agents", "create AGENTS.md framework", "audit governance", "governance health check", "fix governance drift", "release", "publish version". Also loads the generated sub-skills in .governance/generated/skills for ongoing agent work. Do NOT use for normal development tasks.
+  Use when initializing, retrofitting, auditing, OR releasing a project's AI-agent governance framework. Init mode: one-shot bootstrap of AGENTS.md, feature registry, lifecycle, CI validation, security baseline. Audit mode: health-check an already-governed project, detect drift vs .governance/manifest.json, apply minimal fixes. Release mode: version-synced, validated releases via the generated release-manager sub-skill. Triggers on "initialize governance", "setup project for AI agents", "create AGENTS.md framework", "audit governance", "governance health check", "fix governance drift", "release", "publish version", "check skill update", "update this skill". Also loads the generated sub-skills in .governance/generated/skills for ongoing agent work. Do NOT use for normal development tasks.
 ---
 
 # Governance Bootstrap
@@ -21,6 +22,17 @@ description: >-
 判定优先级：**用户明确指令 > `.governance/manifest.json` 存在性 > 成熟度**。INIT / AUDIT / RELEASE 都先走 Phase 0 环境检测。AUDIT 不重建、不重构、不迁移，只输出差距报告与最小补丁；RELEASE 由生成的 `release-manager` 子技能执行（见 `references/workflows/release.md`）；涉及治理文件改动走「治理文件保护」流程。
 
 > 定位：INIT 完成的项目进入**长期运行期**，日常任务由生成的 `.governance/generated/skills/` 子技能接管（含 `drift-check` 巡检）；本 skill 可随时以 AUDIT 模式回来做健康检查。
+
+### 版本与更新（Version & Update）
+
+- 本 skill 的版本记录在 SKILL.md frontmatter 的 `version` 字段（发布时与 package.json / CHANGELOG / tag 同步，见 `references/workflows/release.md` 版本一致性规则）。
+- 用户说 "check skill update" / "update this skill" 时，Agent 执行：
+
+  1. 读取本地 `version`
+  2. 查询上游最新 release（`gh release view` 或 fetch `https://api.github.com/repos/Consciencieux/ai-agent-governance/releases/latest`）
+  3. 比较并报告：本地版本 vs 最新版本、CHANGELOG 差异摘要、更新方式（当前为手动 clone；完整自动化 INSTALL → UPDATE → ROLLBACK 由 ai-skill-manager 提供，见 `docs/plans/skill-lifecycle-management.md`）
+
+- **绝不自动更新**（需用户明确同意）；更新后重新加载 skill。
 
 ## 策略层（Policy —— 每次执行都必须遵守）
 

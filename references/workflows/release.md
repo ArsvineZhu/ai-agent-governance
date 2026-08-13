@@ -38,11 +38,12 @@ AI 仅在前两阶段自动行动（分析 + 提案，只读）；任何写操�
 
 ## 版本一致性规则
 
-同一版本四处必须一致：
+同一版本**五处**必须一致：
 
 - `package.json` 的 `version`
 - `CHANGELOG.md` 顶部版本节
 - `.governance/manifest.json` 的 `governance_version`
+- SKILL.md frontmatter 的 `version`
 - Git tag `v<version>`
 
 SemVer：MAJOR.MINOR.PATCH —— 破坏性 → MAJOR，新能力 → MINOR，修复 → PATCH。
