@@ -50,9 +50,12 @@ AI 编码 Agent 能快速生成和修改代码，但它不会自动拥有项目�
 .agents/skills/ai-agent-governance/SKILL.md
 ```
 
+**技能载荷（只安装这些）：** `SKILL.md` + `references/` + `scripts/` + `LICENSE`。其余内容（`docs/`、`tests/`、`package.json`、`.github/`、`README`、`CONTRIBUTING`、`CHANGELOG`、`AGENTS.md`）是仓库基础设施，**不要**复制进 skill 安装目录。
+
 ```bash
 git clone https://github.com/Consciencieux/ai-agent-governance
-# 将 ai-agent-governance skill 目录复制或软链到你的 Agent skill 位置
+mkdir -p ~/.agents/skills/ai-agent-governance
+cp -R SKILL.md references scripts LICENSE ~/.agents/skills/ai-agent-governance/
 ```
 
 skill 通过各 Agent 原生的 skill/rule discovery 机制被发现。按 Agent 的安装路径（`.claude/skills`、`.opencode/skills` 等）：[docs/zh-CN/skill-discovery.md](skill-discovery.md)

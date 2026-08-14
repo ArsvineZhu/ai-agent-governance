@@ -8,7 +8,7 @@
 npm test        # 或 node tests/run-tests.js
 ```
 
-测试套件覆盖：空项目（exit 1）、完整默认结构（exit 0，20 项检查）、自定义文档根经 manifest（manifest 模式）、缺 governance_version（exit 1）、`--json` 输出、`--help`、无 `.agent` 残留、`validation.json` 可选、CHANGELOG 格式检查、锁检查（无状态 / 未持锁 / 持锁）、Git 策略检查（非法策略 / 受保护分支阻止 / 特性分支通过）、密钥扫描（命中 exit 1 且不泄露 token / 干净 exit 0 / 缺门禁使校验器失败）、发布规划（SemVer 分类：docs/重构 → patch、CLI 命令 → minor、删除公开 API → major、不确定性 → 澄清、`--file` 输入）与审批门禁（未批准 → 无 tag，批准 → 创建 annotated tag）。CI 每次 push/PR 运行。
+测试套件覆盖：空项目（exit 1）、完整默认结构（exit 0，20 项检查）、自定义文档根经 manifest（manifest 模式）、缺 governance_version（exit 1）、`--json` 输出、`--help`、无 `.agent` 残留、`validation.json` 可选、CHANGELOG 格式检查、锁检查（无状态 / 未持锁 / 持锁）、Git 策略检查（非法策略 / 受保护分支阻止 / 特性分支通过）、密钥扫描（命中 exit 1 且不泄露 token / 干净 exit 0 / 缺门禁使校验器失败）、发布规划（SemVer 分类：docs/重构 → patch、CLI 命令 → minor、删除公开 API → major、不确定性 → 澄清、`--file` 输入）与审批门禁（未批准 → 无 tag，批准 → 创建 annotated tag）、文档一致性（三树平行 exit 0 / 标题漂移 exit 1 / 缺失文件 exit 1）。CI 每次 push/PR 运行。
 
 ## 各目录用途
 
@@ -21,13 +21,15 @@ npm test        # 或 node tests/run-tests.js
 | `tests/run-tests.js` | 测试套件 |
 | `docs/en/` `docs/zh-CN/` `docs/zh-TW/` | 知识层 —— 人类文档，每种语言一棵目录树 |
 | `docs/glossary.md` | 三语术语对照表（术语的单一事实源） |
+| `docs/design-decisions/` | 架构决策记录（共享，简体单语） |
+| `docs/archive/` | 已完成计划归档（共享，单语，绝不翻译） |
 
 **新文件放哪里？** 如果删掉该文件会导致 Agent 无法执行（INIT/AUDIT/RELEASE 需要读它）→ `references/`；如果只是帮人理解、维护、贡献 → `docs/<语言>/`。
 
 ## 语言政策（按受众）
 
 - **Agent 面向的文件一律单语** —— `SKILL.md`、`AGENTS.md`、`references/**` 以及生成产物的正文（AGENTS.md、rules、子技能）绝不携带第二语言段落。惯例：本 skill 自身的执行文档（`SKILL.md`、`references/policies`、`references/workflows`）用中文；自动加载的 Agent 指引（`AGENTS.md`、生成模板正文）用英文。
-- **开发者面向的文件三语且拆分** -- 根目录只保留英文主页（`README.md`、`CONTRIBUTING.md`）；简体/繁体翻译下沉到各自语言树（`docs/zh-CN/README.md`、`docs/zh-TW/README.md`…）。**简体中文（zh-CN）是源语言** -- 修改从简体发起，再同步到英文与繁体中文（台湾用语）。改一种语言必须**在同一次改动里同步另两种**。一致性映射：英文入口文件即根目录 `README.md`/`CONTRIBUTING.md`（不在 `docs/en/` 下重复）。
+- **开发者面向的文件三语且拆分** -- 根目录只保留英文主页（`README.md`、`CONTRIBUTING.md`）；简体/繁体翻译下沉到各自语言树（`docs/zh-CN/README.md`、`docs/zh-TW/README.md`…）。**简体中文（zh-CN）是源语言** -- 修改从简体发起，再同步到英文与繁体中文（台湾用语）。改一种语言必须**在同一次改动里同步另两种**（稳定文档）；活跃草稿可延迟翻译至内容稳定，但 push/release 前必须补齐（parity 闸门兜底）。一致性映射：英文入口文件即根目录 `README.md`/`CONTRIBUTING.md`（不在 `docs/en/` 下重复）。结构一致性由 `scripts/check-doc-parity.js` 强制（CI + 发布前置 `docs.parity_passed`）。
 - **术语** —— 引入新术语前先查 `docs/glossary.md`，缺失则补三语条目；所有文件保持同一译法。
 
 ## 修改治理工件

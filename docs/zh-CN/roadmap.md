@@ -36,7 +36,7 @@
 - **demo 示例仓库** —— 展示治理产物实际效果的真实示例项目（远期；在此之前本仓库仅作为*轻量治理*参考：发布流程 + plans/archive + ADR + 测试，**不是**完整的被治理软件项目——其 validator 默认模式必然失败属设计使然）
 - **生态完善** —— IDE 扩展（治理感知的编辑器集成；真实用户需求出现时触发）+ Cursor 兼容实测（验证文档声明的 `.cursor/rules` 兼容性；机制变化或问题报告时触发）
 
-说明：未实现功能的设计计划在各语言树的 `plans/`（如 `skill-lifecycle-management.md`）；已完成的 TASK 计划在发布时归档到 `plans/archive/`。被治理项目自身的开发计划由 INIT 生成在 `docs/plans/DEVELOPMENT_PLAN.md`。
+说明：未实现功能的设计计划在各语言树的 `plans/`（如 `skill-lifecycle-management.md`）；已完成的 TASK 计划在发布时归档到 `docs/archive/`。被治理项目自身的开发计划由 INIT 生成在 `docs/plans/DEVELOPMENT_PLAN.md`。
 
 **维护规则（每次发布滚动重排）：**
 

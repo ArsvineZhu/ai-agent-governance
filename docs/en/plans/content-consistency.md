@@ -1,4 +1,4 @@
-# Content Consistency Check（TASK 计划）
+# Content Consistency Check (TASK plan)
 
 [English](content-consistency.md) · [简体中文](../../zh-CN/plans/content-consistency.md) · [繁體中文](../../zh-TW/plans/content-consistency.md)
 
@@ -30,7 +30,7 @@ Check classes (v1):
 4. **Roadmap target validity** — unfinished items whose target version ≤ current version are flagged as expired targets
 5. **Link validity** — relative markdown links in docs must resolve to real files
 6. **Numeric claims** — documented counts (sub-skill count, validator check count, test count) must match the actual sources
-7. **Trilingual tree parity** - developer-facing files only (the three trees `docs/en/`, `docs/zh-CN/`, `docs/zh-TW/`; entry-file mapping: English = root `README.md`/`CONTRIBUTING.md`, 简/繁 = in-tree `README.md`/`CONTRIBUTING.md`; agent-facing files and shared historical records are single-language by policy and are skipped): compare the same-named files across the three trees structurally - heading count/order per level, code-block count, table dimensions, list-item count; flag mismatches. Structural parity is NOT semantic parity (translation quality stays with the human/agent reviewer)
+7. **Trilingual tree parity** - developer-facing files only (the three trees `docs/en/`, `docs/zh-CN/`, `docs/zh-TW/`; entry-file mapping: English = root `README.md`/`CONTRIBUTING.md`, 简/繁 = in-tree `README.md`/`CONTRIBUTING.md`; agent-facing files and shared historical records are single-language by policy and are skipped): compare the same-named files across the three trees structurally - heading count/order per level, code-block count, table dimensions, list-item count; flag mismatches. Structural parity is NOT semantic parity (translation quality stays with the human/agent reviewer). **Already implemented standalone**: this repo ships `scripts/check-doc-parity.js` (CI + release precondition `docs.parity_passed`) guarding its own three trees; v0.7.0 folds this logic into drift-check's `consistency` mode for governed projects, avoiding duplicate development.
 
 Report shape (appended to drift-report.json):
 

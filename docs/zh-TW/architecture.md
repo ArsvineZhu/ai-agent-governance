@@ -7,7 +7,7 @@
 ### 概念圖
 
 ```
-                  治理规范（Governance Specification）
+                  治理規範（Governance Specification）
 
                      .governance/
                      manifest.json
@@ -22,7 +22,7 @@
                           |
          --------------------------------
 
-         运行时契约（Agent Runtime Contract）
+         執行时契约（Agent Runtime Contract）
 
               AGENTS.md
               CLAUDE.md
@@ -59,11 +59,11 @@ INIT — Inspect → Build → Validate → Report
 生成的專案治理
     +-- AGENTS.md                  執行期規則源頭
     +-- docs/rules/                詳細策略（AGENTS.md 按章節 @ 引用）
-    +-- .governance/state.json          机器状态（成熟度 / 阶段 / 锁）
-    +-- scripts/verify-governance.js  校验门禁（退出码 = 通过/失败）
+    +-- .governance/state.json          机器狀態（成熟度 / 阶段 / 锁）
+    +-- scripts/verify-governance.js  校驗閘門（退出码 = 通过/失败）
     |
     v
-运行期 — Agent 模块校验完整性、断点续跑、检测漂移
+執行期 — Agent 模組校驗完整性、断点续跑、偵測漂移
     |
     v
 AUDIT — 健康检查 + 最小补丁（不重建）
@@ -77,47 +77,47 @@ RELEASE — 前置检查 → 版本同步 → tag → push → GitHub Release
 ```
 ai-agent-governance/
 ├── SKILL.md                    # 策略层 + INIT/AUDIT 编排
-├── references/                 # 实现层（Agent 运行时输入）
+├── references/                 # 實作層（Agent 執行時輸入）
 │   ├── templates/
-│   │   ├── agents-md.template.md   # AGENTS.md 模板
-│   │   ├── feature-doc.template.md # Feature 文档模板（含反虚构规则）
-│   │   ├── sub-skills.md           # 生成的 Agent 模块（含 drift-check、release-manager、plan-manager）
-│   │   ├── env-example.template.md # .env.example 模板（占位符、按依赖裁剪）
-│   │   ├── gitmessage.template.md  # .gitmessage.txt 模板（提交约定）
-│   │   └── git-policy.template.md  # .governance/git-policy.json 模板（Git 工作流策略）
+│   │   ├── agents-md.template.md   # AGENTS.md 範本
+│   │   ├── feature-doc.template.md # Feature 文件範本（含反虛構規則）
+│   │   ├── sub-skills.md           # 生成的 Agent 模組（含 drift-check、release-manager、plan-manager）
+│   │   ├── env-example.template.md # .env.example 範本（佔位符、按依賴裁剪）
+│   │   ├── gitmessage.template.md  # .gitmessage.txt 範本（提交約定）
+│   │   └── git-policy.template.md  # .governance/git-policy.json 範本（Git 工作流程策略）
 │   ├── policies/
 │   │   ├── lifecycle.policy.md / git.policy.md / security.policy.md / coding.policy.md / testing.policy.md
-│   │   └── governance-files.policy.md   # 受保护文件 + .governance Git 跟踪策略
+│   │   └── governance-files.policy.md   # 受保護檔案 + .governance Git 追蹤策略
 │   └── workflows/
-│       ├── ci.md               # CI 模板（能力检测 + 降级）
-│       └── release.md          # 发布前置检查 + 版本一致性
+│       ├── ci.md               # CI 範本（能力偵測 + 降級）
+│       └── release.md          # 發佈前置檢查 + 版本一致性
 ├── scripts/
-│   ├── verify_governance.js    # 校验引擎（manifest 驱动路径 + governance_version）
-│   ├── check-lock.js           # 多 Agent 锁检查（只读，exit 1 = 持锁）
-│   ├── check-git-policy.js     # Git 工作流门禁（受保护分支 + directPush=false → exit 1）
+│   ├── verify_governance.js    # 校驗引擎（manifest 驅動路徑 + governance_version）
+│   ├── check-lock.js           # 多 Agent 鎖檢查（唯讀，exit 1 = 持鎖）
+│   ├── check-git-policy.js     # Git 工作流程閘門（受保護分支 + directPush=false → exit 1）
 │   ├── check-secrets.js        # 密鑰掃描閘門（暫存區掃描，絕不列印密鑰）
-│   └── release-manager.js      # 发布工具：plan（只读）+ execute（审批门禁）
+│   └── release-manager.js      # 發佈工具：plan（唯讀）+ execute（審批閘門）
 ├── docs/                       # 知識層（人類文件）
 │   ├── glossary.md             # 三語術語對照表（共享）
 │   ├── design-decisions/       # 架構決策記錄（共享，簡體單語）
 │   ├── archive/                # 已完成計劃歸檔（共享，單語）
 │   ├── en/                     # 英文樹
-│   │   ├── architecture.md     # 本页
-│   │   ├── governance-model.md # Spec / Status / Health 状态模型
-│   │   ├── anti-regression.md  # 防乱改机制完整明细
-│   │   ├── lifecycle.md        # Agent 六阶段操作生命周期
-│   │   ├── validator.md        # 校验器用法与检查项
-│   │   ├── skill-discovery.md  # Agent 如何发现并触发 skill
-│   │   ├── commands.md         # 完整提示词参考（用户入口命令）
-│   │   ├── bootstrap-output.md # 完整带注释的初始化产物
-│   │   ├── roadmap.md          # 待开发功能与状态
+│   │   ├── architecture.md     # 本頁
+│   │   ├── governance-model.md # Spec / Status / Health 狀態模型
+│   │   ├── anti-regression.md  # 防亂改機制完整明細
+│   │   ├── lifecycle.md        # Agent 六階段操作生命週期
+│   │   ├── validator.md        # 校驗器用法與檢查項
+│   │   ├── skill-discovery.md  # Agent 如何發現並觸發 skill
+│   │   ├── commands.md         # 完整提示詞參考（使用者入口命令）
+│   │   ├── bootstrap-output.md # 完整帶註解的初始化產物
+│   │   ├── roadmap.md          # 待開發功能與狀態
 │   │   └── plans/              # 設計計劃（TASK 格式）
-│   ├── zh-CN/                  # 简体中文树（源语言）
-│   └── zh-TW/                  # 繁體中文树（台湾）
-├── README.md                   # 英文主页（另有 README.zh-CN.md / README.zh-TW.md）
-├── CONTRIBUTING.md             # 开发指南（另有 CONTRIBUTING.zh-CN.md / CONTRIBUTING.zh-TW.md）
+│   ├── zh-CN/                  # 簡體中文樹（源語言）
+│   └── zh-TW/                  # 繁體中文樹（臺灣）
+├── README.md                   # 英文首頁（翻譯：docs/zh-CN/README.md、docs/zh-TW/README.md）
+├── CONTRIBUTING.md             # 開發指南（翻譯：docs/zh-CN/CONTRIBUTING.md、docs/zh-TW/CONTRIBUTING.md）
 └── tests/
-    └── run-tests.js            # 验证套件
+    └── run-tests.js            # 驗證套件
 ```
 
 ### 設計原則

@@ -1,4 +1,4 @@
-# Knowledge Freshness Detection（TASK 计划）
+# Knowledge Freshness Detection (TASK plan)
 
 [English](knowledge-freshness.md) · [简体中文](../../zh-CN/plans/knowledge-freshness.md) · [繁體中文](../../zh-TW/plans/knowledge-freshness.md)
 

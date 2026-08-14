@@ -34,7 +34,7 @@
 - `scripts/generate-governance.js` + `references/init-spec.json` —— 新增
 - `SKILL.md` Phase 1 —— 重寫為「執行生成器 + 處理閘門」
 - `tests/run-tests.js` —— 快照 fixture 套件
-- `docs/bootstrap-output.md` —— 輸出規格改由生成器為源
+- `docs/zh-TW/bootstrap-output.md` —— 輸出規格改由生成器為源
 
 ### 風險
 

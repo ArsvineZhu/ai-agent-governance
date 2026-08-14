@@ -17,7 +17,7 @@
 drift-check 增加 `freshness` 模式（僅報告，**絕不做閘門**）：
 
 - 每份文件的過時度 = 距其**最後一次 git 提交**的天數 vs 同期程式碼活躍度（`src/` 等目錄的提交）
-- **必須用 `git log -1 --format=%cs -- <文档>`，不能用檔案 mtime** —— 全新 clone 的所有 mtime 都等於檢出時間
+- **必須用 `git log -1 --format=%cs -- <文件>`，不能用檔案 mtime** —— 全新 clone 的所有 mtime 都等於檢出時間
 - 閾值（建議性）：程式碼活躍而文件 30+ 天未提交 → `stale`；90+ 天 → `very stale`
 - 結果寫入現有 `.governance/drift-report.json` 的 `"stale": ["docs/ARCHITECTURE.md", ...]` 欄位
 - 兩份必更文件優先報告；feature 文件一併納入

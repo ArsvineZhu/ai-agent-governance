@@ -30,7 +30,7 @@ drift-check 增加 `consistency` 模式（仅报告；与 `freshness` 成对，�
 4. **Roadmap 目标有效性** —— 未完成项的目标版本 ≤ 当前版本的标记为目标过期
 5. **链接有效性** —— 文档中的相对 markdown 链接必须能解析到真实文件
 6. **数值声明** —— 文档中的计数（子技能数、校验器检查项数、测试数）必须与实际来源一致
-7. **多语言结构一致性（三树）** -- 开发者面向文件（三棵目录树 `docs/en/`、`docs/zh-CN/`、`docs/zh-TW/`，入口文件映射：英文=根 `README.md`/`CONTRIBUTING.md`，简/繁=各树内 `README.md`/`CONTRIBUTING.md`；Agent 面向文件与共享区历史记录按政策为单语，直接跳过）：对每棵树的同名文件做结构比对--各层级标题数量与顺序、代码块数量、表格行列数、列表项数量；不一致即标记。结构性同步 ≠ 语义性同步（翻译质量仍由人/Agent 复核）
+7. **多语言结构一致性（三树）** -- 开发者面向文件（三棵目录树 `docs/en/`、`docs/zh-CN/`、`docs/zh-TW/`，入口文件映射：英文=根 `README.md`/`CONTRIBUTING.md`，简/繁=各树内 `README.md`/`CONTRIBUTING.md`；Agent 面向文件与共享区历史记录按政策为单语，直接跳过）：对每棵树的同名文件做结构比对--各层级标题数量与顺序、代码块数量、表格行列数、列表项数量；不一致即标记。结构性同步 ≠ 语义性同步（翻译质量仍由人/Agent 复核）。**先行实现**：本仓库已有独立脚本 `scripts/check-doc-parity.js`（CI + 发布前置 `docs.parity_passed`）验证本仓库自身的三树同构；v0.7.0 实施时将该逻辑并入 drift-check 的 `consistency` 模式，供被治理项目复用，避免重复开发。
 
 报告形态（追加进 drift-report.json）：
 

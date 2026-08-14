@@ -1,6 +1,6 @@
 ---
 name: ai-agent-governance
-version: 0.6.0
+version: 0.7.0
 description: >-
   Use when initializing, retrofitting, auditing, OR releasing a project's AI-agent governance framework. Init mode: one-shot bootstrap of AGENTS.md, feature registry, lifecycle, CI validation, security baseline. Audit mode: health-check an already-governed project, detect drift vs .governance/manifest.json, apply minimal fixes. Release mode: version-synced, validated releases via the generated release-manager sub-skill. Triggers on "initialize governance", "setup project for AI agents", "create AGENTS.md framework", "audit governance", "governance health check", "fix governance drift", "release", "publish version", "check skill update", "update this skill". Also loads the generated sub-skills in .governance/generated/skills for ongoing agent work. Do NOT use for normal development tasks.
 ---
@@ -104,7 +104,9 @@ description: >-
 ### 语言政策（按受众）
 
 - **Agent 面向文件单语** —— AGENTS.md（英文，工具自动加载）、docs/rules/**、`.governance/**`、子技能正文：绝不携带第二语言段落。
-- **开发者面向文件按项目约定多语言** —— README 与 docs/ 的语言布局跟随项目约定；默认拆分式：**根目录只保留英文主页（`README.md`），翻译版下沉 docs/**（`docs/README.zh-CN.md` 等），不做单文件多语言合并、不把语言变体堆在根目录。多语言文档树（`docs/<lang>/`）仅当项目明确约定时生成，默认不做。改任何语言版本必须同步其余语言版本（同一提交内）。
+- **开发者面向文件按项目约定多语言** —— README 与 docs/ 的语言布局跟随项目约定；默认拆分式：**根目录只保留英文主页（`README.md`），翻译版下沉 docs/**（`docs/README.zh-CN.md` 等），不做单文件多语言合并、不把语言变体堆在根目录。多语言文档树（`docs/<lang>/`）仅当项目明确约定时生成，默认不做。改任何语言版本必须同步其余语言版本（**稳定文档同一提交内同步；活跃草稿可延迟翻译至内容稳定，但 push/发布前必须补齐**）。
+- **历史记录不翻译** —— 归档的计划（`docs/plans/archive/`）与 ADR 决策史保持项目约定语言，绝不翻译；它们记录的是已发生的决策与已完成的工作，翻译零收益。
+- **多语言项目可选术语表** —— 仅当项目采用多语言文档时生成 `docs/glossary.md`（术语对照，新术语先入表再入文）；单语项目不生成。
 
 ### 熔断机制（错误恢复）
 

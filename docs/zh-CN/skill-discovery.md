@@ -2,7 +2,13 @@
 
 [English](../en/skill-discovery.md) · [简体中文](skill-discovery.md) · [繁體中文](../zh-TW/skill-discovery.md)
 
-本项目以 AI Agent skill 形式实现。不同 Agent 通过各自的 skill/rule discovery 机制加载它 —— 各 Agent 的机制不同，契约一致。
+本项目以 AI Agent skill 形式实现。
+
+### 安装载荷
+
+安装到技能目录时**只复制** `SKILL.md` + `references/` + `scripts/` + `LICENSE`；`docs/`、`tests/`、`package.json`、`.github/`、README、CONTRIBUTING、CHANGELOG、AGENTS.md 是仓库基础设施，不属于技能载荷，不要复制。
+
+不同 Agent 通过各自的 skill/rule discovery 机制加载它 —— 各 Agent 的机制不同，契约一致。
 
 ### 工作原理
 

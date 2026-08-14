@@ -114,8 +114,8 @@ ai-agent-governance/
 │   │   └── plans/              # design plans (TASK format)
 │   ├── zh-CN/                  # 简体中文 tree (canonical source)
 │   └── zh-TW/                  # 繁體中文 tree (Taiwan)
-├── README.md                   # English landing (+ README.zh-CN.md / README.zh-TW.md)
-├── CONTRIBUTING.md             # development guide (+ CONTRIBUTING.zh-CN.md / CONTRIBUTING.zh-TW.md)
+├── README.md                   # English landing (translations: docs/zh-CN/README.md, docs/zh-TW/README.md)
+├── CONTRIBUTING.md             # development guide (translations: docs/zh-CN/CONTRIBUTING.md, docs/zh-TW/CONTRIBUTING.md)
 └── tests/
     └── run-tests.js            # test suite
 ```

@@ -114,8 +114,8 @@ ai-agent-governance/
 │   │   └── plans/              # 设计计划（TASK 格式）
 │   ├── zh-CN/                  # 简体中文树（源语言）
 │   └── zh-TW/                  # 繁體中文树（台湾）
-├── README.md                   # 英文主页（另有 README.zh-CN.md / README.zh-TW.md）
-├── CONTRIBUTING.md             # 开发指南（另有 CONTRIBUTING.zh-CN.md / CONTRIBUTING.zh-TW.md）
+├── README.md                   # 英文主页（翻译：docs/zh-CN/README.md、docs/zh-TW/README.md）
+├── CONTRIBUTING.md             # 开发指南（翻译：docs/zh-CN/CONTRIBUTING.md、docs/zh-TW/CONTRIBUTING.md）
 └── tests/
     └── run-tests.js            # 验证套件
 ```

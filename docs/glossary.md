@@ -62,7 +62,6 @@
 | compatibility | 兼容性 | 相容性 |
 | update | 更新 | 更新 |
 | install | 安装 | 安裝 |
-| rollback | 回滚 | 回滾 |
 | freshness | 新鲜度 | 新鮮度 |
 | consistency | 一致性 | 一致性 |
 | audit trail | 审计轨迹 | 稽核軌跡 |
@@ -90,3 +89,18 @@
 | bilingual | 双语 | 雙語 |
 | trilingual | 三语 | 三語 |
 | glossary | 术语表 | 術語表 |
+| software | 软件 | 軟體 |
+| default | 默认 | 預設 |
+| server | 服务器 | 伺服器 |
+| network | 网络 | 網路 |
+| data | 数据 | 資料 |
+| support | 支持 | 支援 |
+| user | 用户 | 使用者 |
+| code | 代码 | 程式碼 |
+| execute | 执行 | 執行 |
+| gate | 门禁 | 閘門 |
+| template | 模板 | 範本 |
+| entry file | 入口文件 | 入口檔案 |
+| split | 拆分 | 拆分 |
+| canonical source | 源语言 | 源語言 |
+| draft exception | 草稿例外 | 草稿例外 |

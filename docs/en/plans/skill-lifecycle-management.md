@@ -1,4 +1,4 @@
-# Skill Lifecycle Management（TASK 计划）
+# Skill Lifecycle Management (TASK plan)
 
 [English](skill-lifecycle-management.md) · [简体中文](../../zh-CN/plans/skill-lifecycle-management.md) · [繁體中文](../../zh-TW/plans/skill-lifecycle-management.md)
 

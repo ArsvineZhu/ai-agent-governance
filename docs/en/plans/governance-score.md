@@ -1,4 +1,4 @@
-# Governance Score & Badge（TASK 计划）
+# Governance Score & Badge (TASK plan)
 
 [English](governance-score.md) · [简体中文](../../zh-CN/plans/governance-score.md) · [繁體中文](../../zh-TW/plans/governance-score.md)
 

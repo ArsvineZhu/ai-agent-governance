@@ -50,10 +50,12 @@ This is an AI agent skill, not a CLI — install it where your coding agent disc
 .agents/skills/ai-agent-governance/SKILL.md
 ```
 
+**Skill payload (install these only):** `SKILL.md` + `references/` + `scripts/` + `LICENSE`. Everything else (`docs/`, `tests/`, `package.json`, `.github/`, `README`, `CONTRIBUTING`, `CHANGELOG`, `AGENTS.md`) is repository infrastructure — do NOT copy it into the skill installation.
+
 ```bash
 git clone https://github.com/Consciencieux/ai-agent-governance
-# copy or symlink the ai-agent-governance skill directory
-# into your agent skill location
+mkdir -p ~/.agents/skills/ai-agent-governance
+cp -R SKILL.md references scripts LICENSE ~/.agents/skills/ai-agent-governance/
 ```
 
 The skill is discovered through each agent's native skill/rule discovery mechanism. Agent-specific install paths (`.claude/skills`, `.opencode/skills`, ...): [docs/en/skill-discovery.md](docs/en/skill-discovery.md)

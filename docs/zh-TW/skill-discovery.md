@@ -4,19 +4,23 @@
 
 本專案以 AI Agent skill 形式實作。不同 Agent 透過各自的 skill/rule discovery 機制載入它 —— 各 Agent 的機制不同，契約一致。
 
+### 安裝載荷
+
+安裝到技能目錄時**只複製** `SKILL.md` + `references/` + `scripts/` + `LICENSE`；`docs/`、`tests/`、`package.json`、`.github/`、README、CONTRIBUTING、CHANGELOG、AGENTS.md 是倉庫基礎設施，不屬於技能載荷，不要複製。
+
 ### 工作原理
 
 ```
 安装目录（按 Agent：.agents/skills · .claude/skills · .opencode/skills · ...）
         |
         v
-Agent 扫描 skill 元数据（frontmatter：name + description）
+Agent 扫描 skill 元資料（frontmatter：name + description）
         |
         v
-用户意图 → description 匹配（如 "initialize project governance"）
+使用者意图 → description 匹配（如 "initialize project governance"）
         |
         v
-加载 SKILL.md → 执行工作流（INIT / AUDIT / RELEASE）
+加载 SKILL.md → 执行工作流程（INIT / AUDIT / RELEASE）
 ```
 
 frontmatter 的 `description` 是匹配的關鍵 —— 它聲明了 Agent 用來匹配的觸發短語。使用者只需要輸入想要的提示詞：

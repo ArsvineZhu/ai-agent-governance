@@ -1,7 +1,7 @@
 # ADR-0003: 单文件双语 README，而非按语言拆分文件
 
 
-- 状态：Superseded（被 ADR-0005 取代，v0.5.x）
+- 状态：Superseded（被 ADR-0005 取代）
 - 日期：2026
 
 ## 背景

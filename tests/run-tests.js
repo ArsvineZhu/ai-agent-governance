@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-// Test harness for scripts/verify_governance.js — plain Node, no dependencies.
+// Test harness for the governance scripts — verify_governance.js, check-lock.js,
+// check-git-policy.js, check-secrets.js, check-doc-parity.js, release-manager.js.
+// Plain Node, no dependencies.
 // Usage: npm test   (or: node tests/run-tests.js)
 
 const { spawnSync } = require("child_process");
@@ -259,7 +261,46 @@ test("validator: missing check-secrets.js exits 1", () => {
   return r.status === 1 && r.stdout.includes("Secret scan gate");
 });
 
-// ---------- 9-15. Release planning & approval gate (scripts/release-manager.js) ----------
+// ---------- 9. Doc parity check (scripts/check-doc-parity.js) ----------
+const PARITY_CHECK = path.join(__dirname, "..", "scripts", "check-doc-parity.js");
+
+function buildParityTrees(dir) {
+  // minimal three-tree fixture with one parallel doc + root entry files
+  write(path.join(dir, "README.md"), "# AI Agent Governance\n\n[English](README.md) · [简体中文](docs/zh-CN/README.md) · [繁體中文](docs/zh-TW/README.md)\n\n## Intro\n\n- Hello\n");
+  write(path.join(dir, "CONTRIBUTING.md"), "# Contributing\n\n## Development\n");
+  for (const lang of ["en", "zh-CN", "zh-TW"]) {
+    write(path.join(dir, "docs", lang, "README.md"), `# 标题\n\n## 章节\n\n- 项目\n`);
+    write(path.join(dir, "docs", lang, "doc.md"), `# Doc\n\n## Section\n\n- one\n\n## Table\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n`);
+  }
+  // zh-CN/zh-TW in-tree CONTRIBUTING.md must also exist for entry checks
+  write(path.join(dir, "docs", "zh-CN", "CONTRIBUTING.md"), "# 贡献\n\n## 开发\n");
+  write(path.join(dir, "docs", "zh-TW", "CONTRIBUTING.md"), "# 貢獻\n\n## 開發\n");
+}
+
+test("doc parity: parallel trees exit 0", () => {
+  const dir = tmp("parity-ok");
+  buildParityTrees(dir);
+  const r = spawnSync(process.execPath, [PARITY_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 0;
+});
+
+test("doc parity: heading drift in one tree exits 1", () => {
+  const dir = tmp("parity-drift");
+  buildParityTrees(dir);
+  fs.appendFileSync(path.join(dir, "docs", "zh-TW", "doc.md"), "\n## 额外章节\n");
+  const r = spawnSync(process.execPath, [PARITY_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 1 && r.stdout.includes("structure drift");
+});
+
+test("doc parity: missing file in one tree exits 1", () => {
+  const dir = tmp("parity-missing");
+  buildParityTrees(dir);
+  fs.rmSync(path.join(dir, "docs", "en", "doc.md"));
+  const r = spawnSync(process.execPath, [PARITY_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 1 && r.stdout.includes("missing in docs/en/");
+});
+
+// ---------- 10-16. Release planning & approval gate (scripts/release-manager.js) ----------
 
 const RELEASE_TOOL = path.join(__dirname, "..", "scripts", "release-manager.js");
 

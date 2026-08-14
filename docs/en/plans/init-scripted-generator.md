@@ -1,4 +1,4 @@
-# INIT Scripted Generator（TASK 计划）
+# INIT Scripted Generator (TASK plan)
 
 [English](init-scripted-generator.md) · [简体中文](../../zh-CN/plans/init-scripted-generator.md) · [繁體中文](../../zh-TW/plans/init-scripted-generator.md)
 
@@ -34,7 +34,7 @@ Phased delivery:
 - `scripts/generate-governance.js` + `references/init-spec.json` — new
 - `SKILL.md` Phase 1 — rewritten as "run generator + handle gates"
 - `tests/run-tests.js` — snapshot fixture suite
-- `docs/bootstrap-output.md` — output spec sourced from the generator
+- `docs/en/bootstrap-output.md` — output spec sourced from the generator
 
 ### Risks
 

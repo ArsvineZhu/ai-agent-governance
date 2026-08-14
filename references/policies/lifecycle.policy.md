@@ -46,6 +46,7 @@ AGENTS.md 只保留生命周期摘要，本文件是完整执行规范。所有 
 - 更新 Architecture Documentation（如架构变化）
 - 更新 `docs/plans/DEVELOPMENT_PLAN.md`：勾选对应里程碑、更新状态标记与验收结果（如存在对应里程碑）；归档在发布（RELEASE）时统一执行（见发布流程）
 - 已完成任务的 `TASK_<name>.md`：把文档顶部 `## Status` 更新为 `Completed` 并附完成日期；归档仍在发布（RELEASE）时统一执行
+- **归档不翻译** —— 归档的计划（`docs/plans/archive/`）与 ADR 决策史保持项目约定语言原样，绝不翻译（见 SKILL.md 语言政策·历史记录不翻译）
 
 **Change Classification（CHANGELOG 何时写）**：
 

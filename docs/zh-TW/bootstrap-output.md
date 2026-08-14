@@ -6,21 +6,21 @@
 
 ```
 my-project/
-├── AGENTS.md                    运行期规则源头
-├── CLAUDE.md                    Agent 入口文件（@AGENTS.md，按检测到的工具生成）
+├── AGENTS.md                    執行期規則源頭
+├── CLAUDE.md                    Agent 入口檔案（@AGENTS.md，按偵測到的工具生成）
 ├── CHANGELOG.md                 Keep a Changelog
 ├── README.md                    英文首頁（語言切換連結見檔案頂部）
 ├── .gitmessage.txt              提交訊息範本（倉庫級預設）
 ├── docs/
 │   ├── README.zh-CN.md          簡體翻譯（源語言；純英文專案可省略，見語言政策）
 │   ├── ARCHITECTURE.md          資料流 + ADR + 元件登記
-│   ├── plans/                   开发计划 + 任务模板
+│   ├── plans/                   開發計劃 + 任務範本
 │   ├── features/                Feature 登记（只登记真实功能）
 │   └── rules/                   lifecycle / git-policy / security / coding / testing
-├── .env.example                 安全基线
+├── .env.example                 安全基線
 ├── .governance/                 manifest / state / preflight + generated/skills
-├── scripts/verify-governance.js 校验门禁（退出码 = 通过/失败）
-└── .github/workflows/           CI 管线（能力检测式，优雅降级）
+├── scripts/verify-governance.js 校驗閘門（退出码 = 通过/失败）
+└── .github/workflows/           CI 管线（能力偵測式，优雅降级）
 ```
 
 同時生成 `.governance/generated/skills/` 下的 Agent 模組（含 drift-check、release-manager），把日常任務與發佈留在框架內。

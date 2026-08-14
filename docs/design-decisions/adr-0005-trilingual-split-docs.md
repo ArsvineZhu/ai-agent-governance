@@ -11,7 +11,7 @@
 开发者面向文档改为**三语且拆分**，简体中文为源语言：
 
 - 根目录只保留英文主页（`README.md`、`CONTRIBUTING.md`）；简体/繁体翻译下沉到各自语言树（`docs/zh-CN/README.md`、`docs/zh-TW/README.md` 等），顶部互相链接。
-- `docs/` 下每种语言一棵目录树：`docs/en/`、`docs/zh-CN/`（源）、`docs/zh-TW/`。各树结构镜像一致（roadmap、lifecycle、commands、architecture、ADR、plans）。
+- `docs/` 下每种语言一棵目录树：`docs/en/`、`docs/zh-CN/`（源）、`docs/zh-TW/`。各树结构镜像一致（roadmap、lifecycle、commands、architecture、plans 等；ADR 与归档在共享区，见下）。
 - **简体中文（zh-CN）是源语言** —— 修改从简体发起，再同步到英文与繁体；改一种语言必须**同一次提交里同步另两种**。
 - `docs/glossary.md` 是单一三语术语对照表（术语译法的单一事实源；台湾用语基线，如 專案/檔案/範本/密鑰）。
 - **历史记录单语且入共享区**：ADR 决策史（`docs/design-decisions/`）与已完成计划归档（`docs/archive/`）放 docs/ 根共享区，只保留简体，不翻译；三棵语言树因此完全同构。

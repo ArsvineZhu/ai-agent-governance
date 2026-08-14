@@ -4,6 +4,10 @@
 
 This project is implemented as an AI agent skill. Different agents load it through their own skill/rule discovery mechanisms — the mechanics differ per agent, the contract does not.
 
+### Install Payload
+
+When installing into a skill directory, copy **only** `SKILL.md` + `references/` + `scripts/` + `LICENSE`; `docs/`, `tests/`, `package.json`, `.github/`, README, CONTRIBUTING, CHANGELOG, AGENTS.md are repository infrastructure, not part of the skill payload — do not copy them.
+
 ### How It Works
 
 ```

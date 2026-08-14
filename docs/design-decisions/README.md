@@ -1,4 +1,4 @@
-# Design Decisions (ADRs)
+# 设计决策记录（ADR）
 
 
 本仓库的架构决策记录。每条 ADR 记录一个真实决策、背景与后果。

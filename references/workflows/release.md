@@ -35,6 +35,7 @@ AI 仅在前两阶段自动行动（分析 + 提案，只读）；任何写操�
 | `release.tag_required` | 目标 tag 尚不存在（`git tag -l <tag>` 为空） | ⚠️ Blocked，tag 已存在 |
 | `release.proposal_approved` | Release Proposal 已生成（`scripts/release-manager.js plan`）且开发者已**明确批准** | ⚠️ Blocked，等待批准 |
 | `validator.passed` | `scripts/verify-governance.js` 退出码 0 | ❌ 停止发布。**豁免**：skill 仓库自身发布不适用本项（skill 仓库无 `.governance/`、无软件项目形态工件，validator 按默认检查必然失败）；skill 仓库自身以 `tests.required`（npm test 退出码 0）替代 |
+| `docs.parity_passed` | `scripts/check-doc-parity.js` 退出码 0（三语文档树结构平行） | ⚠️ Blocked，先同步缺失/漂移的文档；仅适用于维护三语文档树的仓库 |
 
 ## 版本一致性规则
 
@@ -228,8 +229,8 @@ AI 不得自动创建 tag、自动 push tag、自动创建 release，除非：
 ```json
 {
   "release": {
-    "version": "0.5.1",
-    "tag": "v0.5.1",
+    "version": "0.7.0",
+    "tag": "v0.7.0",
     "validated": false
   }
 }

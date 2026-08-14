@@ -41,7 +41,7 @@ skill 更新操作**安裝層**（`~/.agents/skills/...`），而非 `project/.g
                Skill Manager
                   ├── check update（检查更新）
                   ├── install（安装）
-                  └── rollback（回滚）
+                  └── rollback（回滾）
                       |
                       v
       ai-agent-governance → Project Governance（.governance/）
@@ -81,7 +81,7 @@ Inspect（读取 SKILL.md frontmatter 的本地版本）
 → 比较版本
 → 备份当前 skill
 → 更新
-→ 验证
+→ 驗證
 ```
 
 #### 5. 版本路線
