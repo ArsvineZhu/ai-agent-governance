@@ -17,18 +17,18 @@ Horizons: **Done** / **Near-term** / **Mid-term** / **Long-term**
 - Agent activity audit — append-only `.governance/activity.jsonl` per-task audit trail + drift-check `activity-report` mode
 - Secret scanning gate — `scripts/check-secrets.js` blocks secret-like staged content (validator 20 checks)
 
-### Near-term (v0.7.0)
+### Near-term (v0.8.0)
 
-- **Knowledge freshness detection** — drift-check `freshness` mode: flag stale governance docs via `git log` commit dates (advisory, never a gate). Target: v0.7.0. Design: [plans/knowledge-freshness.md](plans/knowledge-freshness.md)
-- **Content consistency check** — drift-check `consistency` mode: flag cross-document contradictions (stale version examples, fragmented protected-file lists, stale ADR statuses, expired roadmap targets, broken links, wrong numeric claims). Target: v0.7.0. Design: [plans/content-consistency.md](plans/content-consistency.md)
-- **Governance score & badge** — validator `--json` gains a composite `score`; CI produces a shields.io badge endpoint; this repo adopts it as reference. Target: v0.7.0. Design: [plans/governance-score.md](plans/governance-score.md)
-- **INIT scripted generator** — deterministic, snapshot-testable INIT generation (`scripts/generate-governance.js`); phased A → B → C. Target: v0.7.0. Design: [plans/init-scripted-generator.md](plans/init-scripted-generator.md)
+- **Knowledge freshness detection** — drift-check `freshness` mode: flag stale governance docs via `git log` commit dates (advisory, never a gate). Target: v0.8.0. Design: [plans/knowledge-freshness.md](plans/knowledge-freshness.md)
+- **Content consistency check** — drift-check `consistency` mode: flag cross-document contradictions (stale version examples, fragmented protected-file lists, stale ADR statuses, expired roadmap targets, broken links, wrong numeric claims). Target: v0.8.0. Design: [plans/content-consistency.md](plans/content-consistency.md)
+- **Governance score & badge** — validator `--json` gains a composite `score`; CI produces a shields.io badge endpoint; this repo adopts it as reference. Target: v0.8.0. Design: [plans/governance-score.md](plans/governance-score.md)
+- **INIT scripted generator** — deterministic, snapshot-testable INIT generation (`scripts/generate-governance.js`); phased A → B → C. Target: v0.8.0. Design: [plans/init-scripted-generator.md](plans/init-scripted-generator.md)
 
-### Mid-term (v0.8.0+)
+### Mid-term (v0.9.0+)
 
 - **Multi-agent coordination protocol** — standardized coordination across concurrent agents (lock check already shipped; full protocol awaits real multi-agent usage)
 - **Remote governance dashboard** — observability for governed repositories (depends on the activity audit trail + score from near/mid-term)
-- **Skill lifecycle management** — dedicated [`ai-skill-manager`](https://github.com/Consciencieux/ai-skill-manager) skill (INSTALL → UPDATE → ROLLBACK for all skills in .agents/skills/, including this skill). Deferred from v0.6.0; revisit when the v0.5.2 version-sync step proves insufficient. Design: [plans/skill-lifecycle-management.md](plans/skill-lifecycle-management.md)
+- **Skill lifecycle management** — dedicated [`ai-skill-manager`](https://github.com/Consciencieux/ai-skill-manager) skill (INSTALL → UPDATE → ROLLBACK for all skills in .agents/skills/, including this skill). Deferred from v0.6.0/v0.7.0; revisit when the version-sync step proves insufficient. Design: [plans/skill-lifecycle-management.md](plans/skill-lifecycle-management.md)
 - **Monorepo multi-governance domains** — validator multi-root resolution + multiple manifests (only when real monorepo demand appears)
 
 ### Long-term

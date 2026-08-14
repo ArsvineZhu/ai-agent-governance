@@ -58,6 +58,8 @@ curl -L https://github.com/Consciencieux/ai-agent-governance/releases/latest/dow
   | tar -xz -C ~/.agents/skills/ai-agent-governance
 ```
 
+若下载超时（GitHub release 重定向可能较慢），改用下面的备选方案。
+
 **备选——clone 后只复制载荷。** skill 只包含 `SKILL.md` + `references/` + `scripts/` + `LICENSE`；其余内容（`docs/`、`tests/`、`package.json`、`.github/`、`README`、`CONTRIBUTING`、`CHANGELOG`、`AGENTS.md`）是仓库基础设施，**不要**复制进 skill 安装目录。
 
 ```bash
@@ -182,16 +184,16 @@ Claude Code · Cursor · Codex · opencode —— 以及其他基于 AGENTS.md �
 - [x] 多 Agent 锁强制
 - [x] 校验器内容检查
 - [x] Git 工作流治理
-- [ ] Skill 生命周期管理（*中期，v0.8.0+*）
+- [ ] Skill 生命周期管理（*中期，v0.9.0+*）
 - [x] Agent 行为审计
 - [x] 密钥扫描门禁
-- [ ] 知识新鲜度检测（*近期，v0.7.0*）
-- [ ] 内容一致性检查（*近期，v0.7.0*）
-- [ ] 治理健康分与徽章（*近期，v0.7.0*）
-- [ ] INIT 生成器脚本化（*近期，v0.7.0*）
-- [ ] 多 Agent 协调协议（*中期，v0.8.0+*）
-- [ ] 远程治理看板（*中期，v0.8.0+*）
-- [ ] monorepo 多治理域（*中期，v0.8.0+*）
+- [ ] 知识新鲜度检测（*近期，v0.8.0*）
+- [ ] 内容一致性检查（*近期，v0.8.0*）
+- [ ] 治理健康分与徽章（*近期，v0.8.0*）
+- [ ] INIT 生成器脚本化（*近期，v0.8.0*）
+- [ ] 多 Agent 协调协议（*中期，v0.9.0+*）
+- [ ] 远程治理看板（*中期，v0.9.0+*）
+- [ ] monorepo 多治理域（*中期，v0.9.0+*）
 - [ ] demo 示例仓库（*远期*）
 - [ ] 生态完善：IDE 扩展 + Cursor 兼容实测（*远期*）
 

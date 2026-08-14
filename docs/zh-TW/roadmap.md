@@ -17,18 +17,18 @@
 - Agent 行為稽核 —— 追加式 .governance/activity.jsonl 逐任務稽核軌跡 + drift-check `activity-report` 模式
 - 密鑰掃描閘門 —— scripts/check-secrets.js 阻止暫存區密鑰類內容（校驗器 20 項）
 
-### 近期（v0.7.0）
+### 近期（v0.8.0）
 
-- **知識新鮮度偵測** —— drift-check `freshness` 模式：經 `git log` 提交日期標記過時治理文件（建議性，絕不做閘門）。目標版本：v0.7.0。設計：[plans/knowledge-freshness.md](plans/knowledge-freshness.md)
-- **內容一致性檢查** —— drift-check `consistency` 模式：標記文件間交叉矛盾（版本示例滯後、受保護清單分裂、ADR 狀態過期、roadmap 目標過期、連結失效、數值聲明錯誤）。目標版本：v0.7.0。設計：[plans/content-consistency.md](plans/content-consistency.md)
-- **治理健康分與徽章** —— 校驗器 `--json` 輸出綜合 `score`；CI 產出 shields.io 徽章 endpoint；本倉庫率先啟用作參考實作。目標版本：v0.7.0。設計：[plans/governance-score.md](plans/governance-score.md)
-- **INIT 生成器腳本化** —— 確定性、可快照測試的 INIT 生成（`scripts/generate-governance.js`）；分 A → B → C 三期。目標版本：v0.7.0。設計：[plans/init-scripted-generator.md](plans/init-scripted-generator.md)
+- **知識新鮮度偵測** —— drift-check `freshness` 模式：經 `git log` 提交日期標記過時治理文件（建議性，絕不做閘門）。目標版本：v0.8.0。設計：[plans/knowledge-freshness.md](plans/knowledge-freshness.md)
+- **內容一致性檢查** —— drift-check `consistency` 模式：標記文件間交叉矛盾（版本示例滯後、受保護清單分裂、ADR 狀態過期、roadmap 目標過期、連結失效、數值聲明錯誤）。目標版本：v0.8.0。設計：[plans/content-consistency.md](plans/content-consistency.md)
+- **治理健康分與徽章** —— 校驗器 `--json` 輸出綜合 `score`；CI 產出 shields.io 徽章 endpoint；本倉庫率先啟用作參考實作。目標版本：v0.8.0。設計：[plans/governance-score.md](plans/governance-score.md)
+- **INIT 生成器腳本化** —— 確定性、可快照測試的 INIT 生成（`scripts/generate-governance.js`）；分 A → B → C 三期。目標版本：v0.8.0。設計：[plans/init-scripted-generator.md](plans/init-scripted-generator.md)
 
-### 中期（v0.8.0+）
+### 中期（v0.9.0+）
 
 - **多 Agent 協調協定** —— 並發 Agent 之間的標準化協調（鎖檢查已交付；完整協定待真實多 Agent 使用場景）
 - **遠端治理看板** —— 被治理倉庫的可觀測性（依賴近期/中期的稽核軌跡 + 健康分）
-- **Skill 生命週期管理** —— 獨立 [`ai-skill-manager`](https://github.com/Consciencieux/ai-skill-manager) skill（管理 .agents/skills/ 下所有 skill 的 INSTALL → UPDATE → ROLLBACK，含本 skill）。自 v0.6.0 順延；當 v0.5.2 的版本同步步驟證明不夠用時再重啟。設計：[plans/skill-lifecycle-management.md](plans/skill-lifecycle-management.md)
+- **Skill 生命週期管理** —— 獨立 [`ai-skill-manager`](https://github.com/Consciencieux/ai-skill-manager) skill（管理 .agents/skills/ 下所有 skill 的 INSTALL → UPDATE → ROLLBACK，含本 skill）。自 v0.6.0/v0.7.0 順延；當版本同步步驟證明不夠用時再重啟。設計：[plans/skill-lifecycle-management.md](plans/skill-lifecycle-management.md)
 - **monorepo 多治理域** —— 校驗器多根解析 + 多 manifest（出現真實 monorepo 需求時再做）
 
 ### 遠期

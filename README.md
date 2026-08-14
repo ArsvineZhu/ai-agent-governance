@@ -58,6 +58,8 @@ curl -L https://github.com/Consciencieux/ai-agent-governance/releases/latest/dow
   | tar -xz -C ~/.agents/skills/ai-agent-governance
 ```
 
+If the download times out (GitHub release redirects can be slow), use the alternative below.
+
 **Alternative — clone and copy only the payload.** The skill is `SKILL.md` + `references/` + `scripts/` + `LICENSE` only; everything else (`docs/`, `tests/`, `package.json`, `.github/`, `README`, `CONTRIBUTING`, `CHANGELOG`, `AGENTS.md`) is repository infrastructure — do NOT copy it into the skill installation.
 
 ```bash
@@ -182,16 +184,16 @@ Claude Code · Cursor · Codex · opencode — and other AGENTS.md-based agents.
 - [x] Multi-agent lock enforcement
 - [x] Validator content checks
 - [x] Git workflow governance
-- [ ] Skill lifecycle management *(mid-term, v0.8.0+)*
+- [ ] Skill lifecycle management *(mid-term, v0.9.0+)*
 - [x] Agent activity audit
 - [x] Secret scanning gate
-- [ ] Knowledge freshness detection *(near-term, v0.7.0)*
-- [ ] Content consistency check *(near-term, v0.7.0)*
-- [ ] Governance score & badge *(near-term, v0.7.0)*
-- [ ] INIT scripted generator *(near-term, v0.7.0)*
-- [ ] Multi-agent coordination protocol *(mid-term, v0.8.0+)*
-- [ ] Remote governance dashboard *(mid-term, v0.8.0+)*
-- [ ] Monorepo multi-governance domains *(mid-term, v0.8.0+)*
+- [ ] Knowledge freshness detection *(near-term, v0.8.0)*
+- [ ] Content consistency check *(near-term, v0.8.0)*
+- [ ] Governance score & badge *(near-term, v0.8.0)*
+- [ ] INIT scripted generator *(near-term, v0.8.0)*
+- [ ] Multi-agent coordination protocol *(mid-term, v0.9.0+)*
+- [ ] Remote governance dashboard *(mid-term, v0.9.0+)*
+- [ ] Monorepo multi-governance domains *(mid-term, v0.9.0+)*
 - [ ] Demo repository *(long-term)*
 - [ ] Ecosystem polish: IDE extension + Cursor compatibility testing *(long-term)*
 
