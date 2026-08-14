@@ -1,11 +1,13 @@
 ---
 name: ai-agent-governance
-version: 0.7.0
+version: 0.7.1
 description: >-
   Use when initializing, retrofitting, auditing, OR releasing a project's AI-agent governance framework. Init mode: one-shot bootstrap of AGENTS.md, feature registry, lifecycle, CI validation, security baseline. Audit mode: health-check an already-governed project, detect drift vs .governance/manifest.json, apply minimal fixes. Release mode: version-synced, validated releases via the generated release-manager sub-skill. Triggers on "initialize governance", "setup project for AI agents", "create AGENTS.md framework", "audit governance", "governance health check", "fix governance drift", "release", "publish version", "check skill update", "update this skill". Also loads the generated sub-skills in .governance/generated/skills for ongoing agent work. Do NOT use for normal development tasks.
 ---
 
 # Governance Bootstrap
+
+> **安装载荷（Install Payload）**：本 skill 只包含 `SKILL.md` + `references/` + `scripts/` + `LICENSE` 四个部分。安装到技能目录时**只复制这四者**；`docs/`、`tests/`、`package.json`、`.github/`、README、CONTRIBUTING、CHANGELOG、AGENTS.md 是仓库基础设施，**不属于技能载荷，不得复制**进技能目录。
 
 在**项目创建初期**一次性建立「AI Agent 软件治理体系」，并在项目运行期**持续治理与巡检**（长期维稳）。单次运行内完成，但允许**阶段化暂停**（见执行层）。禁止省略任何一项、禁止以"应该没问题"代替验证。生成的治理体系与具体 AI 工具无关（AGENTS.md / CLAUDE.md / rules / 子技能），Claude Code、Cursor、Codex、opencode 等均可使用。
 

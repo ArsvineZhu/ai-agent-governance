@@ -50,7 +50,15 @@ This is an AI agent skill, not a CLI — install it where your coding agent disc
 .agents/skills/ai-agent-governance/SKILL.md
 ```
 
-**Skill payload (install these only):** `SKILL.md` + `references/` + `scripts/` + `LICENSE`. Everything else (`docs/`, `tests/`, `package.json`, `.github/`, `README`, `CONTRIBUTING`, `CHANGELOG`, `AGENTS.md`) is repository infrastructure — do NOT copy it into the skill installation.
+**Recommended — install from the release payload tarball** (contains only `SKILL.md` + `references/` + `scripts/` + `LICENSE`, nothing else):
+
+```bash
+mkdir -p ~/.agents/skills/ai-agent-governance
+curl -L https://github.com/Consciencieux/ai-agent-governance/releases/latest/download/ai-agent-governance-skill.tar.gz \
+  | tar -xz -C ~/.agents/skills/ai-agent-governance
+```
+
+**Alternative — clone and copy only the payload.** The skill is `SKILL.md` + `references/` + `scripts/` + `LICENSE` only; everything else (`docs/`, `tests/`, `package.json`, `.github/`, `README`, `CONTRIBUTING`, `CHANGELOG`, `AGENTS.md`) is repository infrastructure — do NOT copy it into the skill installation.
 
 ```bash
 git clone https://github.com/Consciencieux/ai-agent-governance

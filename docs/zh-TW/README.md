@@ -50,7 +50,15 @@ AI 編碼 Agent 能快速生成和修改程式碼，但它不會自動擁有專�
 .agents/skills/ai-agent-governance/SKILL.md
 ```
 
-**技能載荷（只安裝這些）：** `SKILL.md` + `references/` + `scripts/` + `LICENSE`。其餘內容（`docs/`、`tests/`、`package.json`、`.github/`、`README`、`CONTRIBUTING`、`CHANGELOG`、`AGENTS.md`）是倉庫基礎設施，**不要**複製進 skill 安裝目錄。
+**推薦——從發佈載荷 tarball 安裝**（只含 `SKILL.md` + `references/` + `scripts/` + `LICENSE`，無任何多餘檔案）：
+
+```bash
+mkdir -p ~/.agents/skills/ai-agent-governance
+curl -L https://github.com/Consciencieux/ai-agent-governance/releases/latest/download/ai-agent-governance-skill.tar.gz \
+  | tar -xz -C ~/.agents/skills/ai-agent-governance
+```
+
+**備選——clone 後只複製載荷。** skill 只包含 `SKILL.md` + `references/` + `scripts/` + `LICENSE`；其餘內容（`docs/`、`tests/`、`package.json`、`.github/`、`README`、`CONTRIBUTING`、`CHANGELOG`、`AGENTS.md`）是倉庫基礎設施，**不要**複製進 skill 安裝目錄。
 
 ```bash
 git clone https://github.com/Consciencieux/ai-agent-governance

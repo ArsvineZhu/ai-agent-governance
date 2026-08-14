@@ -12,3 +12,4 @@ node_modules/
 *.pfx
 .DS_Store
 Thumbs.db
+dist/

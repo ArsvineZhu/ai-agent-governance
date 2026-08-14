@@ -168,7 +168,8 @@ Proceed with release?
    `--yes` 是开发者批准的记录标记；**没有 `--yes` 该工具拒绝一切写操作**（等价于手工 `git tag -a vX.Y.Z -m "Release vX.Y.Z: <summary>"`）。execute 会再次检查工作区干净且 HEAD == proposal `headSha`。
 8. **推送**：`git push origin main` → `git push origin vX.Y.Z`（写操作均需用户确认，见权限）。
 9. **创建 Release**：GitHub 项目执行 `gh release create vX.Y.Z --title "vX.Y.Z" --notes "<Release Notes>"`（gh 未登录/未安装 → ⚠️ Blocked，提示用户）。
-10. **更新状态**：把 `.governance/manifest.json` 的 `release.validated` 置为 `true`，重新校验并记录到 `validation.json`。
+10. **打包并上传技能载荷资产**：运行 `bash scripts/package-skill.sh vX.Y.Z` 生成 `dist/ai-agent-governance-skill.tar.gz`（版本稳定名，只含 SKILL.md + references/ + scripts/ + LICENSE，见 SKILL.md 安装载荷定义），随后 `gh release upload vX.Y.Z dist/ai-agent-governance-skill.tar.gz`。**校验**：`tar -tzf` 列出的内容必须只有载荷，不得含 docs/、tests/、README 等基础设施文件。
+11. **更新状态**：把 `.governance/manifest.json` 的 `release.validated` 置为 `true`，重新校验并记录到 `validation.json`。
 
 ## 安全规则
 
@@ -229,8 +230,8 @@ AI 不得自动创建 tag、自动 push tag、自动创建 release，除非：
 ```json
 {
   "release": {
-    "version": "0.7.0",
-    "tag": "v0.7.0",
+    "version": "0.7.1",
+    "tag": "v0.7.1",
     "validated": false
   }
 }

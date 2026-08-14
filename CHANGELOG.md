@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented here.
 
+## [0.7.1] - 2026-08-14
+
+### Fixed
+
+- `scripts/package-skill.sh` - builds the release payload tarball (`dist/ai-agent-governance-skill.tar.gz`, version-stable name) containing only `SKILL.md` + `references/` + `scripts/` + `LICENSE`; `.gitignore` ignores `dist/`
+- Install payload defined in `SKILL.md` (the file every installing agent must read); README install sections rewritten with tarball-first flow; release flow gains step 10 (package + upload the payload asset with content verification)
+
 ## [0.7.0] - 2026-08-14
 
 ### Added
