@@ -30,7 +30,7 @@ description: >-
 
   1. 读取本地 `version`
   2. 查询上游最新 release（`gh release view` 或 fetch `https://api.github.com/repos/Consciencieux/ai-agent-governance/releases/latest`）
-  3. 比较并报告：本地版本 vs 最新版本、CHANGELOG 差异摘要、更新方式（当前为手动 clone；完整自动化 INSTALL → UPDATE → ROLLBACK 由 ai-skill-manager 提供，见 `docs/plans/skill-lifecycle-management.md`）
+  3. 比较并报告：本地版本 vs 最新版本、CHANGELOG 差异摘要、更新方式（当前为手动 clone；完整自动化 INSTALL → UPDATE → ROLLBACK 由 ai-skill-manager 提供，见 `docs/zh-CN/plans/skill-lifecycle-management.md`）
 
 - **绝不自动更新**（需用户明确同意）；更新后重新加载 skill。
 
@@ -95,11 +95,16 @@ description: >-
 
 | 项 | 默认 | 备注 |
 | --- | --- | --- |
-| 文档语言 | 中文 | 项目约定另指时跟随；AGENTS.md 保持英文（工具自动加载） |
+| 文档语言 | 中文 | 项目约定另指时跟随；AGENTS.md 保持英文（工具自动加载）；README 默认拆分（根 `README.md` 英文主页 + `docs/README.zh-CN.md` 简体翻译，见 Phase 1 第 8 步），语言变体下沉 docs/，不做单文件合并、不堆根目录 |
 | 提交信息语言 | 英文（Conventional Commits） | `feat(auth): add login endpoint` |
 | 包管理器 | `pnpm-lock.yaml` → pnpm，否则 npm；Python 看 `uv.lock` → uv，否则 pip | 以检测到的锁文件为准 |
 | 测试命令 | 未提供 → 占位 `echo "TEST_PLACEHOLDER"` | 在 Inspection Report 中高亮提醒用户 |
 | 测试/静态检查脚本缺失 | CI 中该步骤仅输出警告占位 | 见 CI 降级策略 |
+
+### 语言政策（按受众）
+
+- **Agent 面向文件单语** —— AGENTS.md（英文，工具自动加载）、docs/rules/**、`.governance/**`、子技能正文：绝不携带第二语言段落。
+- **开发者面向文件按项目约定多语言** —— README 与 docs/ 的语言布局跟随项目约定；默认拆分式：**根目录只保留英文主页（`README.md`），翻译版下沉 docs/**（`docs/README.zh-CN.md` 等），不做单文件多语言合并、不把语言变体堆在根目录。多语言文档树（`docs/<lang>/`）仅当项目明确约定时生成，默认不做。改任何语言版本必须同步其余语言版本（同一提交内）。
 
 ### 熔断机制（错误恢复）
 
@@ -243,7 +248,7 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
    - `references/policies/coding.policy.md` → `docs/rules/coding.md`
    - `references/policies/testing.policy.md` → `docs/rules/testing.md`
 2. **AGENTS.md** —— 按 `references/templates/agents-md.template.md` 生成。保持精简（≤150 行），章节内嵌、规范 `@` 引用 rules 文件。语言：默认英文，除非项目约定另指。
-3. **CLAUDE.md** —— `@AGENTS.md` 引用即可。按检测到的工具生成对应入口文件（如 `.cursorrules`、`.github/copilot-instructions.md`、`opencode.json`）。
+3. **CLAUDE.md** —— `@AGENTS.md` 引用即可。按检测到的工具生成对应入口文件（如 `.cursor/rules/*.mdc`、`.github/copilot-instructions.md`、`opencode.json`；Cursor 旧机制 `.cursorrules` 已弃用，不再生成）。
 4. **CHANGELOG.md** —— Keep a Changelog 格式；`[Unreleased]` 只记已完成变更；SemVer 版本号。
    **Change Classification（何时写 CHANGELOG）**：
    - 仅文档改动（README/注释/typo）→ 不更新 CHANGELOG
@@ -260,7 +265,7 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
    - Level 1 必须登记：服务、模块、子系统、数据流节点。
    - Level 2 不登记：普通类、工具函数、UI 组件（如 Button/Modal）。
    **防膨胀**：单文件超过约 300 行时拆分到 `docs/architecture/<module>.md`，主文件只留导航与摘要。
-8. **README.md** —— 若项目**无 README**：生成**基础 README**。**只生成一个文件 `README.md`**；**禁止**创建 `README.zh-CN.md`、`README-zh.md`、`README_cn.md` 或任何独立语言版本文件。采用**单文件双语布局**（与本 skill 的 README 一致）：`# 项目名` + CI 徽章 + 语言切换锚点 `[English](#english) · [简体中文](#chinese)`，前半段为**英文**（项目名 + 一句话简介 + 文档索引），`---` 分隔后后半段为**简体中文**（同一文件内）；文档索引链接 AGENTS.md / docs/ARCHITECTURE.md / docs/features/ 等治理文档。若已有：仅补文档索引与 CI 徽章，**合并不覆盖**已有内容，也**不拆分**为多个语言文件。另建提交信息模板 `.gitmessage.txt`（按 `references/templates/gitmessage.template.md`）并配置为仓库级默认。
+8. **README.md** —— 若项目**无 README**：生成**拆分式 README**（按语言政策：开发者面向文档多语言、Agent 面向文件单语；**根目录每种工件只保留英文一份，语言变体下沉到 `docs/`**）。默认生成根 `README.md`（英文主页，顶部放语言切换链接）+ `docs/README.zh-CN.md`（简体，源语言）；项目约定为纯英文受众 → 只生成根 `README.md`；项目需要更多语言（如繁体）→ 追加 `docs/README.zh-TW.md` 等。**禁止**单文件多语言合并、**禁止**把 `README.zh-CN.md` 等语言变体堆在项目根目录。文档索引链接 AGENTS.md / docs/ARCHITECTURE.md / docs/features/ 等治理文档。若已有 README：仅补文档索引与 CI 徽章，**合并不覆盖**已有内容，不擅自拆分（拆分需项目明确约定）。另建提交信息模板 `.gitmessage.txt`（按 `references/templates/gitmessage.template.md`）并配置为仓库级默认。
 9. **安全基线** —— `.env.example`（按 `references/templates/env-example.template.md` 生成，占位无真实值、按检测到的依赖裁剪）、完善 `.gitignore`（.env、*.key、*.pem、构建产物、依赖目录）、按 CI 平台启用密钥扫描/dependabot（模板见 `references/workflows/ci.md`）。
 10. **.governance/** —— 机器可读状态目录（见下）；生成时附 `README.md`（见 `references/policies/governance-files.policy.md` 模板），说明各文件用途与 Git 跟踪策略，避免误删/混淆。同时生成 `.governance/git-policy.json`（按 `references/templates/git-policy.template.md`，Git 工作流策略：受保护分支 / 禁止直推 / 要求审核 / 禁止 force push）。
 11. **scripts/** —— 从本 Skill 复制 `scripts/verify-governance.js`（校验器）、`scripts/check-lock.js`（锁检查）、`scripts/check-git-policy.js`（Git 策略门禁）与 `scripts/check-secrets.js`（密钥扫描门禁）到项目 `scripts/`，注册为项目命令（如 `npm run governance-check`）。

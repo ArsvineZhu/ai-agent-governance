@@ -1,27 +1,5 @@
-# ADR-0001: `.governance/` replaces legacy `.agent/` state directory
-
-- Status: Accepted (v0.3.1)
-- Date: 2026
-
-## Context
-
-The original bootstrap used `.agent/` as the machine-readable governance state directory. Two problems emerged:
-
-1. `.agents/` (plural) is the standard skill-installation layer across agents (e.g. `.agents/skills/...`). `.agent/` (singular) was constantly confused with it.
-2. `.agent/` suggested "the agent's directory", implying agent ownership of the repo, rather than a governance state layer.
-
-## Decision
-
-Use `.governance/` as the governance state directory (manifest / state / validation / preflight / generated skills). Legacy `.agent/` semantics are removed from runtime behavior; the name only survives in CHANGELOG history.
-
-## Consequences
-
-- Unambiguous: `.agents/` = installation, `.governance/` = state, `AGENTS.md` = behavioral contract.
-- Fresh projects get the new layout; the validator is `.governance`-only and leaves no `.agent` directory.
-
----
-
 # ADR-0001: 用 `.governance/` 取代旧的 `.agent/` 状态目录
+
 
 - 状态：Accepted（v0.3.1）
 - 日期：2026

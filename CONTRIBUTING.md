@@ -1,12 +1,8 @@
 # Contributing
 
-[English](#english) · [简体中文](#chinese)
+[English](CONTRIBUTING.md) · [简体中文](docs/zh-CN/CONTRIBUTING.md) · [繁體中文](docs/zh-TW/CONTRIBUTING.md)
 
----
-
-## English
-
-### Development
+## Development
 
 ```bash
 npm test        # or node tests/run-tests.js
@@ -14,7 +10,7 @@ npm test        # or node tests/run-tests.js
 
 The test suite covers: empty project (exit 1), full default structure (exit 0, 20 checks), custom doc root via manifest (manifest mode), missing governance_version (exit 1), `--json` output, `--help`, no legacy `.agent` leakage, optional `validation.json`, CHANGELOG format check, lock check (no state / unlocked / held), git policy check (invalid policy / protected-branch blocked / feature-branch ok), secret scan (hit exit 1 without leaking token / clean exit 0 / missing gate fails validator), release planning (SemVer classification: docs/refactor → patch, CLI → minor, deleted API → major, uncertainty → clarification, `--file` input), and the approval gate (unapproved → no tag, approved → annotated tag). CI runs it on every push/PR.
 
-### Where Things Live
+## Where Things Live
 
 | Path | Purpose |
 | --- | --- |
@@ -23,11 +19,18 @@ The test suite covers: empty project (exit 1), full default structure (exit 0, 2
 | `scripts/verify_governance.js` | validator source, copied into governed projects |
 | `scripts/release-manager.js` | release tool: `plan` (read-only) + `execute` (approval-gated) |
 | `tests/run-tests.js` | test harness |
-| `docs/` | knowledge layer — human documentation (architecture, governance model, anti-regression, lifecycle, validator, skill discovery, commands, bootstrap output, ADRs) |
+| `docs/en/` `docs/zh-CN/` `docs/zh-TW/` | knowledge layer — human documentation, one tree per language |
+| `docs/glossary.md` | trilingual terminology table (single source of truth for terms) |
 
-**Where does a new file go?** If deleting the file would break agent execution (INIT/AUDIT/RELEASE read it) → `references/`. If it only helps humans understand, maintain or contribute → `docs/`.
+**Where does a new file go?** If deleting the file would break agent execution (INIT/AUDIT/RELEASE read it) → `references/`. If it only helps humans understand, maintain or contribute → `docs/<language>/`.
 
-### Changing Governance Artifacts
+## Language Policy (by audience)
+
+- **Agent-facing files are single-language** — `SKILL.md`, `AGENTS.md`, `references/**`, and the bodies of generated artifacts (AGENTS.md, rules, sub-skills) never carry a second language section. Convention: this skill's own execution docs (`SKILL.md`, `references/policies`, `references/workflows`) are 中文; auto-loaded agent guidance (`AGENTS.md`, generated template bodies) is English.
+- **Developer-facing files are trilingual and split** - the root keeps only the English landing files (`README.md`, `CONTRIBUTING.md`); the 简体中文/繁體中文 translations live inside their trees (`docs/zh-CN/README.md`, `docs/zh-TW/README.md`, ...). **简体中文 (zh-CN) is the canonical source** - edits originate there, then propagate to English and 繁體中文 (Taiwan usage). Editing one language requires updating the other two in the same change. Parity mapping: the English entry files are the root `README.md`/`CONTRIBUTING.md` (not duplicated under `docs/en/`).
+- **Terminology** — before introducing a term, check `docs/glossary.md` and add the trilingual entry if missing; keep renderings consistent across all files.
+
+## Changing Governance Artifacts
 
 `SKILL.md`, `references/`, `scripts/` define the governance framework itself. Changes follow the release policy (see `references/workflows/release.md`):
 
@@ -37,45 +40,6 @@ The test suite covers: empty project (exit 1), full default structure (exit 0, 2
 4. Run `npm test` before pushing
 5. Release only with the `release-manager` flow (preconditions → version sync → validate → tag → push → GitHub Release)
 
-### Commit Conventions
+## Commit Conventions
 
 Conventional Commits in English: `feat(scope): subject` / `fix(scope): subject`. Never commit generated runtime outputs (`.governance/validation.json`, `.governance/drift-report.json`, `.governance/release-proposal.json` are git-ignored).
-
----
-
-## Chinese
-
-### 开发
-
-```bash
-npm test        # 或 node tests/run-tests.js
-```
-
-测试套件覆盖：空项目（exit 1）、完整默认结构（exit 0，20 项检查）、自定义文档根经 manifest（manifest 模式）、缺 governance_version（exit 1）、`--json` 输出、`--help`、无 `.agent` 残留、`validation.json` 可选、CHANGELOG 格式检查、锁检查（无状态 / 未持锁 / 持锁）、Git 策略检查（非法策略 / 受保护分支阻止 / 特性分支通过）、密钥扫描（命中 exit 1 且不泄露 token / 干净 exit 0 / 缺门禁使校验器失败）、发布规划（SemVer 分类：docs/重构 → patch、CLI 命令 → minor、删除公开 API → major、不确定性 → 澄清、`--file` 输入）与审批门禁（未批准 → 无 tag，批准 → 创建 annotated tag）。CI 每次 push/PR 运行。
-
-### 各目录用途
-
-| 路径 | 用途 |
-| --- | --- |
-| `SKILL.md` | 治理引擎 —— 策略层 + INIT/AUDIT 编排 |
-| `references/` | 实现层 —— Agent 运行时输入：`templates/`（生成模板）· `policies/`（`*.policy.md` 规则，复制进被治理项目的 `docs/rules/`）· `workflows/`（CI + 发布规范） |
-| `scripts/verify_governance.js` | 校验器源码，复制进被治理项目 |
-| `scripts/release-manager.js` | 发布工具：`plan`（只读）+ `execute`（审批门禁） |
-| `tests/run-tests.js` | 测试套件 |
-| `docs/` | 知识层 —— 人类文档（架构、治理模型、防乱改、生命周期、校验器、skill discovery、命令、初始化产物、ADR） |
-
-**新文件放哪里？** 如果删掉该文件会导致 Agent 无法执行（INIT/AUDIT/RELEASE 需要读它）→ `references/`；如果只是帮人理解、维护、贡献 → `docs/`。
-
-### 修改治理工件
-
-`SKILL.md`、`references/`、`scripts/` 定义治理框架本身。改动遵循发布策略（见 `references/workflows/release.md`）：
-
-1. 更新 `CHANGELOG.md`（分类：纯文档 → 不记；修复 → Fixed；新能力 → Added；破坏性 → Changed）
-2. 升 `package.json` 版本（SemVer：破坏性 → MAJOR，新能力 → MINOR，修复 → PATCH）
-3. 保持版本一致：package.json · CHANGELOG · tag
-4. push 前必须 `npm test`
-5. 仅通过 `release-manager` 流程发布（前置检查 → 版本同步 → 校验 → tag → push → GitHub Release）
-
-### 提交约定
-
-英文 Conventional Commits：`feat(scope): subject` / `fix(scope): subject`。绝不提交生成的运行时输出（`.governance/validation.json`、`.governance/drift-report.json`、`.governance/release-proposal.json` 已被 git 忽略）。

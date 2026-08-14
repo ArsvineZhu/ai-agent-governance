@@ -34,7 +34,7 @@ AI 仅在前两阶段自动行动（分析 + 提案，只读）；任何写操�
 | `version.manifest_match_tag` | package.json / CHANGELOG / `.governance/manifest.json` 的 `governance_version` 与 tag 一致 | ❌ 停止发布 |
 | `release.tag_required` | 目标 tag 尚不存在（`git tag -l <tag>` 为空） | ⚠️ Blocked，tag 已存在 |
 | `release.proposal_approved` | Release Proposal 已生成（`scripts/release-manager.js plan`）且开发者已**明确批准** | ⚠️ Blocked，等待批准 |
-| `validator.passed` | `scripts/verify-governance.js` 退出码 0 | ❌ 停止发布 |
+| `validator.passed` | `scripts/verify-governance.js` 退出码 0 | ❌ 停止发布。**豁免**：skill 仓库自身发布不适用本项（skill 仓库无 `.governance/`、无软件项目形态工件，validator 按默认检查必然失败）；skill 仓库自身以 `tests.required`（npm test 退出码 0）替代 |
 
 ## 版本一致性规则
 

@@ -1,0 +1,95 @@
+# Commands
+
+[English](../en/commands.md) · [简体中文](../zh-CN/commands.md) · [繁體中文](commands.md)
+
+以下全部是**給 AI 編碼 Agent 的聊天提示語 —— 不是 shell 命令**。它們遵循治理生命週期：**初始化 → 開發 → 持續維護 → 發佈**。
+
+### 可用提示詞
+
+| 使用場景 | 提示詞 | 別名 |
+| --- | --- | --- |
+| 新倉庫 / 首次接入 | `initialize project governance` | `initialize governance` · `setup project for AI agents` · `create AGENTS.md framework` |
+| 開發任務寫計劃 | `plan this task` | `create task plan` · `update development plan` · `check off milestone` · `mark task completed` |
+| 已有治理倉庫的持續維護 | `audit governance` | `governance health check` · `fix governance drift` |
+| 準備發佈版本 | `release` | `publish version` · `create release` · `/release vX.Y.Z` |
+
+Git 工作流程治理沒有獨立提示詞 —— 它作為執行期規則自動生效：任務開始前自動執行 `scripts/check-git-policy.js`，在受保護分支上阻止直接提交/推送（見 `.governance/git-policy.json`）。同理 `push` / `merge` 也不是提示詞 —— 它們是需確認的寫入操作：Agent 會說明意圖並等待你的明確批准（見 `docs/rules/git-policy.md`）。
+
+### 提示詞詳情
+
+#### initialize project governance
+
+為倉庫引導（bootstrap）初始 AI Agent 治理地基（AGENTS.md、規則、Feature 登記、治理狀態、校驗系統、CI）。
+
+執行流程：
+
+```
+仓库检测
+→ 生成治理地基
+→ 创建治理状态
+→ 配置 Agent 规则
+→ 创建校验系统
+→ 配置 CI
+→ 报告
+```
+
+詳細輸出（完整帶註解目錄樹）：[bootstrap-output.md](bootstrap-output.md)
+
+#### plan this task
+
+在中大型修改前建立開發計劃（TASK 文件：Status、目的、問題、方案、受影響檔案、風險、驗證）。
+
+執行流程：
+
+```
+创建 docs/plans/TASK_<name>.md
+→ 与开发者确认
+→ 开始实现
+```
+
+完成後同一計劃器會勾選里程碑並把任務標記為 Completed。
+
+#### audit governance
+
+持續維護治理健康：偵測漂移並保持專案知識同步。
+
+執行流程：
+
+```
+读取当前状态
+→ 检测漂移
+→ 校验工件
+→ 应用最小补丁
+```
+
+#### release
+
+透過人工批准建立版本發佈。
+
+執行流程：
+
+```
+分析变更
+→ SemVer Proposal
+→ 批准
+→ tag
+→ GitHub Release
+```
+
+### 執行期元件
+
+這些元件由生命週期提示詞自動觸發，使用者通常只需要使用上面的生命週期提示詞。
+
+| 元件 | 提示詞 | 職責 |
+| --- | --- | --- |
+| drift-check | `check governance drift` · `governance health report` · `is governance intact` | 將 manifest 與現實比對，報告漂移；`activity-report` 模式聚合稽核軌跡 |
+| governance-validator | `governance check` · `verify governance` · `validate AGENTS` | 執行校驗器，記錄 `validation.json` |
+| ci-generator | `setup CI` · `add CI` · `create workflow` | 為偵測到的技術棧生成 CI 管線 |
+| repository-inspection | `inspect the repo` · `what is the stack` · `check environment` | 偵測環境，返回技術棧報告 |
+| state-manager | `update state` · `record progress` | 把進度持久化到 `.governance/state.json` |
+| plan-manager | `plan this task` · `create task plan` · `update development plan` · `check off milestone` · `mark task completed` | 建立 TASK 計劃、勾選里程碑、標記任務完成 |
+| release-manager | `release` · `publish version` · `/release vX.Y.Z` | 執行帶審批閘門的發佈流程 |
+
+### 執行規則
+
+任何結果不確定的提示詞（如發佈時 Breaking Change 判斷不清）都會暫停並請求釐清 —— 絕不靜默猜測。

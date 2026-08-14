@@ -1,27 +1,7 @@
-# ADR-0003: Single-file bilingual README instead of language-split files
-
-- Status: Accepted (v0.3.3)
-- Date: 2026
-
-## Context
-
-Projects often maintain `README.md`, `README.zh-CN.md` (or `README-zh.md`, `README_cn.md`) in parallel. Multi-file splits create sync burden: every edit must be mirrored, and drift silently widens. The generated AGENTS.md and CI check links then point at whichever file is freshest — nobody knows.
-
-## Decision
-
-Use exactly one `README.md` with a bilingual layout: English first, then a `---` separator, then 简体中文, switched by anchors (`[English](#english) · [简体中文](#chinese)`). For projects that already have a README, INIT only merges the doc index + CI badge, never splits or overwrites.
-
-## Consequences
-
-- One source of truth for the homepage; no language-split files (`README.zh-CN.md` etc. are forbidden by INIT).
-- Slightly longer single file; acceptable vs. the sync cost of split files.
-- Consistent structure between this skill's own README and every generated README.
-
----
-
 # ADR-0003: 单文件双语 README，而非按语言拆分文件
 
-- 状态：Accepted（v0.3.3）
+
+- 状态：Superseded（被 ADR-0005 取代，v0.5.x）
 - 日期：2026
 
 ## 背景

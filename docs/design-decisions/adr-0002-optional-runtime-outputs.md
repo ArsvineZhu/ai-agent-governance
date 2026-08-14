@@ -1,28 +1,5 @@
-# ADR-0002: `validation.json` / `drift-report.json` are optional runtime outputs
-
-- Status: Accepted (v0.3.2)
-- Date: 2026
-
-## Context
-
-`validation.json` (validator results) and `drift-report.json` (drift check) are produced by AUDIT/release runs. Committing them caused two problems:
-
-1. They are session-local snapshots; committing them produces noisy diffs on every audit.
-2. A fresh checkout without them failed the validator (they were treated as required artifacts), so CI depended on local state.
-
-## Decision
-
-Treat them as runtime outputs: git-ignored, and NOT required artifacts. The validator must pass on a fresh checkout without them.
-
-## Consequences
-
-- `manifest.json` / `state.json` / `preflight.json` / `generated/skills/` remain tracked (governance as code).
-- Fresh-checkout CI passes without locally generated state.
-- AUDIT/release runs still write them as evidence records.
-
----
-
 # ADR-0002: `validation.json` / `drift-report.json` 是可选的运行时输出
+
 
 - 状态：Accepted（v0.3.2）
 - 日期：2026
