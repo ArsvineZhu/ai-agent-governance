@@ -11,17 +11,15 @@ All notable changes to this project will be documented here.
 - **Doc consistency check** — `scripts/check-doc-consistency.js` flags cross-document contradictions (stale version examples, fragmented protected-file lists, stale ADR statuses, expired roadmap targets, broken links, wrong numeric claims; trilingual tree parity delegated to `check-doc-parity.js`); advisory only, exit 0 always; drift-check sub-skill template gains the `consistency` mode; results appended to `.governance/drift-report.json`
 - **Standard verification procedure** — `npm run check` (gate group: tests + doc parity) and `npm run check:all` (gates + advisory freshness/consistency); lifecycle Phase 4 defines the governed-project validation sequence (lock → git policy → secrets → validator → test/lint/build → advisory)
 - **Prompt-sync check** — `check-doc-consistency.js` now verifies every sub-skill trigger in `sub-skills.md` appears in all three `commands.md` (prevents new sub-skills/modes from silently missing their prompts); AGENTS.md documents the sync group (sub-skills → commands.md/validator.md/CHANGELOG in one change)
+- **Roadmap decoupled from version numbers** — roadmap/README use time horizons only (near/mid/long-term), no `Target: vX.Y.Z` fields; versions are decided by actual delivery at release time (SemVer), not by plan commitments
+- **5 new plan docs** — review-manager (8th sub-skill, multi-agent deep review), tiered-review-gate (risk-tiered release review), governed-project sync groups (L1 declarative + L2 mechanical check); commands.md prompt coverage completed (all 23 sub-skill triggers documented)
 
 ### Fixed
 
-- Stale version examples in `SKILL.md` (0.5.1 → 0.8.0), missing `check-secrets.js` in anti-regression and agents-md.template protected-file lists — caught by the new consistency check during development
+- Stale version examples in `SKILL.md` (0.5.1 → 0.7.1), missing `check-secrets.js` in anti-regression and agents-md.template protected-file lists — caught by the new consistency check during development
 - INIT copy list now includes the advisory scripts (`check-doc-freshness.js`, `check-doc-consistency.js`; `check-doc-parity.js` on multi-language trees); drift-check template consistency mode no longer references scripts the governed project lacks
 - `check-doc-consistency.js`: semantic version compare for roadmap targets (string compare misjudged v0.10.0 < v0.9.0); manifest `release.version` included in version-example scan; parity delegated check reports "unavailable"/"error" instead of falsely claiming pass; validator filename fallback (`verify-governance.js`)
 - `check-doc-freshness.js`: ghost paths (in git history but not on disk) are skipped
-
-### Docs
-
-- 5 new plan docs (review-manager, tiered-review-gate, governed-project sync groups L1+L2); commands.md prompt coverage completed (all 23 sub-skill triggers, drift modes, compact drift section); roadmap merged + reordered and decoupled from version numbers (time-scale only)
 
 ## [0.7.1] - 2026-08-14
 

@@ -184,20 +184,19 @@ Claude Code · Cursor · Codex · opencode — and other AGENTS.md-based agents.
 - [x] Multi-agent lock enforcement
 - [x] Validator content checks
 - [x] Git workflow governance
-- [ ] Skill lifecycle management *(mid-term, v0.9.0+)*
 - [x] Agent activity audit
 - [x] Secret scanning gate
 - [x] Knowledge freshness detection
 - [x] Content consistency check
 - [x] Governance score & badge
-- [ ] Review manager *(near-term, v0.8.0)*
-- [ ] Tiered review gate *(near-term, v0.8.0)*
-- [ ] Governed-project sync groups *(near-term, v0.8.0; L2 mechanical check v0.9.0)*
-- [ ] INIT scripted generator *(near-term, v0.8.0)*
-- [ ] Multi-agent coordination protocol *(mid-term, v0.9.0+)*
-- [ ] Skill lifecycle management *(mid-term, v0.9.0+)*
-- [ ] Remote governance dashboard *(mid-term, v0.9.0+)*
-- [ ] Monorepo multi-governance domains *(mid-term, v0.9.0+)*
+- [ ] Review manager *(near-term)*
+- [ ] Tiered review gate *(near-term)*
+- [ ] Governed-project sync groups *(near-term; L2 mechanical check)*
+- [ ] INIT scripted generator *(near-term)*
+- [ ] Multi-agent coordination protocol *(mid-term)*
+- [ ] Skill lifecycle management *(mid-term)*
+- [ ] Remote governance dashboard *(mid-term)*
+- [ ] Monorepo multi-governance domains *(mid-term)*
 - [ ] Demo repository *(long-term)*
 - [ ] Ecosystem polish: IDE extension + Cursor compatibility testing *(long-term)*
 
