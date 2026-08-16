@@ -190,7 +190,7 @@ Append the result to `.governance/drift-report.json` (`consistency` object). Adv
 ````
 ---
 name: release-manager
-description: Use to cut a tagged release for this repo with a human-in-the-loop workflow. Analyzes the repository (git tags, version, git log/diff, API and user-visible changes), produces a Release Proposal (SemVer 2.0.0 classification), waits for explicit developer approval, then executes the release (annotated tag, push, GitHub Release) — never any write operation without approval. Triggers on "release", "publish version", "create release", "/release vX.Y.Z".
+description: Use to cut a tagged release for this repo with a human-in-the-loop workflow. Analyzes the repository (git tags, version, git log/diff, API and user-visible changes), produces a Release Proposal (SemVer 2.0.0 classification + risk level: low/medium/high with a review recommendation), waits for explicit developer approval, then executes the release (annotated tag, push, GitHub Release) — never any write operation without approval. Triggers on "release", "publish version", "create release", "/release vX.Y.Z".
 ---
 
 # Release Manager

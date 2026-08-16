@@ -69,13 +69,13 @@ Git 工作流程治理沒有獨立提示詞 —— 它作為執行期規則自�
 
 #### release
 
-透過人工批准建立版本發佈。
+透過人工批准建立版本發佈。Proposal 含風險分級（低 = 僅輕量級閘門；中 = 批准時建議深度審查；高 = 必須 review-manager 或逐項確認）。
 
 執行流程：
 
 ```
 分析变更
-→ SemVer Proposal
+→ SemVer Proposal + 風險分級
 → 批准
 → tag
 → GitHub Release

@@ -69,13 +69,13 @@ Read current state
 
 #### release
 
-Creates a version release through human approval.
+Creates a version release through human approval. The Proposal includes a risk level (low = lightweight gates only; medium = deep review suggested at approval; high = review-manager or item-by-item confirmation required).
 
 Workflow:
 
 ```
 Analyze changes
-→ SemVer proposal
+→ SemVer proposal + risk level
 → Approval
 → Tag
 → GitHub Release

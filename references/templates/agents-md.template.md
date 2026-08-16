@@ -22,15 +22,14 @@ Do NOT maintain a fixed inventory here. Two docs are mandatory and must stay fre
 - `CHANGELOG.md` — completed changes
 
 ## Agent Operating Lifecycle
-All agents MUST follow this lifecycle for every dev task:
+All agents MUST follow this lifecycle for every dev task. Scope tiers: small (single file, <50 lines, no public-interface change) runs Understand → Implement → Validate → Report only; medium/large run the full lifecycle with a TASK plan. Full detail: @docs/rules/lifecycle.md
 - **Phase 1 Understand**: read AGENTS.md, docs/ARCHITECTURE.md, docs/features/, recent CHANGELOG.md before acting.
-- **Phase 2 Plan**: medium/large changes MUST first create `docs/plans/TASK_<name>.md` (Status, Task Purpose, Current Problem, Proposed Solution, Affected Files, Risks, Validation Method).
-- **Phase 3 Implement**: respect architecture, keep backward compatibility, do not restructure without reason.
+- **Phase 2 Plan**: medium/large changes MUST first create `docs/plans/TASK_<name>.md` (Status, Task Purpose, Current Problem, Proposed Solution, Affected Files, Risks, Validation Method). Affected Files must be based on reference search (`rg`), not guesswork.
+- **Phase 3 Implement**: respect architecture, keep backward compatibility, do not restructure without reason. Before touching any public interface/module/file, search its references first and include the found files in the plan.
 - **Phase 4 Validate**: run tests, lint, build; record real output.
-- **Phase 5 Synchronize Knowledge**: update CHANGELOG.md, Feature Registry, ARCHITECTURE.md (if changed), check off the corresponding milestone in docs/plans/DEVELOPMENT_PLAN.md (if one exists), and set the completed TASK_<name>.md Status to Completed. Archiving happens at RELEASE, not here.
-- **Phase 6 Report**: modified files, new features, deleted content, validation results, doc updates.
+- **Phase 5 Synchronize Knowledge** (medium/large only): update CHANGELOG.md (at merge/release boundaries, not per commit), Feature Registry, ARCHITECTURE.md (if changed), check off the corresponding milestone in docs/plans/DEVELOPMENT_PLAN.md (if one exists), and set the completed TASK_<name>.md Status to Completed. Archiving happens at RELEASE, not here.
+- **Phase 6 Report**: modified files, new features, deleted content, validation results, doc updates. Compare actual changed files against the planned Affected Files list — listed-but-unchanged → fix or justify; changed-but-not-listed → explain.
 - Forbidden: changing code without updating project knowledge.
-- Full detail: @docs/rules/lifecycle.md
 
 ## Changelog Workflow
 Plans go in `docs/plans/`; completed changes go in `CHANGELOG.md`. No overlap. On release, move entries into a version section and bump the version.
@@ -89,7 +88,7 @@ Note: users may request governance changes via explicit instruction (through the
 - Never force push; never push directly to protected branches. Small single-file doc/typo changes may skip the branch, but must be reported.
 
 ## Governance File Protection
-Modifying AGENTS.md, CLAUDE.md, docs/rules/**, .governance/manifest.json, .governance/preflight.json, .governance/git-policy.json, scripts/verify-governance.js, scripts/check-lock.js, scripts/check-git-policy.js, scripts/check-secrets.js, opencode.json, or CI config (.github/workflows/**, .gitlab-ci.yml) requires: reason → CHANGELOG update → bump `.governance/manifest.json` governance_version → run verify-governance.js. Never loosen permission limits or remove validation without explicit user approval.
+Modifying AGENTS.md, CLAUDE.md, docs/rules/**, .governance/manifest.json, .governance/preflight.json, .governance/git-policy.json, .governance/sync-rules.json, scripts/verify-governance.js, scripts/check-lock.js, scripts/check-git-policy.js, scripts/check-secrets.js, opencode.json, or CI config (.github/workflows/**, .gitlab-ci.yml) requires: reason → CHANGELOG update → bump `.governance/manifest.json` governance_version → run verify-governance.js. Never loosen permission limits or remove validation without explicit user approval.
 
 ## Mandatory Pre-commit Checklist
 CHANGELOG must be updated before push/PR. No CHANGELOG update → no push.

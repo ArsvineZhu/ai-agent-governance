@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented here.
 
+## [Unreleased]
+
+### Added
+
+- **Impact-face check** — before touching any public interface/module/file, agents must search its references (`rg`) and include found files in the Affected Files plan (Phase 2/3); at task end, Phase 6 compares actual changed files against the planned list (listed-but-unchanged → fix or justify; changed-but-not-listed → explain). Mitigates AI "skipped file" lapses; wired into lifecycle.policy.md, agents-md.template.md, AGENTS.md
+
+### Changed
+
+- **Scope-tiered lifecycle** — small changes (single file, <50 lines, no public-interface change) run Understand → Implement → Validate → Report only (skip Plan/Synchronize); medium/large run the full six-phase lifecycle with a TASK plan. Aligns with mainstream practice (tier by size, not one-size-fits-all)
+- **CHANGELOG timing** — written at merge/release boundaries (per release flow), not per commit/task; small changes carry no entry
+- **Tiered review gate** — release Proposal now carries `Risk level` (low/medium/high) + `Review recommendation` (none/suggested/required); high-risk changes (security/permissions/deletion protection/governance files) require review-manager or item-by-item confirmation; lightweight gates always run
+- **Governed-project sync groups (L1)** — INIT generates `.governance/sync-rules.json` (declarative watch/require groups); Phase 5 mandates group-by-group reconciliation (watch hit + require missing = task not done); added to protected-files lists across all sync points (caught by the consistency check)
+
 ## [0.8.0] - 2026-08-16
 
 ### Added

@@ -109,6 +109,21 @@ One prompt — your project now has a complete governance environment, ready for
 
 All available prompts (audit, release, drift check, ...) and what they do: [docs/en/commands.md](docs/en/commands.md).
 
+### Common Prompts
+
+| Scenario | Prompt |
+| --- | --- |
+| First-time setup | `initialize project governance` |
+| Plan a development task | `plan this task` |
+| Health check on a governed repo | `audit governance` |
+| Governance drift report | `check governance drift` |
+| Inspect the repo stack | `inspect the repo` |
+| Generate CI | `setup CI` |
+| Validate governance | `governance check` |
+| Record task state | `update state` |
+| Cut a release | `release` |
+
+
 ### Core Capabilities
 
 #### Bootstrap & Runtime Governance

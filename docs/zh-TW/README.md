@@ -109,6 +109,21 @@ my-project/
 
 全部可用提示詞（巡檢、發佈、漂移檢查等）及其行為：[docs/zh-TW/commands.md](commands.md)。
 
+### 常用提示詞
+
+| 場景 | 提示詞 |
+| --- | --- |
+| 首次接入 | `initialize project governance` |
+| 開發任務寫計劃 | `plan this task` |
+| 已治理倉庫健康檢查 | `audit governance` |
+| 治理漂移報告 | `check governance drift` |
+| 偵測技術棧 | `inspect the repo` |
+| 生成 CI | `setup CI` |
+| 治理校驗 | `governance check` |
+| 記錄任務狀態 | `update state` |
+| 發佈版本 | `release` |
+
+
 ### 核心能力（Core Capabilities）
 
 #### 引導與執行期治理（Bootstrap & Runtime Governance）

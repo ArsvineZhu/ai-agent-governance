@@ -18,7 +18,7 @@ my-project/
 │   ├── features/                Feature 登记（只登记真实功能）
 │   └── rules/                   lifecycle / git-policy / security / coding / testing
 ├── .env.example                 安全基線
-├── .governance/                 manifest / state / preflight + generated/skills
+├── .governance/                 manifest / state / preflight / git-policy / sync-rules + generated/skills
 ├── scripts/verify-governance.js 校驗閘門（退出码 = 通过/失败）
 └── .github/workflows/           CI 管线（能力偵測式，优雅降级）
 ```

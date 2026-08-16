@@ -69,13 +69,13 @@ Git 工作流治理没有独立提示词 —— 它作为运行期规则自动�
 
 #### release
 
-通过人工批准创建版本发布。
+通过人工批准创建版本发布。Proposal 含风险分级（低 = 仅轻量级门禁；中 = 批准时建议深度审查；高 = 必须 review-manager 或逐项确认）。
 
 执行流程：
 
 ```
 分析变更
-→ SemVer Proposal
+→ SemVer Proposal + 风险分级
 → 批准
 → tag
 → GitHub Release

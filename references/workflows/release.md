@@ -134,11 +134,29 @@ vX.Y.Z
 Reason:
 ...
 
+Risk level:
+low / medium / high
+
+Review recommendation:
+none / suggested (review-manager) / required (review-manager 或逐项确认)
+
 Release Notes:
 ...
 
 Proceed with release?
 ```
+
+**风险分级规则（Tiered Review Gate）**：
+
+| 风险等级 | 变更类型 | 审核要求 |
+| --- | --- | --- |
+| 低 | docs/typo/版本号/链接修正/格式 | 轻量级门禁（标准验证序列）自动跑，通过即提交，不询问 |
+| 中 | 新功能/脚本逻辑/政策变更/模板变更 | 轻量级门禁 + Proposal 标注 suggested；开发者批准时决定是否先跑 review-manager |
+| 高 | 安全/权限/删除保护/治理文件行为变更 | **必须**先跑 review-manager（范围 = git diff，非全项目），或开发者逐项明确确认，否则不发布 |
+
+- 轻量级门禁**总是自动跑**（标准验证序列，见 lifecycle Phase 4）--底线，零成本
+- 高风险清单**明确列举**（见上表），不依赖 AI 自由裁量；边界模糊时**取更高级别**
+- review-manager 未实现前：高风险变更由开发者逐项确认替代（分级规则先行生效）
 
 批准后把 Proposal 记录到 `.governance/release-proposal.json`（运行时输出，git 忽略，非 required artifact）作为审批证据。
 

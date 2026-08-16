@@ -13,6 +13,7 @@
 | `.governance/manifest.json` | 治理工件清单（期望态） |
 | `.governance/preflight.json` | 回滚快照 |
 | `.governance/git-policy.json` | Git 工作流策略 |
+| `.governance/sync-rules.json` | 项目同步组声明（Phase 5 对照执行） |
 | `scripts/verify-governance.js` | 校验门禁 |
 | `scripts/check-lock.js` | 锁检查 |
 | `scripts/check-git-policy.js` | Git 策略门禁 |

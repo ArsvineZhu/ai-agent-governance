@@ -18,7 +18,7 @@ my-project/
 │   ├── features/                feature registry (real features only)
 │   └── rules/                   lifecycle / git-policy / security / coding / testing
 ├── .env.example                 security baseline
-├── .governance/                 manifest / state / preflight + generated/skills
+├── .governance/                 manifest / state / preflight / git-policy / sync-rules + generated/skills
 ├── scripts/verify-governance.js validation gate (exit code = pass/fail)
 └── .github/workflows/           CI pipeline (capability-detected, degrades gracefully)
 ```

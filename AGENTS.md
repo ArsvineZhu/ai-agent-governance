@@ -15,11 +15,15 @@ Modifying `SKILL.md`, `references/policies/**`, `references/templates/**`, `refe
 
 - doc-only (typo, wording, formatting) → no CHANGELOG entry
 - bug fix → `Fixed`; new capability → `Added`; architecture/behavior/breaking → `Changed`
+- CHANGELOG is written at merge/release boundaries (per the release flow), not per commit
+- Small changes (single file, no public-interface change) skip the full lifecycle and CHANGELOG entry; medium/large changes follow the full six-phase lifecycle (per `references/policies/lifecycle.policy.md` scope tiers)
 - Plans are design docs in each language tree's `plans/` (`docs/<lang>/plans/`); completed plans are archived to `docs/archive/` (shared, single-language) at release, never deleted
 
 ## Validation (standard verification procedure)
 
 Run the gate group (`npm run check`) before declaring any task done; run the full group (`npm run check:all`) before release. Record real output (never claim "should pass").
+
+- **Impact-face check** — before touching any public interface/module/file, search its references first (`rg "<name>"`); found files enter the Affected Files list. At task end, compare actual changed files (`git diff --name-only`) against that list: listed-but-unchanged → fix or justify; changed-but-not-listed → explain (or revert if it was a lazy side-edit).
 
 - **Gate layer (fail-closed, exit ≠ 0 blocks):**
   - `npm test` — 39 tests across all scripts (always)
