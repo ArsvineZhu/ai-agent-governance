@@ -1,6 +1,6 @@
 ---
 name: ai-agent-governance
-version: 0.7.1
+version: 0.8.0
 description: >-
   Use when initializing, retrofitting, auditing, OR releasing a project's AI-agent governance framework. Init mode: one-shot bootstrap of AGENTS.md, feature registry, lifecycle, CI validation, security baseline. Audit mode: health-check an already-governed project, detect drift vs .governance/manifest.json, apply minimal fixes. Release mode: version-synced, validated releases via the generated release-manager sub-skill. Triggers on "initialize governance", "setup project for AI agents", "create AGENTS.md framework", "audit governance", "governance health check", "fix governance drift", "release", "publish version", "check skill update", "update this skill". Also loads the generated sub-skills in .governance/generated/skills for ongoing agent work. Do NOT use for normal development tasks.
 ---
@@ -272,7 +272,7 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
 8. **README.md** —— 若项目**无 README**：生成**拆分式 README**（按语言政策：开发者面向文档多语言、Agent 面向文件单语；**根目录每种工件只保留英文一份，语言变体下沉到 `docs/`**）。默认生成根 `README.md`（英文主页，顶部放语言切换链接）+ `docs/README.zh-CN.md`（简体，源语言）；项目约定为纯英文受众 → 只生成根 `README.md`；项目需要更多语言（如繁体）→ 追加 `docs/README.zh-TW.md` 等。**禁止**单文件多语言合并、**禁止**把 `README.zh-CN.md` 等语言变体堆在项目根目录。文档索引链接 AGENTS.md / docs/ARCHITECTURE.md / docs/features/ 等治理文档。若已有 README：仅补文档索引与 CI 徽章，**合并不覆盖**已有内容，不擅自拆分（拆分需项目明确约定）。另建提交信息模板 `.gitmessage.txt`（按 `references/templates/gitmessage.template.md`）并配置为仓库级默认。
 9. **安全基线** —— `.env.example`（按 `references/templates/env-example.template.md` 生成，占位无真实值、按检测到的依赖裁剪）、完善 `.gitignore`（.env、*.key、*.pem、构建产物、依赖目录）、按 CI 平台启用密钥扫描/dependabot（模板见 `references/workflows/ci.md`）。
 10. **.governance/** —— 机器可读状态目录（见下）；生成时附 `README.md`（见 `references/policies/governance-files.policy.md` 模板），说明各文件用途与 Git 跟踪策略，避免误删/混淆。同时生成 `.governance/git-policy.json`（按 `references/templates/git-policy.template.md`，Git 工作流策略：受保护分支 / 禁止直推 / 要求审核 / 禁止 force push）。
-11. **scripts/** —— 从本 Skill 复制 `scripts/verify-governance.js`（校验器）、`scripts/check-lock.js`（锁检查）、`scripts/check-git-policy.js`（Git 策略门禁）与 `scripts/check-secrets.js`（密钥扫描门禁）到项目 `scripts/`，注册为项目命令（如 `npm run governance-check`）。
+11. **scripts/** -- 从本 Skill 复制 `scripts/verify-governance.js`（校验器）、`scripts/check-lock.js`（锁检查）、`scripts/check-git-policy.js`（Git 策略门禁）、`scripts/check-secrets.js`（密钥扫描门禁）、`scripts/check-doc-freshness.js`（知识新鲜度，建议性）与 `scripts/check-doc-consistency.js`（内容一致性，建议性）到项目 `scripts/`，注册为项目命令（如 `npm run governance-check`；建议性脚本可注册 `npm run docs:freshness` / `npm run docs:consistency`，恒 exit 0 不阻塞）。`scripts/check-doc-parity.js`（三语树一致性）仅当项目采用多语言文档树时复制。
 12. **CI workflow** —— 按检测到的平台/栈从 `references/workflows/ci.md` 选择模板生成；推送与 PR 自动运行。**管线步骤按 CI Pipeline Capability Detection 决定，不强制全部存在**：
     - 每种栈管线统一：安装 → **format 检查** → lint → typecheck（如适用）→ test → build → 产物上传。format 用各栈标准工具：Node/TS → Prettier（`pnpm format`）；Python → `ruff format --check`；Rust → `cargo fmt --check`；Go → `gofmt -l`；Java(Maven) → `spotless:check`；C++ → `clang-format --dry-run --Werror`；纯文档项目 → markdown lint + 链接检查，无构建。
     - 栈模板：Node/TS（+typecheck）、Python（ruff check + mypy 可选）、Rust（clippy）、Go（go vet）、Java（spotless + google-java-format **必配**，INIT 写入 pom.xml）、C++（clang-tidy 可选，CMake/CTest 或 Make 按检测选择；同时生成 `.clang-format` 风格基线）。
@@ -287,8 +287,8 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
 ```json
 {
   "schema_version": "1.0",
-  "governance_version": "0.5.1",
-  "release": { "version": "0.5.1", "tag": "v0.5.1", "validated": false },
+  "governance_version": "0.7.1",
+  "release": { "version": "0.7.1", "tag": "v0.7.1", "validated": false },
   "doc_root": "docs",
   "artifacts": [
     { "name": "AGENTS.md", "path": "AGENTS.md", "kind": "file", "type": "policy" },

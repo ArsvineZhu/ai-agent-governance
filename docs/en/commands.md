@@ -11,6 +11,11 @@ All prompts below are chat prompts for AI coding agents, not shell commands. The
 | New repository / first-time setup | `initialize project governance` | `initialize governance` · `setup project for AI agents` · `create AGENTS.md framework` |
 | Planning a development task | `plan this task` | `create task plan` · `update development plan` · `check off milestone` · `mark task completed` |
 | Existing governed repository maintenance | `audit governance` | `governance health check` · `fix governance drift` |
+| Governance drift report | `check governance drift` | `governance health report` · `is governance intact` |
+| Repository inspection | `inspect the repo` | `what is the stack` · `check environment` |
+| CI setup | `setup CI` | `add CI` · `create workflow` |
+| Governance validation | `governance check` | `verify governance` · `validate AGENTS` |
+| State recording | `update state` | `record progress` |
 | Preparing a release | `release` | `publish version` · `create release` · `/release vX.Y.Z` |
 
 Git Workflow Governance has no prompt of its own — it takes effect automatically as a runtime rule: `scripts/check-git-policy.js` runs before work starts and blocks direct commits/pushes on protected branches (see `.governance/git-policy.json`). Likewise `push` / `merge` are not prompts — they are confirmation-gated write operations: the agent states intent and waits for your explicit approval (see `docs/rules/git-policy.md`).
@@ -76,13 +81,42 @@ Analyze changes
 → GitHub Release
 ```
 
+#### check governance drift
+
+Detects governance drift: compares the manifest against reality, plus three advisory modes (results in `.governance/drift-report.json`):
+
+```
+Read manifest
+→ Run validator
+→ Detect drift
+→ Advisory modes: activity-report · freshness · consistency
+```
+
+Target a mode directly: `run the drift activity report` · `check doc freshness` · `check doc consistency`
+
+#### inspect the repo
+
+Inspects the environment before any task — project type, language, package manager, build tool, test framework, linter, git state, CI, existing AI guidance files — and returns a stack report. Also runs automatically at the start of INIT.
+
+#### setup CI
+
+Generates the CI pipeline for the detected stack (capability-detected, format/lint/typecheck/test/build steps with graceful degradation when scripts are missing).
+
+#### governance check
+
+Runs `scripts/verify-governance.js` and records results into `.governance/validation.json`. Gate: the validator must exit 0 before a task is declared done and before RELEASE.
+
+#### update state
+
+Persists progress into `.governance/state.json` (maturity, phase, agent identity, completed/blocked items) so later sessions resume correctly. Runs automatically at the end of every task.
+
 ### Runtime Components
 
 These components are automatically invoked by the lifecycle prompts. Users normally only interact with the lifecycle prompts above.
 
 | Component | Prompts | Responsibility |
 | --- | --- | --- |
-| drift-check | `check governance drift` · `governance health report` · `is governance intact` | compares manifest against reality, reports drift; `activity-report` mode aggregates the audit trail |
+| drift-check | `check governance drift` · `governance health report` · `is governance intact` | compares manifest against reality, reports drift; `activity-report` mode aggregates the audit trail, `freshness` mode flags stale docs, `consistency` mode flags cross-document contradictions |
 | governance-validator | `governance check` · `verify governance` · `validate AGENTS` | runs the validator, records `validation.json` |
 | ci-generator | `setup CI` · `add CI` · `create workflow` | generates the CI pipeline for the detected stack |
 | repository-inspection | `inspect the repo` · `what is the stack` · `check environment` | inspects the environment, returns the stack report |

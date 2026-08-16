@@ -189,6 +189,7 @@ const results = manifestChecks
 const missing = results.filter((r) => !r.ok);
 const pass = results.length - missing.length;
 const allOk = missing.length === 0;
+const score = results.length === 0 ? 0 : pass / results.length;
 
 if (process.argv.includes("--json")) {
   process.stdout.write(
@@ -201,6 +202,7 @@ if (process.argv.includes("--json")) {
         total: results.length,
         passed: pass,
         failed: missing.length,
+        score,
         passedAll: allOk,
         results,
       },

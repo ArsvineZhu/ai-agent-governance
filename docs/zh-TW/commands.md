@@ -11,6 +11,11 @@
 | 新倉庫 / 首次接入 | `initialize project governance` | `initialize governance` · `setup project for AI agents` · `create AGENTS.md framework` |
 | 開發任務寫計劃 | `plan this task` | `create task plan` · `update development plan` · `check off milestone` · `mark task completed` |
 | 已有治理倉庫的持續維護 | `audit governance` | `governance health check` · `fix governance drift` |
+| 治理漂移報告 | `check governance drift` | `governance health report` · `is governance intact` |
+| 倉庫偵測 | `inspect the repo` | `what is the stack` · `check environment` |
+| CI 搭建 | `setup CI` | `add CI` · `create workflow` |
+| 治理校驗 | `governance check` | `verify governance` · `validate AGENTS` |
+| 狀態記錄 | `update state` | `record progress` |
 | 準備發佈版本 | `release` | `publish version` · `create release` · `/release vX.Y.Z` |
 
 Git 工作流程治理沒有獨立提示詞 —— 它作為執行期規則自動生效：任務開始前自動執行 `scripts/check-git-policy.js`，在受保護分支上阻止直接提交/推送（見 `.governance/git-policy.json`）。同理 `push` / `merge` 也不是提示詞 —— 它們是需確認的寫入操作：Agent 會說明意圖並等待你的明確批准（見 `docs/rules/git-policy.md`）。
@@ -76,13 +81,43 @@ Git 工作流程治理沒有獨立提示詞 —— 它作為執行期規則自�
 → GitHub Release
 ```
 
+#### check governance drift
+
+偵測治理漂移：將 manifest 與現實比對，外加三種建議性模式（結果寫入 `.governance/drift-report.json`）：
+
+```
+讀 manifest
+→ 跑校驗器
+→ 偵測漂移
+→ 建議模式：activity-report · freshness · consistency
+```
+
+單獨指定模式：`run the drift activity report` · `check doc freshness` · `check doc consistency`
+
+#### inspect the repo
+
+任務開始前偵測環境——專案類型、語言、套件管理員、建置工具、測試框架、linter、git 狀態、CI、既有 AI 指南檔案，回傳技術棧報告。INIT 開始時也會自動執行。
+
+#### setup CI
+
+為偵測到的技術棧生成 CI 管線（能力偵測式：format/lint/typecheck/test/build，腳本缺失時優雅降級）。
+
+#### governance check
+
+執行 `scripts/verify-governance.js` 並把結果記錄到 `.governance/validation.json`。閘門：宣稱任務完成前、以及 RELEASE 前校驗器必須 exit 0。
+
+#### update state
+
+把進度持久化到 `.governance/state.json`（成熟度、階段、Agent 身分、已完成/阻塞項），讓後續會話正確續跑。每個任務結束自動執行。
+
+
 ### 執行期元件
 
 這些元件由生命週期提示詞自動觸發，使用者通常只需要使用上面的生命週期提示詞。
 
 | 元件 | 提示詞 | 職責 |
 | --- | --- | --- |
-| drift-check | `check governance drift` · `governance health report` · `is governance intact` | 將 manifest 與現實比對，報告漂移；`activity-report` 模式聚合稽核軌跡 |
+| drift-check | `check governance drift` · `governance health report` · `is governance intact` | 將 manifest 與現實比對，報告漂移；`activity-report` 模式聚合稽核軌跡，`freshness` 模式標記過時文件，`consistency` 模式標記文件間矛盾 |
 | governance-validator | `governance check` · `verify governance` · `validate AGENTS` | 執行校驗器，記錄 `validation.json` |
 | ci-generator | `setup CI` · `add CI` · `create workflow` | 為偵測到的技術棧生成 CI 管線 |
 | repository-inspection | `inspect the repo` · `what is the stack` · `check environment` | 偵測環境，返回技術棧報告 |

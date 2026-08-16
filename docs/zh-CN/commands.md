@@ -11,6 +11,11 @@
 | 新仓库 / 首次接入 | `initialize project governance` | `initialize governance` · `setup project for AI agents` · `create AGENTS.md framework` |
 | 开发任务写计划 | `plan this task` | `create task plan` · `update development plan` · `check off milestone` · `mark task completed` |
 | 已有治理仓库的持续维护 | `audit governance` | `governance health check` · `fix governance drift` |
+| 治理漂移报告 | `check governance drift` | `governance health report` · `is governance intact` |
+| 仓库检测 | `inspect the repo` | `what is the stack` · `check environment` |
+| CI 搭建 | `setup CI` | `add CI` · `create workflow` |
+| 治理校验 | `governance check` | `verify governance` · `validate AGENTS` |
+| 状态记录 | `update state` | `record progress` |
 | 准备发布版本 | `release` | `publish version` · `create release` · `/release vX.Y.Z` |
 
 Git 工作流治理没有独立提示词 —— 它作为运行期规则自动生效：任务开始前自动运行 `scripts/check-git-policy.js`，在受保护分支上阻止直接提交/推送（见 `.governance/git-policy.json`）。同理 `push` / `merge` 也不是提示词 —— 它们是需确认的写操作：Agent 会说明意图并等待你的明确批准（见 `docs/rules/git-policy.md`）。
@@ -76,13 +81,42 @@ Git 工作流治理没有独立提示词 —— 它作为运行期规则自动�
 → GitHub Release
 ```
 
+#### check governance drift
+
+检测治理漂移：将 manifest 与现实比对，外加三种建议性模式（结果写入 `.governance/drift-report.json`）：
+
+```
+读 manifest
+→ 跑校验器
+→ 检测漂移
+→ 建议模式：activity-report · freshness · consistency
+```
+
+单独指定模式：`run the drift activity report` · `check doc freshness` · `check doc consistency`
+
+#### inspect the repo
+
+任务开始前检测环境——项目类型、语言、包管理器、构建工具、测试框架、linter、git 状态、CI、既有 AI 指南文件，返回技术栈报告。INIT 开始时也会自动执行。
+
+#### setup CI
+
+为检测到的技术栈生成 CI 管线（能力检测式：format/lint/typecheck/test/build，脚本缺失时优雅降级）。
+
+#### governance check
+
+运行 `scripts/verify-governance.js` 并把结果记录到 `.governance/validation.json`。门禁：宣称任务完成前、以及 RELEASE 前校验器必须 exit 0。
+
+#### update state
+
+把进度持久化到 `.governance/state.json`（成熟度、阶段、Agent 身份、已完成/阻塞项），让后续会话正确续跑。每个任务结束自动执行。
+
 ### 运行时组件
 
 这些组件由生命周期提示词自动触发，用户通常只需要使用上面的生命周期提示词。
 
 | 组件 | 提示词 | 职责 |
 | --- | --- | --- |
-| drift-check | `check governance drift` · `governance health report` · `is governance intact` | 将 manifest 与现实比对，报告漂移；`activity-report` 模式聚合审计轨迹 |
+| drift-check | `check governance drift` · `governance health report` · `is governance intact` | 将 manifest 与现实比对，报告漂移；`activity-report` 模式聚合审计轨迹，`freshness` 模式标记过时文档，`consistency` 模式标记文档间矛盾 |
 | governance-validator | `governance check` · `verify governance` · `validate AGENTS` | 运行校验器，记录 `validation.json` |
 | ci-generator | `setup CI` · `add CI` · `create workflow` | 为检测到的技术栈生成 CI 管线 |
 | repository-inspection | `inspect the repo` · `what is the stack` · `check environment` | 检测环境，返回技术栈报告 |

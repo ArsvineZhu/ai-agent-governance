@@ -187,11 +187,15 @@ Claude Code · Cursor · Codex · opencode — and other AGENTS.md-based agents.
 - [ ] Skill lifecycle management *(mid-term, v0.9.0+)*
 - [x] Agent activity audit
 - [x] Secret scanning gate
-- [ ] Knowledge freshness detection *(near-term, v0.8.0)*
-- [ ] Content consistency check *(near-term, v0.8.0)*
-- [ ] Governance score & badge *(near-term, v0.8.0)*
+- [x] Knowledge freshness detection
+- [x] Content consistency check
+- [x] Governance score & badge
+- [ ] Review manager *(near-term, v0.8.0)*
+- [ ] Tiered review gate *(near-term, v0.8.0)*
+- [ ] Governed-project sync groups *(near-term, v0.8.0; L2 mechanical check v0.9.0)*
 - [ ] INIT scripted generator *(near-term, v0.8.0)*
 - [ ] Multi-agent coordination protocol *(mid-term, v0.9.0+)*
+- [ ] Skill lifecycle management *(mid-term, v0.9.0+)*
 - [ ] Remote governance dashboard *(mid-term, v0.9.0+)*
 - [ ] Monorepo multi-governance domains *(mid-term, v0.9.0+)*
 - [ ] Demo repository *(long-term)*

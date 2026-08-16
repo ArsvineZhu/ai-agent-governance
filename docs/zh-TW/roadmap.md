@@ -16,19 +16,22 @@
 - Git 工作流程治理 —— `.governance/git-policy.json` + `scripts/check-git-policy.js`（受保護分支、分支開發、禁止直推）
 - Agent 行為稽核 —— 追加式 .governance/activity.jsonl 逐任務稽核軌跡 + drift-check `activity-report` 模式
 - 密鑰掃描閘門 —— scripts/check-secrets.js 阻止暫存區密鑰類內容（校驗器 20 項）
+- 治理健康分 —— 校驗器 `--json` 輸出綜合 `score`（v1 等權）+ CI 產出 shields.io 徽章 endpoint 工件
+- 知識新鮮度 —— `scripts/check-doc-freshness.js` 經 `git log` 提交日期標記過時治理文件（僅建議性）
+- 內容一致性 —— `scripts/check-doc-consistency.js` 標記文件間交叉矛盾（版本示例/受保護清單/ADR 狀態/roadmap 目標/連結/數值聲明；僅建議性）
 
-### 近期（v0.8.0）
+### 近期
 
-- **知識新鮮度偵測** —— drift-check `freshness` 模式：經 `git log` 提交日期標記過時治理文件（建議性，絕不做閘門）。目標版本：v0.8.0。設計：[plans/knowledge-freshness.md](plans/knowledge-freshness.md)
-- **內容一致性檢查** —— drift-check `consistency` 模式：標記文件間交叉矛盾（版本示例滯後、受保護清單分裂、ADR 狀態過期、roadmap 目標過期、連結失效、數值聲明錯誤）。目標版本：v0.8.0。設計：[plans/content-consistency.md](plans/content-consistency.md)
-- **治理健康分與徽章** —— 校驗器 `--json` 輸出綜合 `score`；CI 產出 shields.io 徽章 endpoint；本倉庫率先啟用作參考實作。目標版本：v0.8.0。設計：[plans/governance-score.md](plans/governance-score.md)
-- **INIT 生成器腳本化** —— 確定性、可快照測試的 INIT 生成（`scripts/generate-governance.js`）；分 A → B → C 三期。目標版本：v0.8.0。設計：[plans/init-scripted-generator.md](plans/init-scripted-generator.md)
+- **審核管理器** —— 第 8 個子技能：多智能體深度審查工作流程（固定 5 領域、嚴重度排序報告、修復 + 閘門驗證）。設計：[plans/review-manager.md](plans/review-manager.md)
+- **分級審核閘門** —— release/push 風險分級（低 = 僅輕量級；中 = 批准時建議深度審查；高 = 必須 review-manager）；輕量級腳本總是自動跑。設計：[plans/tiered-review-gate.md](plans/tiered-review-gate.md)
+- **被治理專案同步組** —— 兩層：（L1）聲明式 `.governance/sync-rules.json`（watch/require）+ 清單驅動 Phase 5；（L2）`scripts/check-sync.js` 對照實際改動集機械驗證。設計：[plans/governed-project-sync-groups.md](plans/governed-project-sync-groups.md) + [plans/sync-groups-mechanical-check.md](plans/sync-groups-mechanical-check.md)
+- **INIT 生成器腳本化** —— 確定性、可快照測試的 INIT 生成（`scripts/generate-governance.js`）；分 A → B → C 三期。設計：[plans/init-scripted-generator.md](plans/init-scripted-generator.md)
 
-### 中期（v0.9.0+）
+### 中期
 
-- **多 Agent 協調協定** —— 並發 Agent 之間的標準化協調（鎖檢查已交付；完整協定待真實多 Agent 使用場景）
-- **遠端治理看板** —— 被治理倉庫的可觀測性（依賴近期/中期的稽核軌跡 + 健康分）
+- **多 Agent 協調協定** —— 並發 Agent 之間的標準化協調（鎖檢查已交付；review-manager 的並行子代理是其第一個真實用例）
 - **Skill 生命週期管理** —— 獨立 [`ai-skill-manager`](https://github.com/Consciencieux/ai-skill-manager) skill（管理 .agents/skills/ 下所有 skill 的 INSTALL → UPDATE → ROLLBACK，含本 skill）。自 v0.6.0/v0.7.0 順延；當版本同步步驟證明不夠用時再重啟。設計：[plans/skill-lifecycle-management.md](plans/skill-lifecycle-management.md)
+- **遠端治理看板** —— 被治理倉庫的可觀測性（依賴：稽核軌跡 + 健康分，均已交付）
 - **monorepo 多治理域** —— 校驗器多根解析 + 多 manifest（出現真實 monorepo 需求時再做）
 
 ### 遠期
@@ -40,6 +43,6 @@
 
 **維護規則（每次發佈滾動重排）：**
 
-1. **完成時** —— 移到「已完成」，勾 `[x]`，去掉時間括號與版本目標（已完成項不帶時間尺度）。其設計文件歸檔到 `docs/archive/`（共享區，單語）。
-2. **時間尺度是相對的** —— 移出已完成項後，剩餘項整體前移：中期 → 近期、遠期 → 中期、超遠期 → 遠期（視需求）。版本目標隨之重排。
+1. **完成時** —— 移到「已完成」，勾 `[x]`，去掉時間括號（已完成項不帶時間尺度）。其設計文件歸檔到 `docs/archive/`（共享區，單語）。
+2. **時間尺度是相對的** —— 移出已完成項後，剩餘項整體前移：中期 → 近期、遠期 → 中期、超遠期 → 遠期（視需求）。
 3. **觸發時機** —— 重排是發佈流程的一部分（`release-manager` 歸檔計劃時一併重排本 roadmap），不是隨手改；否則時間標註會過期失真。

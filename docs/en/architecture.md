@@ -96,7 +96,11 @@ ai-agent-governance/
 │   ├── check-lock.js           # multi-agent lock check (read-only, exit 1 = lock held)
 │   ├── check-git-policy.js     # Git workflow gate (protected branch + directPush=false → exit 1)
 │   ├── check-secrets.js        # secret scan gate (staged diff, never prints the secret)
-│   └── release-manager.js      # plan (read-only) + execute (approval-gated) release tool
+│   ├── check-doc-freshness.js   # doc staleness (git log dates, advisory, exit 0)
+│   ├── check-doc-consistency.js # cross-doc contradictions (advisory, exit 0)
+│   ├── check-doc-parity.js      # trilingual tree parity (CI + release precondition)
+│   ├── package-skill.sh         # release payload tarball packaging
+│   └── release-manager.js       # plan (read-only) + execute (approval-gated) release tool
 ├── docs/                       # knowledge layer (human documentation)
 │   ├── glossary.md             # trilingual terminology table (shared)
 │   ├── design-decisions/       # architecture decision records (shared, single-language 简体中文)

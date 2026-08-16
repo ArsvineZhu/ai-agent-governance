@@ -28,8 +28,18 @@ preflight.json / git-policy.json / governance_version
 
 - `validation.json` / `drift-report.json` are runtime outputs, NOT required artifacts — a fresh checkout passes without them.
 
+### Governance badge (optional)
+
+The CI governance job produces a shields.io `endpoint`-format artifact (`governance-badge.json`: `{ "schemaVersion": 1, "label": "governance", "message": "N/M", "color": "green|yellow|red" }`). Host it at a public URL of your choice and reference it in the README:
+
+```markdown
+[![Governance](https://img.shields.io/endpoint?url=<YOUR_HOSTED_URL>/governance-badge.json)](docs/validator.md)
+```
+
+`score` (passed/total, unweighted v1) in `--json` output is the composite the badge and future dashboards consume. Color thresholds: 100% green, ≥80% yellow, otherwise red.
+
 ### Report
 
-Human mode prints `✓/✗ <name> (<path>)` per check plus `N/M checks passed.`. JSON mode returns `{ mode, governance_version, total, passed, failed, passedAll, results[] }`. Governance checks must pass before a task can be declared done, and before RELEASE.
+Human mode prints `✓/✗ <name> (<path>)` per check plus `N/M checks passed.`. JSON mode returns `{ mode, governance_version, total, passed, failed, score (passed/total), passedAll, results[] }`. Governance checks must pass before a task can be declared done, and before RELEASE.
 
 ---

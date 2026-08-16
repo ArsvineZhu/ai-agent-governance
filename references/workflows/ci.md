@@ -289,6 +289,23 @@ governance:
   steps:
     - uses: actions/checkout@v4
     - run: node scripts/verify-governance.js
+    - name: Governance badge endpoint
+      run: |
+        node scripts/verify-governance.js --json > governance-report.json || true
+        node -e "
+          const r = require('./governance-report.json');
+          const pct = r.total ? Math.round(r.passed / r.total * 100) : 0;
+          const color = pct === 100 ? 'green' : pct >= 80 ? 'yellow' : 'red';
+          require('fs').writeFileSync('governance-badge.json', JSON.stringify({
+            schemaVersion: 1, label: 'governance', message: r.passed + '/' + r.total, color
+          }));
+        "
+    - uses: actions/upload-artifact@v4
+      with:
+        name: governance-badge
+        path: governance-badge.json
 ```
+
+> 徽章端点为 shields.io `endpoint` 格式（`label=governance`、`message=N/M`、绿/黄/红按通过率）。托管方式自选（Gist / GH Pages / 静态托管），本模板只交付工件生成。`--json` 的 `score` 字段（passed/total，等权 v1）供看板/徽章消费。
 
 > dependabot 的 package-ecosystem 按检测到的包管理器替换（npm / pip / cargo / gomod / maven）；未用到的 ecosystem 区块删除。

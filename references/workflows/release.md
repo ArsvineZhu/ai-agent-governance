@@ -230,8 +230,8 @@ AI 不得自动创建 tag、自动 push tag、自动创建 release，除非：
 ```json
 {
   "release": {
-    "version": "0.7.1",
-    "tag": "v0.7.1",
+    "version": "0.8.0",
+    "tag": "v0.8.0",
     "validated": false
   }
 }

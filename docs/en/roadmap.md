@@ -16,19 +16,22 @@ Horizons: **Done** / **Near-term** / **Mid-term** / **Long-term**
 - Git workflow governance — `.governance/git-policy.json` + `scripts/check-git-policy.js` (protected branches, branch-based development, no direct push)
 - Agent activity audit — append-only `.governance/activity.jsonl` per-task audit trail + drift-check `activity-report` mode
 - Secret scanning gate — `scripts/check-secrets.js` blocks secret-like staged content (validator 20 checks)
+- Governance score — validator `--json` outputs composite `score` (unweighted v1) + CI shields.io badge endpoint artifact
+- Doc freshness — `scripts/check-doc-freshness.js` flags stale governance docs via `git log` commit dates (advisory only)
+- Doc consistency — `scripts/check-doc-consistency.js` flags cross-document contradictions (version examples, protected lists, ADR statuses, roadmap targets, links, numeric claims; advisory only)
 
-### Near-term (v0.8.0)
+### Near-term
 
-- **Knowledge freshness detection** — drift-check `freshness` mode: flag stale governance docs via `git log` commit dates (advisory, never a gate). Target: v0.8.0. Design: [plans/knowledge-freshness.md](plans/knowledge-freshness.md)
-- **Content consistency check** — drift-check `consistency` mode: flag cross-document contradictions (stale version examples, fragmented protected-file lists, stale ADR statuses, expired roadmap targets, broken links, wrong numeric claims). Target: v0.8.0. Design: [plans/content-consistency.md](plans/content-consistency.md)
-- **Governance score & badge** — validator `--json` gains a composite `score`; CI produces a shields.io badge endpoint; this repo adopts it as reference. Target: v0.8.0. Design: [plans/governance-score.md](plans/governance-score.md)
-- **INIT scripted generator** — deterministic, snapshot-testable INIT generation (`scripts/generate-governance.js`); phased A → B → C. Target: v0.8.0. Design: [plans/init-scripted-generator.md](plans/init-scripted-generator.md)
+- **Review manager** — 8th sub-skill: multi-agent deep review workflow (5 fixed domains, severity-sorted report, fix + gate verification). Design: [plans/review-manager.md](plans/review-manager.md)
+- **Tiered review gate** — release/push risk tiering (low = lightweight only; medium = suggested deep review at approval; high = review-manager required); lightweight scripts always run. Design: [plans/tiered-review-gate.md](plans/tiered-review-gate.md)
+- **Governed-project sync groups** — two layers: (L1) declarative `.governance/sync-rules.json` (watch/require) + checklist-driven Phase 5; (L2) `scripts/check-sync.js` mechanical verification against the actual change set. Designs: [plans/governed-project-sync-groups.md](plans/governed-project-sync-groups.md) + [plans/sync-groups-mechanical-check.md](plans/sync-groups-mechanical-check.md)
+- **INIT scripted generator** — deterministic, snapshot-testable INIT generation (`scripts/generate-governance.js`); phased A → B → C. Design: [plans/init-scripted-generator.md](plans/init-scripted-generator.md)
 
-### Mid-term (v0.9.0+)
+### Mid-term
 
-- **Multi-agent coordination protocol** — standardized coordination across concurrent agents (lock check already shipped; full protocol awaits real multi-agent usage)
-- **Remote governance dashboard** — observability for governed repositories (depends on the activity audit trail + score from near/mid-term)
+- **Multi-agent coordination protocol** — standardized coordination across concurrent agents (lock check already shipped; review-manager's parallel subagents are its first real use case)
 - **Skill lifecycle management** — dedicated [`ai-skill-manager`](https://github.com/Consciencieux/ai-skill-manager) skill (INSTALL → UPDATE → ROLLBACK for all skills in .agents/skills/, including this skill). Deferred from v0.6.0/v0.7.0; revisit when the version-sync step proves insufficient. Design: [plans/skill-lifecycle-management.md](plans/skill-lifecycle-management.md)
+- **Remote governance dashboard** — observability for governed repositories (dependencies: activity audit trail + score, both already shipped)
 - **Monorepo multi-governance domains** — validator multi-root resolution + multiple manifests (only when real monorepo demand appears)
 
 ### Long-term
@@ -40,6 +43,6 @@ Note: design plans for unimplemented features live in each language tree's `plan
 
 **Maintenance rule (rolling re-baseline, at each release):**
 
-1. **On completion** — move the item to `Done`, check `[x]`, drop its horizon label and version target (done items carry no horizon). Archive its design doc to `docs/archive/` (shared, single-language).
-2. **Horizons are relative** — after removing completed items, promote the remainder: Mid-term → Near-term, Long-term → Mid-term, Very long-term → Long-term (as demand warrants). Reassign version targets to match.
+1. **On completion** — move the item to `Done`, check `[x]`, drop its horizon label (done items carry no horizon). Archive its design doc to `docs/archive/` (shared, single-language).
+2. **Horizons are relative** — after removing completed items, promote the remainder: Mid-term → Near-term, Long-term → Mid-term, Very long-term → Long-term (as demand warrants).
 3. **Trigger** — the re-ordering is part of the release flow (the `release-manager` step that archives plans also re-baselines this roadmap), not an ad-hoc edit; otherwise labels go stale.

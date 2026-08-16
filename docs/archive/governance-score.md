@@ -1,6 +1,7 @@
 # Governance Score & Badge（TASK 计划）
 
-[English](../../en/plans/governance-score.md) · [简体中文](governance-score.md) · [繁體中文](../../zh-TW/plans/governance-score.md)
+
+> **状态：已实现（v0.8.0 待发布，已归档）。** 实现见 `scripts/verify_governance.js`（--json 输出 score 字段）与 `.github/workflows/ci.yml`（shields.io badge endpoint 工件）、`references/workflows/ci.md`（被治理项目模板）。
 
 ### 任务目的
 

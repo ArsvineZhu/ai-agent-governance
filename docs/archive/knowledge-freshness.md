@@ -1,6 +1,7 @@
 # Knowledge Freshness Detection（TASK 计划）
 
-[English](../../en/plans/knowledge-freshness.md) · [简体中文](knowledge-freshness.md) · [繁體中文](../../zh-TW/plans/knowledge-freshness.md)
+
+> **状态：已实现（v0.8.0 待发布，已归档）。** 实现见 `scripts/check-doc-freshness.js`（git log 提交日期，30/90 天阈值，代码活跃感知，恒 exit 0）；drift-check 子技能模板已含 freshness 模式（`references/templates/sub-skills.md`）。
 
 ### 任务目的
 

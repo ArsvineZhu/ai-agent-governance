@@ -14,3 +14,18 @@ jobs:
           node-version: 20
       - run: npm test
       - run: node scripts/check-doc-parity.js
+      - name: Governance badge endpoint
+        run: |
+          node scripts/verify_governance.js --json > governance-report.json || true
+          node -e "
+            const r = require('./governance-report.json');
+            const pct = r.total ? Math.round(r.passed / r.total * 100) : 0;
+            const color = pct === 100 ? 'green' : pct >= 80 ? 'yellow' : 'red';
+            require('fs').writeFileSync('governance-badge.json', JSON.stringify({
+              schemaVersion: 1, label: 'governance', message: r.passed + '/' + r.total, color
+            }));
+          "
+      - uses: actions/upload-artifact@v4
+        with:
+          name: governance-badge
+          path: governance-badge.json

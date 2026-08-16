@@ -144,8 +144,20 @@ test("--json reports passedAll, mode and governance_version", () => {
     out.passedAll === true &&
     out.governance_version === "1.0.0" &&
     Array.isArray(out.results) &&
-    out.results.length === 20
+    out.results.length === 20 &&
+    out.score === 1
   );
+});
+
+test("--json score reflects partial failures (19/20 = 0.95)", () => {
+  const dir = tmp("score");
+  buildFullDefault(dir);
+  fs.rmSync(path.join(dir, ".env.example"));
+
+  const r = run(dir, ["--json"]);
+  if (r.status !== 1) return false;
+  const out = JSON.parse(r.stdout);
+  return out.total === 20 && out.passed === 19 && out.score === 0.95;
 });
 
 // ---------- 6. --help output ----------
@@ -300,7 +312,143 @@ test("doc parity: missing file in one tree exits 1", () => {
   return r.status === 1 && r.stdout.includes("missing in docs/en/");
 });
 
-// ---------- 10-16. Release planning & approval gate (scripts/release-manager.js) ----------
+// ---------- 10. Doc freshness check (scripts/check-doc-freshness.js) ----------
+const FRESHNESS_CHECK = path.join(__dirname, "..", "scripts", "check-doc-freshness.js");
+
+// commit file(s) with a forced author/committer date: `git commit --date=<iso>`
+function gitCommitAt(dir, files, dateIso, msg) {
+  spawnSync("git", ["add", ...files], { cwd: dir });
+  spawnSync("git", ["commit", "-q", "-m", msg, "--date=" + dateIso], {
+    cwd: dir,
+    env: { ...process.env, GIT_AUTHOR_DATE: dateIso, GIT_COMMITTER_DATE: dateIso },
+  });
+}
+
+function buildFreshnessFixture(dir) {
+  gitInit(dir);
+  // docs/ARCHITECTURE.md committed 60 days ago
+  write(path.join(dir, "docs", "ARCHITECTURE.md"), "# Arch\n");
+  const oldDate = new Date(Date.now() - 60 * 86400000).toISOString().slice(0, 10);
+  gitCommitAt(dir, ["docs/ARCHITECTURE.md"], oldDate + "T00:00:00+00:00", "doc old");
+  // src/ code committed recently (code active)
+  write(path.join(dir, "src", "main.ts"), "export const x = 1;\n");
+  gitCommitAt(dir, ["src/main.ts"], new Date().toISOString(), "code recent");
+  // CHANGELOG.md committed recently (fresh)
+  write(path.join(dir, "CHANGELOG.md"), "# Changelog\n");
+  gitCommitAt(dir, ["CHANGELOG.md"], new Date().toISOString(), "changelog fresh");
+}
+
+test("doc freshness: stale doc flagged, fresh doc not flagged (exit 0)", () => {
+  const dir = tmp("freshness");
+  buildFreshnessFixture(dir);
+  const r = spawnSync(process.execPath, [FRESHNESS_CHECK, "--json"], { cwd: dir, encoding: "utf8" });
+  const out = JSON.parse(r.stdout);
+  return (
+    r.status === 0 &&
+    out.stale.includes("docs/ARCHITECTURE.md") &&
+    !out.stale.includes("CHANGELOG.md") &&
+    !out.veryStale.includes("docs/ARCHITECTURE.md")
+  );
+});
+
+test("doc freshness: very stale doc (90+ days) flagged as very stale", () => {
+  const dir = tmp("freshness-very");
+  gitInit(dir);
+  write(path.join(dir, "docs", "ARCHITECTURE.md"), "# Arch\n");
+  const oldDate = new Date(Date.now() - 95 * 86400000).toISOString().slice(0, 10);
+  gitCommitAt(dir, ["docs/ARCHITECTURE.md"], oldDate + "T00:00:00+00:00", "doc very old");
+  write(path.join(dir, "src", "main.ts"), "x\n");
+  gitCommitAt(dir, ["src/main.ts"], new Date().toISOString(), "code recent");
+  const r = spawnSync(process.execPath, [FRESHNESS_CHECK, "--json"], { cwd: dir, encoding: "utf8" });
+  const out = JSON.parse(r.stdout);
+  return r.status === 0 && out.veryStale.includes("docs/ARCHITECTURE.md");
+});
+
+test("doc freshness: drift-report.json gains freshness section", () => {
+  const dir = tmp("freshness-drift");
+  buildFreshnessFixture(dir);
+  write(path.join(dir, ".governance", "drift-report.json"), JSON.stringify({ missing: [] }));
+  spawnSync(process.execPath, [FRESHNESS_CHECK], { cwd: dir, encoding: "utf8" });
+  const drift = JSON.parse(fs.readFileSync(path.join(dir, ".governance", "drift-report.json"), "utf8"));
+  return drift.freshness && Array.isArray(drift.freshness.stale);
+});
+
+// ---------- 11. Doc consistency check (scripts/check-doc-consistency.js) ----------
+const CONSISTENCY_CHECK = path.join(__dirname, "..", "scripts", "check-doc-consistency.js");
+
+test("doc consistency: clean repo exits 0 with no issues", () => {
+  const dir = tmp("consistency-clean");
+  // minimal valid repo: version example matches package.json
+  write(path.join(dir, "package.json"), JSON.stringify({ version: "1.2.3" }));
+  write(path.join(dir, "docs", "en", "doc.md"), "# Doc\n\n## Section\n");
+  write(path.join(dir, "docs", "zh-CN", "doc.md"), "# Doc\n\n## Section\n");
+  write(path.join(dir, "docs", "zh-TW", "doc.md"), "# Doc\n\n## Section\n");
+  write(path.join(dir, "docs", "zh-CN", "README.md"), "# R\n\n## S\n");
+  write(path.join(dir, "docs", "zh-TW", "README.md"), "# R\n\n## S\n");
+  write(path.join(dir, "README.md"), "# R\n\n## S\n");
+  const r = spawnSync(process.execPath, [CONSISTENCY_CHECK, "--json"], { cwd: dir, encoding: "utf8" });
+  const out = JSON.parse(r.stdout);
+  return r.status === 0 && Object.values(out.issues).every((v) => (Array.isArray(v) ? v.length === 0 : true));
+});
+
+test("doc consistency: stale version example in SKILL.md-style doc is flagged", () => {
+  const dir = tmp("consistency-version");
+  write(path.join(dir, "package.json"), JSON.stringify({ version: "2.0.0" }));
+  write(path.join(dir, "SKILL.md"), 'governance_version": "1.0.0"');
+  const r = spawnSync(process.execPath, [CONSISTENCY_CHECK, "--json"], { cwd: dir, encoding: "utf8" });
+  const out = JSON.parse(r.stdout);
+  return r.status === 0 && out.issues.version_examples.some((i) => i.includes("1.0.0"));
+});
+
+test("doc consistency: broken relative link is flagged", () => {
+  const dir = tmp("consistency-link");
+  write(path.join(dir, "README.md"), "[missing](docs/does-not-exist.md)");
+  const r = spawnSync(process.execPath, [CONSISTENCY_CHECK, "--json"], { cwd: dir, encoding: "utf8" });
+  const out = JSON.parse(r.stdout);
+  return r.status === 0 && out.issues.broken_links.some((i) => i.includes("does-not-exist.md"));
+});
+
+test("doc consistency: roadmap target ≤ current version is flagged (semantic compare)", () => {
+  const dir = tmp("consistency-roadmap");
+  write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
+  write(path.join(dir, "docs", "zh-CN", "roadmap.md"), "- **X** — 目标版本：v0.9.0。");
+  const r = spawnSync(process.execPath, [CONSISTENCY_CHECK, "--json"], { cwd: dir, encoding: "utf8" });
+  const out = JSON.parse(r.stdout);
+  return r.status === 0 && out.issues.roadmap_targets.some((i) => i.includes("v0.9.0"));
+});
+
+test("doc consistency: numeric claim mismatch with validator source is flagged", () => {
+  const dir = tmp("consistency-numeric");
+  // 20-item DEFAULTS array + README claiming 99
+  write(path.join(dir, "scripts", "verify_governance.js"),
+    "const DEFAULTS = [\n  [\"a\", \"a\", isFile],\n  [\"b\", \"b\", isFile],\n  [\"c\", \"c\", isFile],\n  [\"d\", \"d\", isFile],\n  [\"e\", \"e\", isFile],\n];\n");
+  write(path.join(dir, "README.md"), "the validator has 99 checks");
+  const r = spawnSync(process.execPath, [CONSISTENCY_CHECK, "--json"], { cwd: dir, encoding: "utf8" });
+  const out = JSON.parse(r.stdout);
+  return r.status === 0 && out.issues.numeric_claims.some((i) => i.includes("99"));
+});
+
+test("doc consistency: parity unavailable is reported, not claimed as pass", () => {
+  const dir = tmp("consistency-noparity");
+  write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
+  // no scripts/check-doc-parity.js in this fixture
+  const r = spawnSync(process.execPath, [CONSISTENCY_CHECK, "--json"], { cwd: dir, encoding: "utf8" });
+  const out = JSON.parse(r.stdout);
+  return r.status === 0 && out.parity === "unavailable";
+});
+
+test("doc consistency: sub-skill trigger missing from commands.md is flagged", () => {
+  const dir = tmp("consistency-prompt");
+  // fixture: sub-skills.md with one trigger, commands.md without it
+  write(path.join(dir, "references", "templates", "sub-skills.md"),
+    'description: ... Triggers on "unique-trigger-xyz".');
+  write(path.join(dir, "docs", "en", "commands.md"), "# Commands\n\nno such trigger here\n");
+  const r = spawnSync(process.execPath, [CONSISTENCY_CHECK, "--json"], { cwd: dir, encoding: "utf8" });
+  const out = JSON.parse(r.stdout);
+  return r.status === 0 && out.issues.prompt_sync.some((i) => i.includes("unique-trigger-xyz"));
+});
+
+// ---------- 12-16. Release planning & approval gate (scripts/release-manager.js) ----------
 
 const RELEASE_TOOL = path.join(__dirname, "..", "scripts", "release-manager.js");
 

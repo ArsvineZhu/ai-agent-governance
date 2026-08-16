@@ -8,7 +8,7 @@
 npm test        # 或 node tests/run-tests.js
 ```
 
-測試套件涵蓋：空專案（exit 1）、完整預設結構（exit 0，20 項檢查）、自訂文件根經 manifest（manifest 模式）、缺 governance_version（exit 1）、`--json` 輸出、`--help`、無 `.agent` 殘留、`validation.json` 可選、CHANGELOG 格式檢查、鎖檢查（無狀態 / 未持鎖 / 持鎖）、Git 策略檢查（非法策略 / 受保護分支阻止 / 特性分支通過）、密鑰掃描（命中 exit 1 且不洩漏 token / 乾淨 exit 0 / 缺閘門使校驗器失敗）、發佈規劃（SemVer 分類：docs/重構 → patch、CLI 命令 → minor、刪除公開 API → major、不確定性 → 澄清、`--file` 輸入）與審批閘門（未批准 → 無 tag，批准 → 建立 annotated tag）、文件一致性（三樹平行 exit 0 / 標題漂移 exit 1 / 缺失檔案 exit 1）。CI 每次 push/PR 執行。
+測試套件涵蓋：空專案（exit 1）、完整預設結構（exit 0，20 項檢查）、自訂文件根經 manifest（manifest 模式）、缺 governance_version（exit 1）、`--json` 輸出、`--help`、無 `.agent` 殘留、`validation.json` 可選、CHANGELOG 格式檢查、鎖檢查（無狀態 / 未持鎖 / 持鎖）、Git 策略檢查（非法策略 / 受保護分支阻止 / 特性分支通過）、密鑰掃描（命中 exit 1 且不洩漏 token / 乾淨 exit 0 / 缺閘門使校驗器失敗）、發佈規劃（SemVer 分類：docs/重構 → patch、CLI 命令 → minor、刪除公開 API → major、不確定性 → 澄清、`--file` 輸入）與審批閘門（未批准 → 無 tag，批准 → 建立 annotated tag）、文件一致性（三樹平行 exit 0 / 標題漂移 exit 1 / 缺失檔案 exit 1）、知識新鮮度（git log 日期偵測 stale/very-stale）、內容一致性（乾淨 exit 0 / 版本示例標記 / 壞鏈標記）與 --json score（全過 1.0 / 部分 0.95）。CI 每次 push/PR 執行。
 
 ## 各目錄用途
 

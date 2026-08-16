@@ -28,6 +28,16 @@ preflight.json / git-policy.json / governance_version
 
 - `validation.json` / `drift-report.json` 是运行时输出，不是 required artifact —— fresh checkout 无它们也能通过。
 
+### 治理徽章（可选）
+
+CI 治理 job 产出 shields.io `endpoint` 格式工件（`governance-badge.json`：`{ "schemaVersion": 1, "label": "governance", "message": "N/M", "color": "green|yellow|red" }`）。托管到自选公网地址后，在 README 引用：
+
+```markdown
+[![Governance](https://img.shields.io/endpoint?url=<YOUR_HOSTED_URL>/governance-badge.json)](docs/zh-CN/validator.md)
+```
+
+`--json` 输出的 `score`（passed/total，v1 等权）即徽章与未来看板消费的综合分数。配色阈值：100% 绿、≥80% 黄、否则红。
+
 ### 报告
 
-人类模式逐项打印 `✓/✗ <名称> (<路径>)` 及 `N/M checks passed.`。JSON 模式返回 `{ mode, governance_version, total, passed, failed, passedAll, results[] }`。治理检查必须在宣称任务完成前、以及 RELEASE 前通过。
+人类模式逐项打印 `✓/✗ <名称> (<路径>)` 及 `N/M checks passed.`。JSON 模式返回 `{ mode, governance_version, total, passed, failed, score, passedAll, results[] }`。治理检查必须在宣称任务完成前、以及 RELEASE 前通过。

@@ -153,7 +153,34 @@ description: Use to detect governance drift in this repo — compare declared ar
 - Read the last N entries (default 50): group by `agent_id` / by `action` / failed-only (`result != "ok"`)
 - Output a summary table + the failed entries with `ts` / `agent_id` / `task_id` / `summary`
 - Never print `commands` / `files` from failed entries verbatim when they may contain secret material (apply the same redaction as state-manager)
+
+**freshness mode** — flag governance docs gone stale relative to code activity (report-only, NEVER a gate):
+
+1. Compute per-doc staleness = days since its **last git commit** (`git log -1 --format=%cs -- <doc>`), NOT filesystem mtime (fresh clones have all mtimes equal to checkout time)
+2. Measure code activity in the same window: commits touching `src/`, `app/`, `packages/` etc. since the doc's last commit date
+3. Thresholds (advisory): doc not committed in 30+ days while code is active → `stale`; 90+ days → `very stale`
+4. Mandatory-doc pair (`docs/ARCHITECTURE.md`, `CHANGELOG.md`) reported first; feature docs (`docs/features/`) included
+5. Append the result to `.governance/drift-report.json` (nested under `freshness`):
+   ```json
+   {"freshness": {"stale": ["docs/ARCHITECTURE.md"], "veryStale": []}}
+   ```
+6. Exit code is unaffected — freshness is advisory only; stable low-commit projects are allowed to show stale docs without failing
+
+**consistency mode** — flag cross-document contradictions (report-only, exit 0 always). Run `node scripts/check-doc-consistency.js --json` (or `npm run governance-consistency` if registered):
+
+- **version-example sync** — `governance_version` / manifest examples in docs must match the current declared version
+- **protected-files sync** — protected-file summary lists must match the single source of truth (`references/policies/governance-files.policy.md`); summaries that defer to it ("single source of truth") are exempt
+- **ADR status sync** — ADRs marked `Accepted (Unreleased)` whose feature already shipped in a released CHANGELOG section
+- **roadmap target validity** — unfinished items whose target version ≤ current version
+- **link validity** — relative markdown links must resolve to real files
+- **numeric claims** — documented counts (validator check count etc.) must match the source
+- **trilingual tree parity** — delegates to `scripts/check-doc-parity.js` (three language trees structurally parallel)
+
+Append the result to `.governance/drift-report.json` (`consistency` object). Advisory only — heuristics, never a fail-closed gate.
+
 - Exit 0 always (reporting, not a gate)
+
+**standard validation sequence** — lifecycle Phase 4 runs the gates in order: `check-lock.js` (multi-agent) → `check-git-policy.js` → `check-secrets.js` → `verify-governance.js` → project test/lint/build → advisory (`check-doc-freshness.js` + `check-doc-consistency.js`, exit 0). Gates 1-5 fail-closed; the advisory pair reports only.
 ````
 
 ---

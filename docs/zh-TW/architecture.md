@@ -96,7 +96,11 @@ ai-agent-governance/
 │   ├── check-lock.js           # 多 Agent 鎖檢查（唯讀，exit 1 = 持鎖）
 │   ├── check-git-policy.js     # Git 工作流程閘門（受保護分支 + directPush=false → exit 1）
 │   ├── check-secrets.js        # 密鑰掃描閘門（暫存區掃描，絕不列印密鑰）
-│   └── release-manager.js      # 發佈工具：plan（唯讀）+ execute（審批閘門）
+│   ├── check-doc-freshness.js   # 文件過時度（git log 日期，建議性，exit 0）
+│   ├── check-doc-consistency.js # 文件間矛盾（建議性，exit 0）
+│   ├── check-doc-parity.js      # 三語樹一致性（CI + 發佈前置）
+│   ├── package-skill.sh         # 發佈載荷 tarball 打包
+│   └── release-manager.js       # 發佈工具：plan（唯讀）+ execute（審批閘門）
 ├── docs/                       # 知識層（人類文件）
 │   ├── glossary.md             # 三語術語對照表（共享）
 │   ├── design-decisions/       # 架構決策記錄（共享，簡體單語）
