@@ -32,6 +32,7 @@
 | `preflight.json` | 回滚快照 | 提交 |
 | `git-policy.json` | Git 工作流策略 | 提交 |
 | `generated/skills/` | 治理产物 | 提交 |
+| `docs/plans/archive/` | 归档的已完成 TASK 计划（治理历史；非 validator 必查，但必须提交） | 提交 |
 
 **Runtime outputs（validator 不要求，git 忽略）**：
 
