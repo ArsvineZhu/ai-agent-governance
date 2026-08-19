@@ -408,14 +408,6 @@ test("doc consistency: broken relative link is flagged", () => {
   return r.status === 0 && out.issues.broken_links.some((i) => i.includes("does-not-exist.md"));
 });
 
-test("doc consistency: roadmap target ≤ current version is flagged (semantic compare)", () => {
-  const dir = tmp("consistency-roadmap");
-  write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
-  write(path.join(dir, "docs", "zh-CN", "roadmap.md"), "- **X** — 目标版本：v0.9.0。");
-  const r = spawnSync(process.execPath, [CONSISTENCY_CHECK, "--json"], { cwd: dir, encoding: "utf8" });
-  const out = JSON.parse(r.stdout);
-  return r.status === 0 && out.issues.roadmap_targets.some((i) => i.includes("v0.9.0"));
-});
 
 test("doc consistency: numeric claim mismatch with validator source is flagged", () => {
   const dir = tmp("consistency-numeric");

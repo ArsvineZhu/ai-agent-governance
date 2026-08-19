@@ -191,31 +191,10 @@ Claude Code · Cursor · Codex · opencode —— 以及其他基于 AGENTS.md �
 
 ### Roadmap
 
-- [x] AGENTS.md 治理引导
-- [x] Feature 登记
-- [x] 治理校验器
-- [x] 发布工作流
-- [x] 多语言 CI 模板
-- [x] 多 Agent 锁强制
-- [x] 校验器内容检查
-- [x] Git 工作流治理
-- [x] Agent 行为审计
-- [x] 密钥扫描门禁
-- [x] 知识新鲜度检测
-- [x] 内容一致性检查
-- [x] 治理健康分与徽章
-- [ ] 审核管理器（*近期*）
-- [ ] 分级审核门禁（*近期*）
-- [ ] 被治理项目同步组（*近期；L2 机械验证*）
-- [ ] INIT 生成器脚本化（*近期*）
-- [ ] 多 Agent 协调协议（*中期*）
-- [ ] Skill 生命周期管理（*中期*）
-- [ ] 远程治理看板（*中期*）
-- [ ] monorepo 多治理域（*中期*）
-- [ ] demo 示例仓库（*远期*）
-- [ ] 生态完善：IDE 扩展 + Cursor 兼容实测（*远期*）
+接下来：审核管理器（多智能体深度审查）· 分级审核门禁 · 被治理项目同步组 · INIT 生成器脚本化。
 
-状态详情与设计文档：[docs/zh-CN/roadmap.md](roadmap.md)
+完整路线图与设计文档：[docs/zh-CN/roadmap.md](roadmap.md)
+
 
 ### License
 

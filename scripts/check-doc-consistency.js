@@ -3,9 +3,9 @@
 //   1. version-example sync   — examples of governance_version/manifest values vs current
 //   2. protected-files sync   — summary lists vs the single source of truth
 //   3. ADR status sync        — "Accepted (Unreleased)" ADRs whose feature already shipped
-//   4. roadmap target validity— unfinished items with target ≤ current version
-//   5. link validity          — relative markdown links must resolve
-//   6. numeric claims         — documented counts (sub-skills, validator checks, tests)
+//   4. link validity          — relative markdown links must resolve
+//   5. numeric claims         — documented counts (sub-skills, validator checks, tests)
+//   6. prompt sync            - sub-skill triggers must appear in all three commands.md
 //   7. trilingual tree parity — delegated to scripts/check-doc-parity.js
 // Advisory only — exit code is ALWAYS 0 (heuristics, not a fail-closed gate).
 // Usage: node scripts/check-doc-consistency.js [--json]
@@ -63,7 +63,7 @@ function mdFiles() {
 
 function main() {
   const json = process.argv.includes("--json");
-  const issues = { version_examples: [], protected_lists: [], adr_statuses: [], roadmap_targets: [], broken_links: [], numeric_claims: [], prompt_sync: [] };
+  const issues = { version_examples: [], protected_lists: [], adr_statuses: [], broken_links: [], numeric_claims: [], prompt_sync: [] };
   const version = currentVersion();
 
   // ---- 1. version-example sync ----
@@ -122,29 +122,7 @@ function main() {
     }
   }
 
-  // ---- 4. roadmap target validity ----
-  // Semantic version compare (string compare would say 0.10.0 < 0.9.0).
-  const cmpVersion = (a, b) => {
-    const pa = a.split(".").map(Number);
-    const pb = b.split(".").map(Number);
-    for (let i = 0; i < 3; i++) {
-      if (pa[i] !== pb[i]) return pa[i] < pb[i] ? -1 : 1;
-    }
-    return 0;
-  };
-  for (const lang of ["en", "zh-CN", "zh-TW"]) {
-    const rp = path.join(DOCS, lang, "roadmap.md");
-    const c = readFile(rp);
-    if (!c) continue;
-    const re = /Target: v(\d+\.\d+\.\d+)|目标版本：v(\d+\.\d+\.\d+)/g;
-    let m;
-    while ((m = re.exec(c))) {
-      const t = m[1] || m[2];
-      if (version && t && cmpVersion(t, version) <= 0) issues.roadmap_targets.push(`${lang}/roadmap.md: v${t} <= current v${version}`);
-    }
-  }
-
-  // ---- 5. link validity ----
+  // ---- 4. link validity ----
   const linkFiles = mdFiles();
   for (const f of linkFiles) {
     const c = readFile(path.join(ROOT, f));
@@ -160,7 +138,7 @@ function main() {
     }
   }
 
-  // ---- 6. numeric claims ----
+  // ---- 5. numeric claims ----
   // validator check count: docs must claim the same count as the DEFAULTS array
   const validator = readFile(path.join(ROOT, "scripts", "verify_governance.js")) || readFile(path.join(ROOT, "scripts", "verify-governance.js")) || "";
   const defaultArr = validator.match(/const DEFAULTS = \[([\s\S]*?)\n\];/);
@@ -177,7 +155,7 @@ function main() {
     }
   }
 
-  // ---- 7. prompt sync (sub-skill triggers must appear in commands.md) ----
+  // ---- 6. prompt sync (sub-skill triggers must appear in commands.md) ----
   const subSkills = readFile(path.join(ROOT, "references", "templates", "sub-skills.md")) || "";
   const triggers = new Set();
   for (const line of subSkills.split("\n")) {
@@ -196,7 +174,7 @@ function main() {
     }
   }
 
-  // ---- 8. trilingual tree parity (delegate) ----
+  // ---- 7. trilingual tree parity (delegate) ----
   const parityScript = path.join(ROOT, "scripts", "check-doc-parity.js");
   let parityPass = "unavailable"; // never claim a pass we could not verify
   if (fs.existsSync(parityScript)) {
