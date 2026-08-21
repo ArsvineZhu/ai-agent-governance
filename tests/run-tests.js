@@ -14,6 +14,7 @@ const LOCK_CHECK = path.join(__dirname, "..", "scripts", "check-lock.js");
 const GIT_POLICY_CHECK = path.join(__dirname, "..", "scripts", "check-git-policy.js");
 const SECRET_CHECK = path.join(__dirname, "..", "scripts", "check-secrets.js");
 const SYNC_CHECK = path.join(__dirname, "..", "scripts", "check-sync.js");
+const GENERATOR = path.join(__dirname, "..", "scripts", "generate-governance.js");
 const TMP_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), "ai-agent-governance-test-"));
 
 function tmp(name) {
@@ -620,6 +621,84 @@ for (const t of tests) {
     failed += 1;
   }
 }
+
+// ---------- 24. generate-governance.js (Phase A) ----------
+test("generate-governance: Phase A creates expected file tree", () => {
+  const dir = tmp("gen-tree");
+  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "TestApp", "--phase", "A"], { encoding: "utf8" });
+  if (r.status !== 0) return false;
+  const expected = [
+    "docs/rules/lifecycle.md",
+    "docs/rules/git-policy.md",
+    "docs/rules/security.md",
+    "docs/rules/coding.md",
+    "docs/rules/testing.md",
+    "AGENTS.md",
+    "CHANGELOG.md",
+    "docs/features/.gitkeep",
+    "docs/ARCHITECTURE.md",
+    "docs/plans/DEVELOPMENT_PLAN.md",
+    ".governance/manifest.json",
+    ".governance/state.json",
+    ".governance/git-policy.json",
+    ".governance/sync-rules.json",
+  ];
+  const actual = [];
+  for (const e of expected) {
+    if (fs.existsSync(path.join(dir, e))) actual.push(e);
+  }
+  return actual.length === expected.length;
+});
+
+test("generate-governance: determinism — same inputs produce byte-identical outputs", () => {
+  const d1 = tmp("gen-det-a");
+  const d2 = tmp("gen-det-b");
+  spawnSync(process.execPath, [GENERATOR, "--target", d1, "--project-name", "DetTest", "--phase", "A"]);
+  spawnSync(process.execPath, [GENERATOR, "--target", d2, "--project-name", "DetTest", "--phase", "A"]);
+  const files = ["AGENTS.md", "CHANGELOG.md", ".governance/manifest.json", "docs/rules/lifecycle.md"];
+  for (const f of files) {
+    const a = fs.readFileSync(path.join(d1, f));
+    const b = fs.readFileSync(path.join(d2, f));
+    if (!a.equals(b)) return false;
+  }
+  return true;
+});
+
+test("generate-governance: AGENTS.md has resolved placeholders", () => {
+  const dir = tmp("gen-placeholder");
+  spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "MyProject", "--phase", "A"]);
+  const content = fs.readFileSync(path.join(dir, "AGENTS.md"), "utf8");
+  return content.includes("MyProject") && !content.includes("{{PROJECT_NAME}}");
+});
+
+test("generate-governance: manifest has correct artifact types", () => {
+  const dir = tmp("gen-manifest");
+  spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "TypeTest", "--phase", "A"]);
+  const m = JSON.parse(fs.readFileSync(path.join(dir, ".governance/manifest.json"), "utf8"));
+  const policy = m.artifacts.filter((a) => a.type === "policy");
+  const state = m.artifacts.filter((a) => a.type === "state");
+  return policy.length === 5 && state.length === 4;
+});
+
+test("generate-governance: --dry-run creates nothing", () => {
+  const dir = tmp("gen-dryrun");
+  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "Dry", "--phase", "A", "--dry-run"], { encoding: "utf8" });
+  return r.status === 0 && !fs.existsSync(dir + "/AGENTS.md");
+});
+
+test("generate-governance: --json outputs structured result", () => {
+  const dir = tmp("gen-jsonout");
+  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "JsonTest", "--phase", "A", "--json"], { encoding: "utf8" });
+  if (r.status !== 0) return false;
+  const out = JSON.parse(r.stdout);
+  return out.phase === "A" && Array.isArray(out.results) && out.results.length === 14;
+});
+
+test("generate-governance: missing --project-name exits 2", () => {
+  const dir = tmp("gen-noname");
+  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir], { encoding: "utf8" });
+  return r.status === 2;
+});
 
 cleanup();
 

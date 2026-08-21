@@ -1,0 +1,233 @@
+{
+  "$schema": "init-spec-v1",
+  "description": "Machine-readable specification for the INIT scripted generator. SKILL.md references this file; never restate its contents in prose.",
+  "phases": {
+    "A": {
+      "name": "static skeleton",
+      "description": "Rules, AGENTS.md, CHANGELOG, README bootstrap, feature placeholder strategy, .governance state files",
+      "shipped": "v0.9.0"
+    },
+    "B": {
+      "name": "config and CI",
+      "description": "Config files (.gitignore, .env.example, .gitmessage), CI selection, sub-skills generation",
+      "shipped": "later"
+    },
+    "C": {
+      "name": "structure-adaptive",
+      "description": "Existing doc root detection, merge-not-overwrite, parity with all 13 Phase-1 steps",
+      "shipped": "later"
+    }
+  },
+  "inputs": {
+    "repo_root": { "type": "string", "required": true, "description": "Absolute path to target project root" },
+    "project_name": { "type": "string", "required": true, "description": "Project name for AGENTS.md heading" },
+    "maturity": { "type": "enum", "values": ["LEVEL_0_EMPTY", "LEVEL_1_PROTOTYPE", "LEVEL_2_ACTIVE", "LEVEL_3_PRODUCTION"], "default": "LEVEL_0_EMPTY" },
+    "doc_root": { "type": "string", "default": "docs", "description": "Documentation root directory" },
+    "language": { "type": "string", "default": "en", "description": "Primary documentation language" },
+    "test_cmd": { "type": "string", "default": "npm test", "description": "Test command for AGENTS.md" },
+    "lint_cmd": { "type": "string", "default": "npm run lint", "description": "Lint command for AGENTS.md" },
+    "build_cmd": { "type": "string", "default": "npm run build", "description": "Build command for AGENTS.md" },
+    "convention": { "type": "string", "default": "Conventional Commits", "description": "Commit message convention" }
+  },
+  "artifacts": [
+    {
+      "phase": "A",
+      "path": "docs/rules/lifecycle.md",
+      "source": "references/policies/lifecycle.policy.md",
+      "type": "copy",
+      "description": "Agent operating lifecycle rules"
+    },
+    {
+      "phase": "A",
+      "path": "docs/rules/git-policy.md",
+      "source": "references/policies/git.policy.md",
+      "type": "copy",
+      "description": "Git write policy rules"
+    },
+    {
+      "phase": "A",
+      "path": "docs/rules/security.md",
+      "source": "references/policies/security.policy.md",
+      "type": "copy",
+      "description": "Security baseline rules"
+    },
+    {
+      "phase": "A",
+      "path": "docs/rules/coding.md",
+      "source": "references/policies/coding.policy.md",
+      "type": "copy",
+      "description": "Coding standards rules"
+    },
+    {
+      "phase": "A",
+      "path": "docs/rules/testing.md",
+      "source": "references/policies/testing.policy.md",
+      "type": "copy",
+      "description": "Testing standards rules"
+    },
+    {
+      "phase": "A",
+      "path": "AGENTS.md",
+      "source": "references/templates/agents-md.template.md",
+      "type": "template",
+      "placeholders": {
+        "PROJECT_NAME": "project_name",
+        "1-sentence description": "description",
+        "TEST_CMD": "test_cmd",
+        "LINT_CMD": "lint_cmd",
+        "BUILD_CMD": "build_cmd",
+        "npm run governance-check | uv run scripts/check_governance.py | ...": "governance_cmd",
+        "CONVENTION: e.g. Conventional Commits in <lang>": "convention"
+      },
+      "description": "Agent guidelines (keep <=150 lines)"
+    },
+    {
+      "phase": "A",
+      "path": "CHANGELOG.md",
+      "source": null,
+      "type": "static",
+      "content": "# Changelog\n\nAll notable changes to this project will be documented here.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),\nand this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).\n\n## [Unreleased]\n\n### Added\n\n- Initial governance framework (ai-agent-governance v{{GOVERNANCE_VERSION}})\n",
+      "description": "Keep a Changelog format"
+    },
+    {
+      "phase": "A",
+      "path": "docs/features/.gitkeep",
+      "source": null,
+      "type": "static",
+      "content": "",
+      "description": "Feature registry placeholder (empty until real features registered)"
+    },
+    {
+      "phase": "A",
+      "path": "docs/ARCHITECTURE.md",
+      "source": null,
+      "type": "static",
+      "content": "# Architecture\n\n## Overview\n\n{{ONE_SENTENCE_DESCRIPTION}}\n\n## Data Flow\n\n<!-- Describe how data flows through the system -->\n\n## Component Registry\n\n| Component | Responsibility | Dependencies | Entry |\n| --- | --- | --- | --- |\n| <!-- add rows as components are registered --> | | | |\n\n## Architecture Decision Records\n\n<!-- Record significant architectural decisions here -->\n",
+      "description": "System architecture + ADR + component registry"
+    },
+    {
+      "phase": "A",
+      "path": "docs/plans/DEVELOPMENT_PLAN.md",
+      "source": null,
+      "type": "static",
+      "content": "# Development Plan\n\n## Milestones\n\n<!-- [] = pending, [x] = completed -->\n\n- [ ] M1: Governance framework initialized\n\n## Task Template\n\nUse `docs/plans/TASK_<name>.md` for medium/large changes (see Lifecycle Phase 2).\n",
+      "description": "Milestone plan with checkboxes"
+    },
+    {
+      "phase": "A",
+      "path": ".governance/manifest.json",
+      "source": null,
+      "type": "generated",
+      "generator": "manifest",
+      "description": "治理工件清单 (desired state)"
+    },
+    {
+      "phase": "A",
+      "path": ".governance/state.json",
+      "source": null,
+      "type": "generated",
+      "generator": "state",
+      "description": "当前态 (current state)"
+    },
+    {
+      "phase": "A",
+      "path": ".governance/git-policy.json",
+      "source": "references/templates/git-policy.template.md",
+      "type": "copy",
+      "description": "Git workflow policy"
+    },
+    {
+      "phase": "A",
+      "path": ".governance/sync-rules.json",
+      "source": "references/templates/sync-rules.template.md",
+      "type": "copy",
+      "description": "Sync groups declaration"
+    },
+    {
+      "phase": "B",
+      "path": ".gitignore",
+      "source": null,
+      "type": "generated",
+      "generator": "gitignore",
+      "description": "Security baseline gitignore"
+    },
+    {
+      "phase": "B",
+      "path": ".env.example",
+      "source": "references/templates/env-example.template.md",
+      "type": "template",
+      "placeholders": {
+        "APP_NAME": "project_name",
+        "SERVICE_NAME": "project_name"
+      },
+      "description": "Environment variable template"
+    },
+    {
+      "phase": "B",
+      "path": ".gitmessage.txt",
+      "source": "references/templates/gitmessage.template.md",
+      "type": "template",
+      "placeholders": {
+        "CONVENTION": "convention"
+      },
+      "description": "Commit message template"
+    },
+    {
+      "phase": "B",
+      "path": "scripts/verify-governance.js",
+      "source": "scripts/verify_governance.js",
+      "type": "copy",
+      "description": "Governance validator"
+    },
+    {
+      "phase": "B",
+      "path": "scripts/check-lock.js",
+      "source": "scripts/check-lock.js",
+      "type": "copy",
+      "description": "Lock check"
+    },
+    {
+      "phase": "B",
+      "path": "scripts/check-git-policy.js",
+      "source": "scripts/check-git-policy.js",
+      "type": "copy",
+      "description": "Git policy gate"
+    },
+    {
+      "phase": "B",
+      "path": "scripts/check-secrets.js",
+      "source": "scripts/check-secrets.js",
+      "type": "copy",
+      "description": "Secret scan gate"
+    },
+    {
+      "phase": "B",
+      "path": "scripts/check-sync.js",
+      "source": "scripts/check-sync.js",
+      "type": "copy",
+      "description": "Sync groups gate"
+    },
+    {
+      "phase": "C",
+      "path": "scripts/check-doc-freshness.js",
+      "source": "scripts/check-doc-freshness.js",
+      "type": "copy",
+      "description": "Doc freshness check (advisory)"
+    },
+    {
+      "phase": "C",
+      "path": "scripts/check-doc-consistency.js",
+      "source": "scripts/check-doc-consistency.js",
+      "type": "copy",
+      "description": "Doc consistency check (advisory)"
+    },
+    {
+      "phase": "C",
+      "path": ".governance/generated/skills/",
+      "source": "references/templates/sub-skills.md",
+      "type": "generated",
+      "generator": "sub-skills",
+      "description": "Generated sub-skills"
+    }
+  ]
+}
