@@ -19,12 +19,12 @@ Horizons: **Done** / **Near-term** / **Mid-term** / **Long-term**
 - Governance score — validator `--json` outputs composite `score` (unweighted v1) + CI shields.io badge endpoint artifact
 - Doc freshness — `scripts/check-doc-freshness.js` flags stale governance docs via `git log` commit dates (advisory only)
 - Doc consistency — `scripts/check-doc-consistency.js` flags cross-document contradictions (version examples, protected lists, ADR statuses, roadmap targets, links, numeric claims; advisory only)
+- **Review manager** — 8th sub-skill: multi-agent deep review workflow (5 fixed domains, severity-sorted report, fix + gate verification). Design: [../archive/review-manager.md](../archive/review-manager.md)
+- **Tiered review gate** — release/push risk tiering (low = lightweight only; medium = suggested deep review at approval; high = review-manager required); lightweight scripts always run. Design: [../archive/tiered-review-gate.md](../archive/tiered-review-gate.md)
+- **Governed-project sync groups** — two layers: (L1) declarative `.governance/sync-rules.json` (watch/require) + checklist-driven Phase 5; (L2) `scripts/check-sync.js` mechanical verification against the actual change set. Designs: [../archive/governed-project-sync-groups.md](../archive/governed-project-sync-groups.md) + [../archive/sync-groups-mechanical-check.md](../archive/sync-groups-mechanical-check.md)
 
 ### Near-term
 
-- **Review manager** — 8th sub-skill: multi-agent deep review workflow (5 fixed domains, severity-sorted report, fix + gate verification). Design: [plans/review-manager.md](plans/review-manager.md)
-- **Tiered review gate** — release/push risk tiering (low = lightweight only; medium = suggested deep review at approval; high = review-manager required); lightweight scripts always run. Design: [plans/tiered-review-gate.md](plans/tiered-review-gate.md)
-- **Governed-project sync groups** — two layers: (L1) declarative `.governance/sync-rules.json` (watch/require) + checklist-driven Phase 5; (L2) `scripts/check-sync.js` mechanical verification against the actual change set. Designs: [plans/governed-project-sync-groups.md](plans/governed-project-sync-groups.md) + [plans/sync-groups-mechanical-check.md](plans/sync-groups-mechanical-check.md)
 - **INIT scripted generator** — deterministic, snapshot-testable INIT generation (`scripts/generate-governance.js`); phased A → B → C. Design: [plans/init-scripted-generator.md](plans/init-scripted-generator.md)
 - **Rule capture** — stop stated requirements from living only in chat context: the agent pre-classifies each requirement (persistent / one-off / unclear), the developer adjudicates at Phase 6, confirmed rules are written into `AGENTS.md` / `docs/rules/**`, unconfirmed ones leave a `rules_pending` trace in the activity trail. Design: [plans/rule-capture.md](plans/rule-capture.md)
 
