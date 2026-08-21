@@ -122,7 +122,7 @@ These components are automatically invoked by the lifecycle prompts. Users norma
 | repository-inspection | `inspect the repo` · `what is the stack` · `check environment` | inspects the environment, returns the stack report |
 | state-manager | `update state` · `record progress` | persists progress into `.governance/state.json` |
 | plan-manager | `plan this task` · `create task plan` · `update development plan` · `check off milestone` · `mark task completed` | creates TASK plans, checks off milestones, marks tasks completed |
-| review-manager | `review this` · `review the changes` · `audit recent changes` · `review my changes` | multi-agent deep review (5 fixed domains, severity-sorted report, fix + gate verification) |
+| review-manager | light: `review this` · `review the changes` · `audit recent changes` · `review my changes` · `审核一下` — full: `deep review` · `full review` · `audit everything` · `全面审查` · `彻底审查` · `逐行审查` | change-set review in two modes (lightweight / full audit) |
 | release-manager | `release` · `publish version` · `/release vX.Y.Z` | executes the approval-gated release flow |
 
 ### Execution Rules

@@ -32,6 +32,14 @@
 - `git push` 严禁在无人确认下执行
 - `git add .` 严禁在未检查 `.gitignore` 时执行（防止暂存 `.env`、`secret.pem`）
 
+## 确认范围（Turn-Scoped Consent）
+
+**每次 Git 写操作都需要当轮的独立明确确认。** 之前回合中的 "yes" / "确认" / "go ahead" **不**适用于后续回合。
+
+- 执行任何写命令前，**必须先向用户回显确切命令**并等待最终确认。
+- 即使用户说"完成任务"、"wrap it up"、"发布吧"，也**不得**在没有明确写操作指令（如 "Commit these changes"、"Push now"、"Run git push"）的情况下自动提交或推送。
+- 有疑问时，**永远先问**。
+
 ## Mandatory Pre-commit Checklist
 
 push/PR 前必须确认：

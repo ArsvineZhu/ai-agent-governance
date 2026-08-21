@@ -6,7 +6,8 @@
   "scripts": {
     "test": "node tests/run-tests.js",
     "docs:parity": "node scripts/check-doc-parity.js",
-    "check": "npm test && npm run docs:parity",
+    "docs:layout": "node scripts/check-layout-sync.js",
+    "check": "npm test && npm run docs:parity && npm run docs:layout",
     "check:all": "npm run check && node scripts/check-doc-freshness.js && node scripts/check-doc-consistency.js"
   },
   "engines": {

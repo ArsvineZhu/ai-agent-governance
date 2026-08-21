@@ -25,7 +25,7 @@
 
 分期交付：
 
-- Phase A（v0.8.0）：静态骨架 —— rules、AGENTS.md、CHANGELOG、README 引导、Feature 占位策略
+- Phase A（v0.9.0）：静态骨架 —— rules、AGENTS.md、CHANGELOG、README 引导、Feature 占位策略
 - Phase B（后续）：配置文件（.gitignore、.env.example、.gitmessage）、CI 选择、`.governance/` 状态文件
 - Phase C（后续）：结构自适应模式（既有文档根、合并不覆盖），与全部 13 步 Phase 1 对齐
 

@@ -80,6 +80,7 @@ Note: users may request governance changes via explicit instruction (through the
 - Auto: `git status`, `git diff`, `git add <specific files>`
 - Confirm: `git add .` (after checking .gitignore), `git commit`, `git push`, `git reset`, `git rebase`, destructive commands
 - Before any `git commit`: run `node scripts/check-secrets.js` — exit 0 required (never commit secret-like material). After a sync-group-triggering change, run `node scripts/check-sync.js` — exit 0 required (watch/require pairs must be reconciled).
+- **Consent is turn-scoped.** A "yes" in a prior turn does NOT apply to subsequent turns. Each git write operation requires fresh, explicit consent in the current turn. Before executing any write-command, echo the exact command back and wait for confirmation.
 - Full detail: @docs/rules/git-policy.md
 
 ## Git Workflow Governance

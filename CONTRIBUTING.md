@@ -14,12 +14,14 @@ The test suite covers: empty project (exit 1), full default structure (exit 0, 2
 
 | Path | Purpose |
 | --- | --- |
-| `SKILL.md` | the governance engine — policy layer + INIT/AUDIT orchestration |
-| `references/` | implementation layer — agent runtime inputs: `templates/` (generation templates) · `policies/` (`*.policy.md` rules copied into governed `docs/rules/`) · `workflows/` (CI + release specs) |
+| `SKILL.md` | skill entry point / product spec — INIT/AUDIT/RELEASE orchestration |
+| `references/` | skill body — the only place skill behavior lives: `templates/` (generation templates) · `policies/` (`*.policy.md` rules copied into governed `docs/rules/`) · `workflows/` (CI + release specs) |
 | `scripts/verify_governance.js` | validator source, copied into governed projects |
 | `scripts/release-manager.js` | release tool: `plan` (read-only) + `execute` (approval-gated) |
+| `scripts/generate-governance.js` | INIT generator: deterministic bootstrap scaffolding (spec: `references/init-spec.json`) |
+| `references/init-spec.json` | machine-readable INIT spec (single source of truth for generated output) |
 | `tests/run-tests.js` | test harness |
-| `docs/en/` `docs/zh-CN/` `docs/zh-TW/` | knowledge layer — human documentation, one tree per language |
+| `docs/en/` `docs/zh-CN/` `docs/zh-TW/` | user/developer manual — how to use the skill (trigger words, plans, roadmap), one tree per language; NOT part of the skill payload |
 | `docs/glossary.md` | trilingual terminology table (single source of truth for terms) |
 | `docs/design-decisions/` | architecture decision records (shared, single-language 简体中文) |
 | `docs/archive/` | completed plan archives (shared, single-language, never translated) |

@@ -1,0 +1,98 @@
+#!/usr/bin/env node
+// Repository Layout Sync Check — fail-closed gate (repo infrastructure, not part of
+// the governed-project payload). Verifies the Repository Layout tree in each of the
+// three docs/{en,zh-CN,zh-TW}/architecture.md files lists every file that actually
+// exists under references/ and scripts/. Prevents the exact regression where new
+// skill files (scripts, templates, spec) were added but the architecture doc stayed
+// stale — so an agent cannot "skip reading the architecture" and silently drift it.
+//
+// Usage: node scripts/check-layout-sync.js [--json]
+// Exit 0: layout is in sync. Exit 1: files missing from the tree (fix the docs).
+
+const fs = require("fs");
+const path = require("path");
+
+const ROOT = process.cwd();
+const DOCS = path.join(ROOT, "docs");
+const TREES = ["en", "zh-CN", "zh-TW"];
+// Map tree heading to the section we extract (structure differs only by translation)
+const HEADING = /###\s+(Repository Layout|仓库布局|倉庫佈局)/;
+const DIRS = ["references", "scripts"];
+
+function listFiles(dir) {
+  const out = [];
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) out.push(...listFiles(p));
+    else out.push(e.name); // basename is enough: no collisions across references/ + scripts/
+  }
+  return out;
+}
+
+function extractTreeFileTokens(architectureMd) {
+  const lines = architectureMd.split(/\r?\n/);
+  const start = lines.findIndex((l) => HEADING.test(l));
+  if (start < 0) return null;
+  // Find the opening code fence after the heading
+  let fence = -1;
+  for (let i = start; i < lines.length; i++) {
+    if (/^```/.test(lines[i].trim())) { fence = i; break; }
+  }
+  if (fence < 0) return null;
+  const tokens = new Set();
+  for (let i = fence + 1; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^```/.test(line.trim())) break;
+    const m = /^.*[├└]──\s+(.*)$/.exec(line);
+    if (!m) continue;
+    let name = m[1].split("#")[0].trim(); // strip the inline comment
+    if (!name || name.endsWith("/")) continue; // skip dirs
+    for (const tok of name.split("/")) {
+      const t = tok.trim();
+      if (t) tokens.add(t);
+    }
+  }
+  return tokens;
+}
+
+function main() {
+  const json = process.argv.includes("--json");
+  const missingByTree = {};
+  const actual = new Set(DIRS.flatMap((d) => listFiles(path.join(ROOT, d))));
+  if (actual.size === 0) {
+    if (json) process.stdout.write(JSON.stringify({ pass: false, issues: ["no files found under references/ or scripts/"] }, null, 2) + "\n");
+    else console.log("✗ no files found under references/ or scripts/");
+    process.exit(1);
+  }
+
+  for (const lang of TREES) {
+    const file = path.join(DOCS, lang, "architecture.md");
+    if (!fs.existsSync(file)) {
+      missingByTree[lang] = ["architecture.md missing"];
+      continue;
+    }
+    const tokens = extractTreeFileTokens(fs.readFileSync(file, "utf8"));
+    if (!tokens) {
+      missingByTree[lang] = ["Repository Layout section not found"];
+      continue;
+    }
+    const missing = [...actual].filter((f) => !tokens.has(f));
+    if (missing.length > 0) missingByTree[lang] = missing;
+  }
+
+  const pass = Object.keys(missingByTree).length === 0;
+  if (json) {
+    process.stdout.write(JSON.stringify({ pass, actual: [...actual], missing: missingByTree }, null, 2) + "\n");
+  } else {
+    if (pass) {
+      console.log(`✓ repository layout in sync (${actual.size} files under references/ + scripts/ all present in all ${TREES.length} trees)`);
+    } else {
+      for (const [lang, missing] of Object.entries(missingByTree)) {
+        console.log(`✗ docs/${lang}/architecture.md Repository Layout missing: ${missing.join(", ")}`);
+      }
+    }
+  }
+  process.exit(pass ? 0 : 1);
+}
+
+main();

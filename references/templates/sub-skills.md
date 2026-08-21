@@ -336,34 +336,57 @@ Archiving happens at RELEASE (release-manager), NOT here.
 ```
 ---
 name: review-manager
-description: Use to perform a multi-agent deep review of a change set before commit/release. Dispatch parallel subagents over 5 fixed domains, produce a severity-sorted issue list, fix severe and general items, then run the gate group. Triggers on "review this" · "review the changes" · "audit recent changes" · "review my changes".
+description: Perform a change-set review before commit/release in one of two modes — lightweight (5 fixed domains, parallel subagents, quick pass) or full audit (line-by-line read of every changed file, cross-referenced against dev plans, execution-level verification, distrust-of-gates). Triggers on "review this" · "review the changes" · "audit recent changes" · "review my changes" · "审核一下" (lightweight) · "deep review" · "full review" · "audit everything" · "全面审查" · "彻底审查" · "逐行审查" (full audit).
 ---
 
 # Review Manager
 
-Standardize the multi-agent deep review into a fixed workflow — no improvisation, every review covers the same five domains.
+Standardize change-set review into two fixed modes — no improvisation. Every review covers the same five domains; the mode decides depth and which mandatory steps run.
 
-## Workflow
+## Mode selection
+
+| Mode | Triggers | Depth | Use for |
+| --- | --- | --- | --- |
+| Lightweight | `review this` · `review the changes` · `audit recent changes` · `review my changes` · `审核一下` | 5 domains, one parallel pass each; severity-sorted report; fix severe/general; run gates | routine changes, pre-commit quick check |
+| Full audit | `deep review` · `full review` · `audit everything` · `全面审查` · `彻底审查` · `逐行审查` | line-by-line read of the entire change set + dev-plan cross-reference + execution-level verification + distrust-of-gates | release gate, high-risk changes, post-incident re-review |
+
+Both modes run the same 5 domains (fixed, no dynamic expansion in v1):
+
+- Script logic — correctness, edge cases, error handling
+- Doc consistency — three language trees, links, version examples, CHANGELOG reconciliation (invokes drift-check scripts as input)
+- Test coverage — fixture realism, assertion strength, flaky risk
+- Governance artifacts — policies, templates vs implementation, protected lists
+- Security — secrets, permission rules, sensitive data
+
+## Lightweight workflow
 
 1. **Determine scope** — `git diff <baseline>..HEAD` plus uncommitted changes; baseline defaults to the last review point (manually specified in v1, no auto-recording). Scope = the change set + directly affected files (tests affected by changed scripts, generated artifacts affected by changed policies), NOT the whole project — whole-project review only on explicit user request.
-2. **Dispatch parallel subagents** (fixed 5 domains, no dynamic expansion in v1):
-   - Script logic — correctness, edge cases, error handling
-   - Doc consistency — three language trees, links, version examples, CHANGELOG reconciliation (invokes drift-check scripts as input)
-   - Test coverage — fixture realism, assertion strength, flaky risk
-   - Governance artifacts — policies, templates vs implementation, protected lists
-   - Security — secrets, permission rules, sensitive data
-3. **Summarize** — sorted by severity (severe / general / trivial), each with file path + line number + evidence
-4. **Fix** — severe and general must be fixed; trivial items reported for the user to decide
-5. **Gate verification** — after fixes, run `npm run check` (tests + parity) and record real output
+2. **Dispatch parallel subagents** — the 5 fixed domains above, one pass each.
+3. **Summarize** — sorted by severity (severe / general / trivial), each with file path + line number + evidence.
+4. **Fix** — severe and general must be fixed; trivial items reported for the user to decide.
+5. **Gate verification** — run `npm run check` (tests + parity) and record real output.
+
+## Full audit workflow (additional mandatory steps)
+
+The full audit runs the lightweight steps PLUS the following — each is a hard requirement, not optional:
+
+1. **Enumerate the change set exhaustively** — `git show --stat` + `git diff --name-only` + `git status --porcelain` (uncommitted) → complete file list. No sampling.
+2. **Read every changed file in full, line by line** — summaries and "trust the author's description" are forbidden. This is the core difference from lightweight mode.
+3. **Cross-reference against dev plans** — for each plan doc under `plans/` touching the change set: compare phase alignment, Affected Files, Validation Method, shipped-vs-planned. Flag deviations (e.g. plan says Phase B, implementation put it in Phase A; plan lists a required doc that is missing).
+4. **Execution-level verification** — do not stop at reading code; actually run the artifacts and check the output is valid (e.g. generate JSON and verify it parses; re-run the e2e command in an isolated temp dir). Assumption is that output is broken until proven otherwise.
+5. **Distrust the gates** — a green result is not proof the check ran. Verify the verification: confirm the test harness actually executed the relevant tests (e.g. ✓ line count matches the denominator; tests are registered before the runner loop, not after); re-run the suite independently; cross-check numeric claims in docs against the validator source.
+6. **Evidence-form report** — every finding carries file:line + real output excerpt (command output, parsed JSON, etc.), sorted by severity. Fix severe and general items, then re-run gates and record real output.
+
+Anti-confirmation-bias rule for both modes but especially full audit: assume bugs exist and hunt them; never conclude "no issues" from reading your own just-written code without execution-level evidence.
 
 ## Boundary with drift-check (explicit)
 
 | | review-manager | drift-check |
 | --- | --- | --- |
-| Layer | deep (multi-agent problem-finding) | mechanical (omission-catching) |
-| Input | git diff + related project files | manifest + script check classes |
+| Layer | deep (problem-finding, two depths) | mechanical (omission-catching) |
+| Input | git diff + related project files + (full audit) dev plans | manifest + script check classes |
 | Output | severity-sorted issue list + fixes | drift-report.json |
-| Trigger | `review this` | `check governance drift` |
+| Trigger | `review this` (light) / `deep review` (full) | `check governance drift` |
 
 Complementary: the review-manager's "doc consistency" subagent invokes drift-check scripts; no duplication.
 

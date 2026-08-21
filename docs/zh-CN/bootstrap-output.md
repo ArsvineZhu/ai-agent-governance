@@ -1,33 +1,45 @@
-# Bootstrap Output
+# Bootstrap 输出
 
 [English](../en/bootstrap-output.md) · [简体中文](bootstrap-output.md) · [繁體中文](../zh-TW/bootstrap-output.md)
 
-一条 `initialize project governance` 指令生成的完整产物（带注释目录树）。
+INIT 脚本化生成器（`scripts/generate-governance.js`）为被治理项目产出**确定性**的引导文件树。机器可读的单一事实源是 `references/init-spec.json`；本页是给人看的人肉摘要——两者冲突时以规范为准。
 
-```
-my-project/
-├── AGENTS.md                    运行期规则源头
-├── CLAUDE.md                    Agent 入口文件（@AGENTS.md，按检测到的工具生成）
-├── CHANGELOG.md                 Keep a Changelog
-├── README.md                    英文主页（语言切换链接见文件顶部）
-├── .gitmessage.txt              提交信息模板（仓库级默认）
-├── docs/
-│   ├── README.zh-CN.md          简体翻译（源语言；纯英文项目可省略，见语言政策）
-│   ├── ARCHITECTURE.md          数据流 + ADR + 组件登记
-│   ├── plans/                   开发计划 + 任务模板
-│   ├── features/                Feature 登记（只登记真实功能）
-│   └── rules/                   lifecycle / git-policy / security / coding / testing
-├── .env.example                 安全基线
-├── .governance/                 manifest / state / preflight / git-policy / sync-rules + generated/skills
-├── scripts/verify-governance.js 校验门禁（退出码 = 通过/失败）
-└── .github/workflows/           CI 管线（能力检测式，优雅降级）
-```
+## Phase A — 静态骨架
 
-同时生成 `.governance/generated/skills/` 下的 Agent 模块（含 drift-check、release-manager），把日常任务与发布留在框架内。
+| 路径 | 来源 |
+| --- | --- |
+| docs/rules/lifecycle.md | references/policies/lifecycle.policy.md |
+| docs/rules/git-policy.md | references/policies/git.policy.md |
+| docs/rules/security.md | references/policies/security.policy.md |
+| docs/rules/coding.md | references/policies/coding.policy.md |
+| docs/rules/testing.md | references/policies/testing.policy.md |
+| AGENTS.md | references/templates/agents-md.template.md（占位符已解析） |
+| CHANGELOG.md | 静态（Keep a Changelog，含 Unreleased 段） |
+| README.md | 静态引导 + 文档索引 |
+| docs/features/ | 目录占位（登记真实功能前为空） |
+| docs/plans/ + docs/plans/archive/ | 目录（归档按生命周期 Phase 5） |
+| docs/plans/DEVELOPMENT_PLAN.md | 静态里程碑计划 |
+| docs/ARCHITECTURE.md | 静态骨架（组件登记表 + ADR） |
 
-- `AGENTS.md` — 每个 Agent 会话开始必读的运行时规则源头（细节在 `docs/rules/`，按章节 `@` 引用）
-- `CLAUDE.md` / 适配层 — 按工具生成的入口文件（`@AGENTS.md`）
-- `.governance/` — 机器可读治理状态：`manifest.json`（期望态）· `state.json`（当前态）· `validation.json`（观测态）
-- `scripts/verify-governance.js` — 零依赖校验门禁，CI 与 AUDIT 使用
+## Phase B — 配置、状态与脚本
 
-已有项目只合并不覆盖；既有文档布局经 `.governance/manifest.json` 被尊重（结构适配）。
+| 路径 | 来源 |
+| --- | --- |
+| .gitignore | 生成（安全基线，确定性） |
+| .env.example | references/templates/env-example.template.md |
+| .gitmessage.txt | references/templates/gitmessage.template.md |
+| .governance/ + .governance/README.md | 目录 + 静态说明 |
+| .governance/manifest.json | 最后生成——只列出磁盘上实际存在的工件 |
+| .governance/state.json / preflight.json | 生成（确定性；preflight 字段留空至 Phase 0 检测填写） |
+| .governance/git-policy.json / sync-rules.json | 模板（JSON 从代码块提取） |
+| scripts/verify-governance.js + 4 个门禁脚本 | 从本 skill 原样复制 |
+
+## 确定性与验证
+
+- 相同输入产出字节级一致的输出（无时间戳、无随机）。
+- 已存在的文件跳过、绝不覆盖（合并不覆盖留到 Phase C）。
+- Phase B 输出通过 `scripts/verify-governance.js`（manifest 模式）——由 `tests/run-tests.js` 的端到端测试覆盖。
+
+## 尚未生成（Phase C 前由 Agent 完成）
+
+CI 工作流选择、CLAUDE.md 等按工具检测的入口文件、子技能生成、README 语言布局、建议性脚本（新鲜度 / 一致性）、结构适配模式（既有文档根）。

@@ -14,12 +14,14 @@ npm test        # 或 node tests/run-tests.js
 
 | 路徑 | 用途 |
 | --- | --- |
-| `SKILL.md` | 治理引擎 —— 策略層 + INIT/AUDIT 編排 |
-| `references/` | 實作層 —— Agent 執行時輸入：`templates/`（生成範本）· `policies/`（`*.policy.md` 規則，複製進被治理專案的 `docs/rules/`）· `workflows/`（CI + 發佈規範） |
+| `SKILL.md` | skill 入口 / 產品規格 —— INIT/AUDIT/RELEASE 編排 |
+| `references/` | skill 本體 —— skill 行為唯一所在地：`templates/`（生成範本）· `policies/`（`*.policy.md` 規則，複製進被治理專案的 `docs/rules/`）· `workflows/`（CI + 發佈規範） |
 | `scripts/verify_governance.js` | 校驗器原始碼，複製進被治理專案 |
 | `scripts/release-manager.js` | 發佈工具：`plan`（唯讀）+ `execute`（審批閘門） |
+| `scripts/generate-governance.js` | INIT 產生器：確定性引導鷹架（規範：`references/init-spec.json`） |
+| `references/init-spec.json` | 機器可讀 INIT 規範（生成產出的單一事實源） |
 | `tests/run-tests.js` | 測試套件 |
-| `docs/en/` `docs/zh-CN/` `docs/zh-TW/` | 知識層 —— 人類文件，每種語言一棵目錄樹 |
+| `docs/en/` `docs/zh-CN/` `docs/zh-TW/` | 使用者/開發者手冊 —— 怎麼用 skill（觸發詞、計劃、路線圖），每種語言一棵目錄樹；不屬於 skill 載荷 |
 | `docs/glossary.md` | 三語術語對照表（術語的單一事實來源） |
 | `docs/design-decisions/` | 架構決策記錄（共享，簡體單語） |
 | `docs/archive/` | 已完成計劃歸檔（共享，單語，絕不翻譯） |

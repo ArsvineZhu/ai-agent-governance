@@ -179,7 +179,7 @@ Claude Code · Cursor · Codex · opencode — and other AGENTS.md-based agents.
 - [docs/en/commands.md](docs/en/commands.md) — user-facing prompts + runtime components
 - [docs/en/bootstrap-output.md](docs/en/bootstrap-output.md) — complete annotated initialization output
 - [docs/en/governance-model.md](docs/en/governance-model.md) — the Spec / Status / Health state model
-- [docs/en/architecture.md](docs/en/architecture.md) — concept map, operating modes, lifecycle pipeline, repository layout, design principles
+- [docs/en/architecture.md](docs/en/architecture.md) — repository layout (what each directory is FOR)
 - [docs/en/anti-regression.md](docs/en/anti-regression.md) — anti-regression mechanisms in full
 - [docs/en/lifecycle.md](docs/en/lifecycle.md) — the 6-phase agent operating lifecycle
 - [docs/en/validator.md](docs/en/validator.md) — validator usage and checks

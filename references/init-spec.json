@@ -1,33 +1,37 @@
 {
   "$schema": "init-spec-v1",
-  "description": "Machine-readable specification for the INIT scripted generator. SKILL.md references this file; never restate its contents in prose.",
+  "description": "Machine-readable specification for the INIT scripted generator. SKILL.md references this file; never restate its contents in prose. Single source of truth for what the generator produces.",
   "phases": {
     "A": {
       "name": "static skeleton",
-      "description": "Rules, AGENTS.md, CHANGELOG, README bootstrap, feature placeholder strategy, .governance state files",
+      "description": "Rules, AGENTS.md, CHANGELOG, README bootstrap, feature placeholder strategy, plans skeleton, ARCHITECTURE skeleton",
       "shipped": "v0.9.0"
     },
     "B": {
-      "name": "config and CI",
-      "description": "Config files (.gitignore, .env.example, .gitmessage), CI selection, sub-skills generation",
-      "shipped": "later"
+      "name": "config, state and scripts",
+      "description": "Config files (.gitignore, .env.example, .gitmessage), .governance/ state files, scripts copies. CI selection and sub-skills generation remain agent-driven (deferred to Phase C parity).",
+      "shipped": "v0.9.0"
     },
     "C": {
       "name": "structure-adaptive",
-      "description": "Existing doc root detection, merge-not-overwrite, parity with all 13 Phase-1 steps",
+      "description": "Advisory scripts (freshness/consistency), sub-skills generation, existing doc root detection, merge-not-overwrite for existing content, parity with all 13 Phase-1 steps (CI selection, CLAUDE.md, README language layout)",
       "shipped": "later"
     }
   },
   "inputs": {
-    "repo_root": { "type": "string", "required": true, "description": "Absolute path to target project root" },
-    "project_name": { "type": "string", "required": true, "description": "Project name for AGENTS.md heading" },
-    "maturity": { "type": "enum", "values": ["LEVEL_0_EMPTY", "LEVEL_1_PROTOTYPE", "LEVEL_2_ACTIVE", "LEVEL_3_PRODUCTION"], "default": "LEVEL_0_EMPTY" },
+    "target": { "type": "string", "required": true, "description": "Target project root (CLI: --target)" },
+    "project_name": { "type": "string", "required": true, "description": "Project name for AGENTS.md heading and README" },
+    "description": { "type": "string", "default": "", "description": "One-sentence project description (AGENTS.md Project Overview, ARCHITECTURE Overview)" },
+    "maturity": { "type": "enum", "values": ["LEVEL_0_EMPTY", "LEVEL_1_PROTOTYPE", "LEVEL_2_ACTIVE", "LEVEL_3_PRODUCTION"], "default": "LEVEL_0_EMPTY", "description": "Maturity level (written to state.json; structure-adaptive behavior is Phase C)" },
     "doc_root": { "type": "string", "default": "docs", "description": "Documentation root directory" },
-    "language": { "type": "string", "default": "en", "description": "Primary documentation language" },
+    "language": { "type": "string", "default": "en", "description": "Primary documentation language (Phase C uses it for README layout)" },
     "test_cmd": { "type": "string", "default": "npm test", "description": "Test command for AGENTS.md" },
     "lint_cmd": { "type": "string", "default": "npm run lint", "description": "Lint command for AGENTS.md" },
     "build_cmd": { "type": "string", "default": "npm run build", "description": "Build command for AGENTS.md" },
-    "convention": { "type": "string", "default": "Conventional Commits", "description": "Commit message convention" }
+    "governance_cmd": { "type": "string", "default": "npm run governance-check", "description": "Governance check command for AGENTS.md" },
+    "convention": { "type": "string", "default": "Conventional Commits", "description": "Commit message convention for AGENTS.md" },
+    "governance_version": { "type": "string", "default": "0.9.0", "description": "Governance framework version stamped into manifest/CHANGELOG" },
+    "release_version": { "type": "string", "optional": true, "description": "If provided, manifest gains a release object (version/tag/validated). Omitted for fresh INIT - a new project has not released anything." }
   },
   "artifacts": [
     {
@@ -91,19 +95,35 @@
     },
     {
       "phase": "A",
-      "path": "docs/features/.gitkeep",
+      "path": "README.md",
       "source": null,
       "type": "static",
-      "content": "",
-      "description": "Feature registry placeholder (empty until real features registered)"
+      "content": "# {{PROJECT_NAME}}\n\n<!-- One-sentence description -->\n\n## Documentation Index\n\n- [AGENTS.md](AGENTS.md) — AI agent guidelines\n- [Architecture](docs/ARCHITECTURE.md) — system architecture + ADRs + component registry\n- [Features](docs/features/) — feature registry\n- [Development Plan](docs/plans/DEVELOPMENT_PLAN.md) — milestones\n- [Changelog](CHANGELOG.md) — completed changes\n\n## Getting Started\n\n<!-- Build/run instructions -->\n",
+      "description": "README bootstrap with doc index (language layout stays agent-driven, Phase C)"
     },
     {
       "phase": "A",
-      "path": "docs/ARCHITECTURE.md",
+      "path": "docs/features/",
       "source": null,
-      "type": "static",
-      "content": "# Architecture\n\n## Overview\n\n{{ONE_SENTENCE_DESCRIPTION}}\n\n## Data Flow\n\n<!-- Describe how data flows through the system -->\n\n## Component Registry\n\n| Component | Responsibility | Dependencies | Entry |\n| --- | --- | --- | --- |\n| <!-- add rows as components are registered --> | | | |\n\n## Architecture Decision Records\n\n<!-- Record significant architectural decisions here -->\n",
-      "description": "System architecture + ADR + component registry"
+      "type": "dir",
+      "name": "Feature registry",
+      "description": "Feature registry directory (empty placeholder until real features registered)"
+    },
+    {
+      "phase": "A",
+      "path": "docs/plans/",
+      "source": null,
+      "type": "dir",
+      "name": "Plans",
+      "description": "Development plans directory"
+    },
+    {
+      "phase": "A",
+      "path": "docs/plans/archive/",
+      "source": null,
+      "type": "dir",
+      "name": "Plan archive",
+      "description": "Completed plan archive (per Lifecycle Phase 5 - archive, never delete)"
     },
     {
       "phase": "A",
@@ -115,33 +135,11 @@
     },
     {
       "phase": "A",
-      "path": ".governance/manifest.json",
+      "path": "docs/ARCHITECTURE.md",
       "source": null,
-      "type": "generated",
-      "generator": "manifest",
-      "description": "治理工件清单 (desired state)"
-    },
-    {
-      "phase": "A",
-      "path": ".governance/state.json",
-      "source": null,
-      "type": "generated",
-      "generator": "state",
-      "description": "当前态 (current state)"
-    },
-    {
-      "phase": "A",
-      "path": ".governance/git-policy.json",
-      "source": "references/templates/git-policy.template.md",
-      "type": "copy",
-      "description": "Git workflow policy"
-    },
-    {
-      "phase": "A",
-      "path": ".governance/sync-rules.json",
-      "source": "references/templates/sync-rules.template.md",
-      "type": "copy",
-      "description": "Sync groups declaration"
+      "type": "static",
+      "content": "# Architecture\n\n## Overview\n\n{{ONE_SENTENCE_DESCRIPTION}}\n\n## Data Flow\n\n<!-- Describe how data flows through the system -->\n\n## Component Registry\n\n| Component | Responsibility | Dependencies | Entry |\n| --- | --- | --- | --- |\n| <!-- add rows as components are registered --> | | | |\n\n## Architecture Decision Records\n\n<!-- Record significant architectural decisions here -->\n",
+      "description": "System architecture + ADR + component registry"
     },
     {
       "phase": "B",
@@ -149,7 +147,7 @@
       "source": null,
       "type": "generated",
       "generator": "gitignore",
-      "description": "Security baseline gitignore"
+      "description": "Security baseline gitignore (.env, *.key, *.pem, build dirs, governance runtime outputs)"
     },
     {
       "phase": "B",
@@ -160,17 +158,68 @@
         "APP_NAME": "project_name",
         "SERVICE_NAME": "project_name"
       },
-      "description": "Environment variable template"
+      "description": "Environment variable template (placeholders only, never real values)"
     },
     {
       "phase": "B",
       "path": ".gitmessage.txt",
       "source": "references/templates/gitmessage.template.md",
       "type": "template",
-      "placeholders": {
-        "CONVENTION": "convention"
-      },
       "description": "Commit message template"
+    },
+    {
+      "phase": "B",
+      "path": ".governance/",
+      "source": null,
+      "type": "dir",
+      "name": "Governance state dir",
+      "description": "Machine-readable governance state directory"
+    },
+    {
+      "phase": "B",
+      "path": ".governance/README.md",
+      "source": null,
+      "type": "static",
+      "content": "# .governance/ — machine-readable governance state\n\n- `manifest.json` — desired state: declared artifacts, paths, versions. Git-tracked.\n- `state.json` — current state: maturity, phase, agent identity. Git-tracked.\n- `git-policy.json` — Git workflow policy (protected branches, direct push, review). Git-tracked.\n- `sync-rules.json` — sync groups declaration (watch/require pairs). Git-tracked.\n- `preflight.json` — pre-INIT snapshot (rollback basis). Git-tracked.\n- `validation.json` / `drift-report.json` / `release-proposal.json` — runtime outputs, git-ignored.\n\nUsage: see the project AGENTS.md and `docs/rules/`.\n",
+      "description": "Explains each state file and git tracking strategy"
+    },
+    {
+      "phase": "B",
+      "path": ".governance/manifest.json",
+      "source": null,
+      "type": "generated",
+      "generator": "manifest",
+      "description": "Desired state: declared artifacts (generated last, lists only artifacts that exist on disk)"
+    },
+    {
+      "phase": "B",
+      "path": ".governance/state.json",
+      "source": null,
+      "type": "generated",
+      "generator": "state",
+      "description": "Current state (maturity, phase, agent identity)"
+    },
+    {
+      "phase": "B",
+      "path": ".governance/preflight.json",
+      "source": null,
+      "type": "generated",
+      "generator": "preflight",
+      "description": "Pre-INIT snapshot with empty fields - agent fills after Phase 0 inspection (rollback basis)"
+    },
+    {
+      "phase": "B",
+      "path": ".governance/git-policy.json",
+      "source": "references/templates/git-policy.template.md",
+      "type": "template",
+      "description": "Git workflow policy (JSON extracted from template code block)"
+    },
+    {
+      "phase": "B",
+      "path": ".governance/sync-rules.json",
+      "source": "references/templates/sync-rules.template.md",
+      "type": "template",
+      "description": "Sync groups declaration (JSON extracted from template code block)"
     },
     {
       "phase": "B",
@@ -227,7 +276,7 @@
       "source": "references/templates/sub-skills.md",
       "type": "generated",
       "generator": "sub-skills",
-      "description": "Generated sub-skills"
+      "description": "Generated sub-skills (agent-driven until the generator implements them)"
     }
   ]
 }

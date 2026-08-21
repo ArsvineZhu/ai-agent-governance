@@ -2,7 +2,7 @@
 
 [English](../en/validator.md) · [简体中文](../zh-CN/validator.md) · [繁體中文](validator.md)
 
-治理校驗器是零相依性的純 Node 腳本，INIT 時生成到每個被治理專案的 `scripts/verify-governance.js`（源頭：本倉庫 `scripts/verify_governance.js`）。
+治理校驗器是零依賴的純 Node 腳本，INIT 時生成到每個被治理專案 `scripts/verify-governance.js`（源頭：本倉庫 `scripts/verify_governance.js`）。本頁是開發者用法手冊；檢查項清單由腳本自身定義，不在本頁複述。
 
 ### 用法
 
@@ -12,25 +12,18 @@ node scripts/verify-governance.js --json   # 機器可讀 JSON 報告
 node scripts/verify-governance.js --help   # 用法
 ```
 
-全部治理工件存在時退出碼為 0，否則為 1。
+全部治理工件存在時退出碼 0，否則 1。
 
-### 行為
+### 模式
 
-- **manifest 模式** — 當 `.governance/manifest.json` 宣告了非空 `artifacts` 陣列時，路徑以它為準（結構適配）。追加檢查：CHANGELOG format、Git policy、Manifest schema、Manifest artifacts valid（`kind` ∈ file/dir）、Governance version、Release metadata（僅當宣告了 `release` 欄位時）。
-- **預設模式** — 沒有 manifest 時檢查內建預設項目：
+- **manifest 模式** — `.governance/manifest.json` 宣告了非空 `artifacts` 陣列時，路徑以它為準（結構適配）。追加 manifest 相關檢查（schema、工件 kind、治理版本、可選 release 中繼資料）。
+- **預設模式** — 無 manifest 時檢查內建預設清單（AGENTS.md、CHANGELOG format、architecture/features/plans/rules 目錄、.gitignore、.env.example、CI 工作流程、腳本、.governance/ 狀態檔案、治理版本）。
 
-```
-AGENTS.md / CHANGELOG.md / CHANGELOG format / docs/ARCHITECTURE.md / docs/features/ / docs/plans/ /
-docs/rules/ / .gitignore / .env.example / CI workflow / scripts/verify-governance.js / scripts/check-lock.js /
-scripts/check-git-policy.js / scripts/check-secrets.js / scripts/check-sync.js / .governance/ 目錄 / manifest.json / state.json /
-preflight.json / git-policy.json / governance_version
-```
-
-- `validation.json` / `drift-report.json` 是執行時期輸出，不是 required artifact —— fresh checkout 沒有它們也能通過。
+權威檢查清單在 `scripts/verify_governance.js`（`DEFAULTS` 陣列）；`check-doc-consistency.js` 用它交叉核對 docs 裡的數值宣告。執行時輸出 `validation.json` / `drift-report.json` 不是 required artifact —— fresh checkout 無它們也能通過。
 
 ### 治理徽章（可選）
 
-CI 治理 job 產出 shields.io `endpoint` 格式工件（`governance-badge.json`：`{ "schemaVersion": 1, "label": "governance", "message": "N/M", "color": "green|yellow|red" }`）。託管到自選公網位址後，在 README 引用：
+CI 治理 job 產出 shields.io `endpoint` 格式工件（`governance-badge.json`：`{ "schemaVersion": 1, "label": "governance", "message": "N/M", "color": "green|yellow|red" }`）。托管到自選公網位址後，在 README 引用：
 
 ```markdown
 [![Governance](https://img.shields.io/endpoint?url=<YOUR_HOSTED_URL>/governance-badge.json)](docs/zh-TW/validator.md)
@@ -40,4 +33,6 @@ CI 治理 job 產出 shields.io `endpoint` 格式工件（`governance-badge.json
 
 ### 報告
 
-人類可讀模式逐項列印 `✓/✗ <名稱> (<路徑>)` 及 `N/M checks passed.`。JSON 模式回傳 `{ mode, governance_version, total, passed, failed, score, passedAll, results[] }`。治理檢查必須在宣稱任務完成前、以及 RELEASE 前通過。
+人類模式逐項列印 `✓/✗ <名稱> (<路徑>)` 及 `N/M checks passed.`。JSON 模式返回 `{ mode, governance_version, total, passed, failed, score, passedAll, results[] }`。治理檢查必須在宣稱任務完成前、以及 RELEASE 前通過。
+
+---

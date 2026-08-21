@@ -25,7 +25,7 @@ Freeze the INIT generation logic into a **deterministic, snapshot-testable scrip
 
 Phased delivery:
 
-- Phase A (v0.8.0): static skeleton — rules, AGENTS.md, CHANGELOG, README bootstrap, feature placeholder strategy
+- Phase A (v0.9.0): static skeleton — rules, AGENTS.md, CHANGELOG, README bootstrap, feature placeholder strategy
 - Phase B (later): config files (.gitignore, .env.example, .gitmessage), CI selection, `.governance/` state files
 - Phase C (later): structure-adaptive mode (existing doc roots, merge-not-overwrite), parity with all 13 Phase-1 steps
 

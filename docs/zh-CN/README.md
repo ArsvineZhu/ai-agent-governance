@@ -179,7 +179,7 @@ Claude Code · Cursor · Codex · opencode —— 以及其他基于 AGENTS.md �
 - [docs/zh-CN/commands.md](commands.md) — 用户提示词 + 运行时组件
 - [docs/zh-CN/bootstrap-output.md](bootstrap-output.md) — 完整带注释的初始化产物
 - [docs/zh-CN/governance-model.md](governance-model.md) — Spec / Status / Health 状态模型
-- [docs/zh-CN/architecture.md](architecture.md) — 概念图、运行模式、生命周期管线、仓库布局、设计原则
+- [docs/zh-CN/architecture.md](architecture.md) — 仓库布局（各目录用途）
 - [docs/zh-CN/anti-regression.md](anti-regression.md) — 防乱改机制完整明细
 - [docs/zh-CN/lifecycle.md](lifecycle.md) — Agent 六阶段操作生命周期
 - [docs/zh-CN/validator.md](validator.md) — 校验器用法与检查项

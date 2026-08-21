@@ -15,6 +15,7 @@ const GIT_POLICY_CHECK = path.join(__dirname, "..", "scripts", "check-git-policy
 const SECRET_CHECK = path.join(__dirname, "..", "scripts", "check-secrets.js");
 const SYNC_CHECK = path.join(__dirname, "..", "scripts", "check-sync.js");
 const GENERATOR = path.join(__dirname, "..", "scripts", "generate-governance.js");
+const LAYOUT_CHECK = path.join(__dirname, "..", "scripts", "check-layout-sync.js");
 const TMP_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), "ai-agent-governance-test-"));
 
 function tmp(name) {
@@ -604,7 +605,167 @@ test("release execute: approved release creates annotated tag", () => {
   return gitTags(dir) === "v1.0.1" && String(type.stdout).trim() === "tag";
 });
 
-// ---------- runner ----------
+// ---------- 24. generate-governance.js ----------
+function listFiles(dir) {
+  const out = [];
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) out.push(...listFiles(p));
+    else out.push(p);
+  }
+  return out.sort();
+}
+
+test("generate-governance: Phase A creates expected file tree", () => {
+  const dir = tmp("gen-tree");
+  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "TestApp", "--phase", "A"], { encoding: "utf8" });
+  if (r.status !== 0) return false;
+  const expected = [
+    "docs/rules/lifecycle.md",
+    "docs/rules/git-policy.md",
+    "docs/rules/security.md",
+    "docs/rules/coding.md",
+    "docs/rules/testing.md",
+    "AGENTS.md",
+    "CHANGELOG.md",
+    "README.md",
+    "docs/features/.gitkeep",
+    "docs/plans/DEVELOPMENT_PLAN.md",
+    "docs/plans/archive/.gitkeep",
+    "docs/ARCHITECTURE.md",
+  ];
+  const actual = [];
+  for (const e of expected) {
+    if (fs.existsSync(path.join(dir, e))) actual.push(e);
+  }
+  return actual.length === expected.length;
+});
+
+test("generate-governance: determinism — same inputs produce byte-identical full trees", () => {
+  const d1 = tmp("gen-det-a");
+  const d2 = tmp("gen-det-b");
+  const a = spawnSync(process.execPath, [GENERATOR, "--target", d1, "--project-name", "DetTest", "--phase", "B"], { encoding: "utf8" });
+  const b = spawnSync(process.execPath, [GENERATOR, "--target", d2, "--project-name", "DetTest", "--phase", "B"], { encoding: "utf8" });
+  if (a.status !== 0 || b.status !== 0) return false;
+  const f1 = listFiles(d1);
+  const f2 = listFiles(d2);
+  if (f1.length !== f2.length || f1.length === 0) return false;
+  for (let i = 0; i < f1.length; i++) {
+    if (path.relative(d1, f1[i]) !== path.relative(d2, f2[i])) return false;
+    if (!fs.readFileSync(f1[i]).equals(fs.readFileSync(f2[i]))) return false;
+  }
+  return true;
+});
+
+test("generate-governance: AGENTS.md has resolved placeholders", () => {
+  const dir = tmp("gen-placeholder");
+  spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "MyProject", "--phase", "A"]);
+  const content = fs.readFileSync(path.join(dir, "AGENTS.md"), "utf8");
+  return content.includes("MyProject") && !content.includes("{{PROJECT_NAME}}");
+});
+
+test("generate-governance: manifest lists created artifacts with correct types", () => {
+  const dir = tmp("gen-manifest");
+  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "TypeTest", "--phase", "B"], { encoding: "utf8" });
+  if (r.status !== 0) return false;
+  const m = JSON.parse(fs.readFileSync(path.join(dir, ".governance/manifest.json"), "utf8"));
+  const count = (t) => m.artifacts.filter((a) => a.type === t).length;
+  const validKinds = m.artifacts.every((a) => a.kind === "file" || a.kind === "dir");
+  const agentsType = m.artifacts.find((a) => a.path === "AGENTS.md").type;
+  return count("policy") === 9 && count("script") === 5 && count("state") === 6 && validKinds && agentsType === "policy";
+});
+
+test("generate-governance: manifest omits release for fresh INIT", () => {
+  const dir = tmp("gen-norelease");
+  spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "Fresh", "--phase", "B"]);
+  const m = JSON.parse(fs.readFileSync(path.join(dir, ".governance/manifest.json"), "utf8"));
+  return m.release === undefined;
+});
+
+test("generate-governance: git-policy.json and sync-rules.json are valid JSON", () => {
+  const dir = tmp("gen-jsonval");
+  spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "JsonVal", "--phase", "B"]);
+  const gp = JSON.parse(fs.readFileSync(path.join(dir, ".governance/git-policy.json"), "utf8"));
+  const sr = JSON.parse(fs.readFileSync(path.join(dir, ".governance/sync-rules.json"), "utf8"));
+  return Array.isArray(gp.protectedBranches) && gp.protectedBranches.length > 0 &&
+    typeof gp.directPush === "boolean" && Array.isArray(sr.syncGroups) && sr.syncGroups.length > 0;
+});
+
+test("generate-governance: end-to-end — Phase B output passes verify-governance.js", () => {
+  const dir = tmp("gen-e2e");
+  const g = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "E2EApp", "--phase", "B"], { encoding: "utf8" });
+  if (g.status !== 0) return false;
+  const v = spawnSync(process.execPath, [VALIDATOR], { cwd: dir, encoding: "utf8" });
+  return v.status === 0;
+});
+
+test("generate-governance: existing files are skipped, not overwritten", () => {
+  const dir = tmp("gen-skip");
+  fs.mkdirSync(path.join(dir, "docs/rules"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "docs/rules/lifecycle.md"), "CUSTOM CONTENT", "utf8");
+  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "SkipTest", "--phase", "A"], { encoding: "utf8" });
+  if (r.status !== 0) return false;
+  const content = fs.readFileSync(path.join(dir, "docs/rules/lifecycle.md"), "utf8");
+  return content === "CUSTOM CONTENT";
+});
+
+test("generate-governance: --dry-run creates nothing", () => {
+  const dir = tmp("gen-dryrun");
+  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "Dry", "--phase", "A", "--dry-run"], { encoding: "utf8" });
+  return r.status === 0 && !fs.existsSync(dir + "/AGENTS.md");
+});
+
+test("generate-governance: --json outputs structured result", () => {
+  const dir = tmp("gen-jsonout");
+  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "JsonTest", "--phase", "A", "--json"], { encoding: "utf8" });
+  if (r.status !== 0) return false;
+  const out = JSON.parse(r.stdout);
+  return out.phase === "A" && Array.isArray(out.results) && out.results.length === 13;
+});
+
+test("generate-governance: missing --project-name exits 2", () => {
+  const dir = tmp("gen-noname");
+  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir], { encoding: "utf8" });
+  return r.status === 2;
+});
+
+// ---------- 25. check-layout-sync.js ----------
+function buildLayoutRepo(dir, treeFiles) {
+  fs.mkdirSync(path.join(dir, "docs/en"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "docs/zh-CN"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "docs/zh-TW"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "references/templates"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "scripts"), { recursive: true });
+  for (const f of treeFiles) {
+    if (f.startsWith("references/") || f.startsWith("scripts/")) {
+      fs.mkdirSync(path.dirname(path.join(dir, f)), { recursive: true });
+      fs.writeFileSync(path.join(dir, f), "x", "utf8");
+    }
+  }
+  const tree = treeFiles.map((f) => "├── " + f + "   # file").join("\n");
+  const fence = String.fromCharCode(96, 96, 96);
+  const layout = "### Repository Layout\n\n" + fence + "\nai-agent-governance/\n" + tree + "\n" + fence + "\n";
+  for (const lang of ["en", "zh-CN", "zh-TW"]) {
+    fs.writeFileSync(path.join(dir, `docs/${lang}/architecture.md`), layout, "utf8");
+  }
+}
+
+test("check-layout-sync: tree covering all files exits 0", () => {
+  const dir = tmp("layout-ok");
+  buildLayoutRepo(dir, ["references/templates/a.template.md", "scripts/check-a.js", "scripts/check-b.js"]);
+  const r = spawnSync(process.execPath, [LAYOUT_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 0;
+});
+
+test("check-layout-sync: missing file in tree exits 1", () => {
+  const dir = tmp("layout-missing");
+  buildLayoutRepo(dir, ["references/templates/a.template.md", "scripts/check-a.js"]);
+  fs.writeFileSync(path.join(dir, "scripts/check-b.js"), "x", "utf8");
+  const r = spawnSync(process.execPath, [LAYOUT_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 1 && r.stdout.includes("missing: check-b.js");
+});
+
+// ---------- runner (must stay after ALL test registrations) ----------
 let failed = 0;
 for (const t of tests) {
   let ok;
@@ -621,84 +782,6 @@ for (const t of tests) {
     failed += 1;
   }
 }
-
-// ---------- 24. generate-governance.js (Phase A) ----------
-test("generate-governance: Phase A creates expected file tree", () => {
-  const dir = tmp("gen-tree");
-  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "TestApp", "--phase", "A"], { encoding: "utf8" });
-  if (r.status !== 0) return false;
-  const expected = [
-    "docs/rules/lifecycle.md",
-    "docs/rules/git-policy.md",
-    "docs/rules/security.md",
-    "docs/rules/coding.md",
-    "docs/rules/testing.md",
-    "AGENTS.md",
-    "CHANGELOG.md",
-    "docs/features/.gitkeep",
-    "docs/ARCHITECTURE.md",
-    "docs/plans/DEVELOPMENT_PLAN.md",
-    ".governance/manifest.json",
-    ".governance/state.json",
-    ".governance/git-policy.json",
-    ".governance/sync-rules.json",
-  ];
-  const actual = [];
-  for (const e of expected) {
-    if (fs.existsSync(path.join(dir, e))) actual.push(e);
-  }
-  return actual.length === expected.length;
-});
-
-test("generate-governance: determinism — same inputs produce byte-identical outputs", () => {
-  const d1 = tmp("gen-det-a");
-  const d2 = tmp("gen-det-b");
-  spawnSync(process.execPath, [GENERATOR, "--target", d1, "--project-name", "DetTest", "--phase", "A"]);
-  spawnSync(process.execPath, [GENERATOR, "--target", d2, "--project-name", "DetTest", "--phase", "A"]);
-  const files = ["AGENTS.md", "CHANGELOG.md", ".governance/manifest.json", "docs/rules/lifecycle.md"];
-  for (const f of files) {
-    const a = fs.readFileSync(path.join(d1, f));
-    const b = fs.readFileSync(path.join(d2, f));
-    if (!a.equals(b)) return false;
-  }
-  return true;
-});
-
-test("generate-governance: AGENTS.md has resolved placeholders", () => {
-  const dir = tmp("gen-placeholder");
-  spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "MyProject", "--phase", "A"]);
-  const content = fs.readFileSync(path.join(dir, "AGENTS.md"), "utf8");
-  return content.includes("MyProject") && !content.includes("{{PROJECT_NAME}}");
-});
-
-test("generate-governance: manifest has correct artifact types", () => {
-  const dir = tmp("gen-manifest");
-  spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "TypeTest", "--phase", "A"]);
-  const m = JSON.parse(fs.readFileSync(path.join(dir, ".governance/manifest.json"), "utf8"));
-  const policy = m.artifacts.filter((a) => a.type === "policy");
-  const state = m.artifacts.filter((a) => a.type === "state");
-  return policy.length === 5 && state.length === 4;
-});
-
-test("generate-governance: --dry-run creates nothing", () => {
-  const dir = tmp("gen-dryrun");
-  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "Dry", "--phase", "A", "--dry-run"], { encoding: "utf8" });
-  return r.status === 0 && !fs.existsSync(dir + "/AGENTS.md");
-});
-
-test("generate-governance: --json outputs structured result", () => {
-  const dir = tmp("gen-jsonout");
-  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "JsonTest", "--phase", "A", "--json"], { encoding: "utf8" });
-  if (r.status !== 0) return false;
-  const out = JSON.parse(r.stdout);
-  return out.phase === "A" && Array.isArray(out.results) && out.results.length === 14;
-});
-
-test("generate-governance: missing --project-name exits 2", () => {
-  const dir = tmp("gen-noname");
-  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir], { encoding: "utf8" });
-  return r.status === 2;
-});
 
 cleanup();
 

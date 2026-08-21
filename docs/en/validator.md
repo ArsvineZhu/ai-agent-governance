@@ -2,7 +2,7 @@
 
 [English](validator.md) · [简体中文](../zh-CN/validator.md) · [繁體中文](../zh-TW/validator.md)
 
-The governance validator is a zero-dependency plain-Node script generated into each governed project as `scripts/verify-governance.js` (source: this repo's `scripts/verify_governance.js`).
+The governance validator is a zero-dependency plain-Node script generated into each governed project as `scripts/verify-governance.js` (source: this repo's `scripts/verify_governance.js`). This page is a developer usage manual; the check list itself is defined by the script, not restated here.
 
 ### Usage
 
@@ -14,19 +14,12 @@ node scripts/verify-governance.js --help   # usage
 
 Exit code 0 when every governance artifact exists, 1 otherwise.
 
-### Behavior
+### Modes
 
-- **Manifest mode** — when `.governance/manifest.json` declares a non-empty `artifacts` array, paths are resolved from it (structure-adaptive). Adds checks: CHANGELOG format, Git policy, Manifest schema, Manifest artifacts valid (`kind` ∈ file/dir), Governance version, and Release metadata (only when a `release` field is declared).
-- **Defaults mode** — without a manifest, built-in defaults are checked:
+- **Manifest mode** — when `.governance/manifest.json` declares a non-empty `artifacts` array, paths are resolved from it (structure-adaptive). Adds manifest-specific checks (schema, artifact kinds, governance version, optional release metadata).
+- **Defaults mode** — without a manifest, a built-in defaults list is checked (AGENTS.md, CHANGELOG format, architecture/features/plans/rules dirs, .gitignore, .env.example, CI workflow, scripts, .governance/ state files, governance version).
 
-```
-AGENTS.md / CHANGELOG.md / CHANGELOG format / docs/ARCHITECTURE.md / docs/features/ / docs/plans/ /
-docs/rules/ / .gitignore / .env.example / CI workflow / scripts/verify-governance.js / scripts/check-lock.js /
-scripts/check-git-policy.js / scripts/check-secrets.js / scripts/check-sync.js / .governance/ directory / manifest.json / state.json /
-preflight.json / git-policy.json / governance_version
-```
-
-- `validation.json` / `drift-report.json` are runtime outputs, NOT required artifacts — a fresh checkout passes without them.
+The authoritative check list lives in `scripts/verify_governance.js` (the `DEFAULTS` array); `check-doc-consistency.js` cross-checks numeric claims in docs against it. Runtime outputs `validation.json` / `drift-report.json` are NOT required artifacts — a fresh checkout passes without them.
 
 ### Governance badge (optional)
 

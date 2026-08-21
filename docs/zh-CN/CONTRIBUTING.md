@@ -14,12 +14,14 @@ npm test        # 或 node tests/run-tests.js
 
 | 路径 | 用途 |
 | --- | --- |
-| `SKILL.md` | 治理引擎 —— 策略层 + INIT/AUDIT 编排 |
-| `references/` | 实现层 —— Agent 运行时输入：`templates/`（生成模板）· `policies/`（`*.policy.md` 规则，复制进被治理项目的 `docs/rules/`）· `workflows/`（CI + 发布规范） |
+| `SKILL.md` | skill 入口 / 产品规格 —— INIT/AUDIT/RELEASE 编排 |
+| `references/` | skill 本体 —— skill 行为唯一所在地：`templates/`（生成模板）· `policies/`（`*.policy.md` 规则，复制进被治理项目的 `docs/rules/`）· `workflows/`（CI + 发布规范） |
 | `scripts/verify_governance.js` | 校验器源码，复制进被治理项目 |
 | `scripts/release-manager.js` | 发布工具：`plan`（只读）+ `execute`（审批门禁） |
+| `scripts/generate-governance.js` | INIT 生成器：确定性引导脚手架（规范：`references/init-spec.json`） |
+| `references/init-spec.json` | 机器可读 INIT 规范（生成产出的单一事实源） |
 | `tests/run-tests.js` | 测试套件 |
-| `docs/en/` `docs/zh-CN/` `docs/zh-TW/` | 知识层 —— 人类文档，每种语言一棵目录树 |
+| `docs/en/` `docs/zh-CN/` `docs/zh-TW/` | 用户/开发者手册 —— 怎么用 skill（触发词、计划、路线图），每种语言一棵目录树；不属于 skill 载荷 |
 | `docs/glossary.md` | 三语术语对照表（术语的单一事实源） |
 | `docs/design-decisions/` | 架构决策记录（共享，简体单语） |
 | `docs/archive/` | 已完成计划归档（共享，单语，绝不翻译） |

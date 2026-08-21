@@ -13,6 +13,20 @@ description: >-
 
 本 Skill 只负责治理体系搭建与巡检维护，不写业务代码、技术规范、测试内容。
 
+### 概念总览（Concept Map）
+
+```
+Governance Spec  →  Governance Engine  →  Runtime Contract  →  Coding Agents
+  .governance/       SKILL.md             AGENTS.md/CLAUDE.md      Claude / Cursor /
+  manifest.json      (INIT/AUDIT/         (每个 Agent 会话        Codex / opencode
+  (期望态)            RELEASE 编排)         开始时读的行为契约)
+```
+
+- **期望态（Spec）** —— `.governance/manifest.json` 声明全部治理工件与版本，是"治理即代码"的单一索引。
+- **引擎（Engine）** —— 本 SKILL 按 INIT / AUDIT / RELEASE 模式生成并维护这套体系。
+- **运行时契约（Runtime Contract）** —— 生成的 AGENTS.md 与各工具适配器是每个 Agent 会话开始时读取的行为规则。
+
+
 ## 进入模式（Entry Mode）
 
 | 模式 | 触发条件 | 行为 |
@@ -70,6 +84,8 @@ description: >-
 | Dependency Change | confirmation required |
 | Git Commit | confirmation required |
 | Git Push | forbidden（禁止自动执行） |
+
+**确认范围**：以上所有 "confirmation required" 操作都需要**当轮**的独立明确确认。之前回合中的 "yes" / "确认" **不**适用于后续回合。执行写命令前必须先向用户回显确切命令并等待确认。有疑问时永远先问。
 
 ### 状态协议（最终报告必须支持三态）
 
@@ -243,6 +259,8 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
 
 ### Phase 1：治理体系构建（按序执行）
 
+**脚本化生成（无判断的静态文件机械生成）**：第 1–11 步中无需判断的静态文件由生成器生成：`node scripts/generate-governance.js --target <项目根> --phase B --file <inspection.json>`（产物清单与规范见 `references/init-spec.json`，单一事实源；幂等——已存在文件跳过不覆盖；`--phase A` 只出静态骨架，`--phase B` 出配置/状态/脚本）。生成后必须跑 `verify-governance.js` 退出码 0（e2e 已在测试覆盖）。Agent 仍负责：Phase 0 检测判断（生成 inspection.json）、确认门（依赖变更 / git 身份 / CI 推送）、生成器未覆盖的步骤（第 3 步 CLAUDE.md 等按工具检测、第 8 步 README 语言布局与合并不覆盖、第 12 步 CI 选择、第 13 步子技能生成）与结构适配（既有文档根、合并既有内容）。
+
 **目录结构适配规则**：以下结构是**默认布局**，不是强制迁移目标。若项目已有成熟结构（如已有 `documentation/`、`docs/` 被产品文档占用、monorepo 用 `packages/*/docs`），**适配现有体系**：把治理文件放进既有文档根，并把实际路径写入 `.governance/manifest.json`。`verify-governance.js` 以 manifest 声明的路径为准。禁止创建第二个平行文档中心。
 
 1. **docs/rules/** —— 先建规则文件（AGENTS.md 要 `@` 引用它们）；内容从本 Skill 的 `references/policies/` 生成，替换 `{{...}}` 占位符：
@@ -278,7 +296,7 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
     - 栈模板：Node/TS（+typecheck）、Python（ruff check + mypy 可选）、Rust（clippy）、Go（go vet）、Java（spotless + google-java-format **必配**，INIT 写入 pom.xml）、C++（clang-tidy 可选，CMake/CTest 或 Make 按检测选择；同时生成 `.clang-format` 风格基线）。
     - format 配置策略：**必须带配置才能检查**的栈（Java spotless、C++ clang-format）由 INIT 生成配置；**默认即可运行**的栈（Node/Python）默认用工具默认值，定制才生成 `.prettierrc` / `[tool.ruff]`；Go（gofmt）、Rust（rustfmt）零配置。
     - 若项目脚本缺失，对应步骤只保留 `echo "No <tool> configured yet"`（黄字警告），**不得强行编写无法执行的命令**；包管理器以锁文件为准（见默认值约定）。
-13. **.governance/generated/skills/** —— 按 `references/templates/sub-skills.md` 生成子技能（repository-inspection / ci-generator / governance-validator / state-manager / **drift-check** / **release-manager** / **plan-manager** / **review-manager**），并写入 `opencode.json` 的 `skills.paths` 使其被加载（如项目用 opencode）。其中 `drift-check` 承担长期巡检（治理健康报告、版本漂移检测），`release-manager` 承担版本发布（RELEASE 模式），`plan-manager` 承担开发计划管理（TASK 创建 / 里程碑勾选 / 完成标记），`review-manager` 承担多 Agent 深度评审（5 固定领域 / 严重度排序报告 / 修复 + 门禁验证）。
+13. **.governance/generated/skills/** —— 按 `references/templates/sub-skills.md` 生成子技能（repository-inspection / ci-generator / governance-validator / state-manager / **drift-check** / **release-manager** / **plan-manager** / **review-manager**），并写入 `opencode.json` 的 `skills.paths` 使其被加载（如项目用 opencode）。其中 `drift-check` 承担长期巡检（治理健康报告、版本漂移检测），`release-manager` 承担版本发布（RELEASE 模式），`plan-manager` 承担开发计划管理（TASK 创建 / 里程碑勾选 / 完成标记），`review-manager` 承担变更集评审（双模式：轻量 5 固定领域 + 门禁；全量 = 逐行通读 / 对照开发计划 / 执行级验证 / 不信任门禁）。
 
 ### .governance/ 机器可读状态
 
