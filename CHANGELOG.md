@@ -4,6 +4,8 @@ All notable changes to this project will be documented here.
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-08-21
+
 ### Fixed
 
 - **Turn-scoped consent vs release sequence contradiction** — AGENTS.md / `references/policies/git.policy.md` / `references/templates/agents-md.template.md` stated that every git write op needs fresh per-turn confirmation (and explicitly that saying 发布吧 is not enough), while `references/workflows/release.md` states 批准覆盖本次 release 序列的全部写操作. The three consent clauses now carry the release-sequence exception: one Approval Gate approval covers the whole sequence (version sync → archive → commit → tag → push → release → asset upload), conditional on the shown Proposal and an unchanged working tree/HEAD. Surfaced by a real v0.9.0 release run where the agent asked for confirmation 6 times instead of once.
