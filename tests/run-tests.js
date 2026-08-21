@@ -13,6 +13,7 @@ const VALIDATOR = path.join(__dirname, "..", "scripts", "verify_governance.js");
 const LOCK_CHECK = path.join(__dirname, "..", "scripts", "check-lock.js");
 const GIT_POLICY_CHECK = path.join(__dirname, "..", "scripts", "check-git-policy.js");
 const SECRET_CHECK = path.join(__dirname, "..", "scripts", "check-secrets.js");
+const SYNC_CHECK = path.join(__dirname, "..", "scripts", "check-sync.js");
 const TMP_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), "ai-agent-governance-test-"));
 
 function tmp(name) {
@@ -68,6 +69,7 @@ function buildFullDefault(dir) {
   fs.copyFileSync(LOCK_CHECK, path.join(dir, "scripts/check-lock.js"));
   fs.copyFileSync(GIT_POLICY_CHECK, path.join(dir, "scripts/check-git-policy.js"));
   fs.copyFileSync(SECRET_CHECK, path.join(dir, "scripts/check-secrets.js"));
+  fs.copyFileSync(SYNC_CHECK, path.join(dir, "scripts/check-sync.js"));
 }
 
 test("full default structure exits 0 (defaults mode)", () => {
@@ -75,7 +77,7 @@ test("full default structure exits 0 (defaults mode)", () => {
   buildFullDefault(dir);
 
   const r = run(dir);
-  return r.status === 0 && r.stdout.includes("20/20 checks passed.");
+  return r.status === 0 && r.stdout.includes("21/21 checks passed.");
 });
 
 // ---------- 3. Custom structure via manifest ----------
@@ -116,7 +118,7 @@ test("custom doc root (documentation/) follows manifest (manifest mode)", () => 
   fs.copyFileSync(VALIDATOR, path.join(dir, "scripts/verify-governance.js"));
 
   const r = run(dir);
-  return r.status === 0 && r.stdout.includes("mode: manifest") && r.stdout.includes("12/12 checks passed.");
+  return r.status === 0 && r.stdout.includes("mode: manifest") && r.stdout.includes("13/13 checks passed.");
 });
 
 // ---------- 4. Manifest without governance_version ----------
@@ -144,12 +146,12 @@ test("--json reports passedAll, mode and governance_version", () => {
     out.passedAll === true &&
     out.governance_version === "1.0.0" &&
     Array.isArray(out.results) &&
-    out.results.length === 20 &&
+    out.results.length === 21 &&
     out.score === 1
   );
 });
 
-test("--json score reflects partial failures (19/20 = 0.95)", () => {
+test("--json score reflects partial failures (20/21)", () => {
   const dir = tmp("score");
   buildFullDefault(dir);
   fs.rmSync(path.join(dir, ".env.example"));
@@ -157,7 +159,7 @@ test("--json score reflects partial failures (19/20 = 0.95)", () => {
   const r = run(dir, ["--json"]);
   if (r.status !== 1) return false;
   const out = JSON.parse(r.stdout);
-  return out.total === 20 && out.passed === 19 && out.score === 0.95;
+  return out.total === 21 && out.passed === 20 && Math.abs(out.score - 20 / 21) < 1e-9;
 });
 
 // ---------- 6. --help output ----------
@@ -187,7 +189,7 @@ test("validation.json present is optional and still passes", () => {
   const r = run(dir);
   return (
     r.status === 0 &&
-    r.stdout.includes("20/20 checks passed.") &&
+    r.stdout.includes("21/21 checks passed.") &&
     !r.stdout.includes(".governance validation")
   );
 });
@@ -271,6 +273,52 @@ test("validator: missing check-secrets.js exits 1", () => {
   fs.rmSync(path.join(dir, "scripts/check-secrets.js"));
   const r = run(dir);
   return r.status === 1 && r.stdout.includes("Secret scan gate");
+});
+
+// ---------- 8d-8f. Sync groups mechanical check ----------
+
+test("check-sync: changed src without ARCHITECTURE.md exits 1", () => {
+  const dir = tmp("sync-unsynced");
+  gitInit(dir);
+  fs.mkdirSync(path.join(dir, "src"), { recursive: true });
+  write(path.join(dir, "src", "a.ts"), "x");
+  spawnSync("git", ["add", "src/a.ts"], { cwd: dir });
+  write(
+    path.join(dir, ".governance", "sync-rules.json"),
+    JSON.stringify({ syncGroups: [{ name: "api-architecture", watch: ["src/**"], require: ["docs/ARCHITECTURE.md"] }] })
+  );
+  write(path.join(dir, ".governance", "state.json"), JSON.stringify({ task_start_sha: "" }));
+  fs.mkdirSync(path.join(dir, "scripts"), { recursive: true });
+  fs.copyFileSync(SYNC_CHECK, path.join(dir, "scripts/check-sync.js"));
+  const r = spawnSync(process.execPath, [SYNC_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 1 && r.stderr.includes("api-architecture");
+});
+
+test("check-sync: changed src AND ARCHITECTURE.md exits 0", () => {
+  const dir = tmp("sync-ok");
+  gitInit(dir);
+  fs.mkdirSync(path.join(dir, "src"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "docs"), { recursive: true });
+  write(path.join(dir, "src", "a.ts"), "x");
+  write(path.join(dir, "docs", "ARCHITECTURE.md"), "y");
+  spawnSync("git", ["add", "src/a.ts", "docs/ARCHITECTURE.md"], { cwd: dir });
+  write(
+    path.join(dir, ".governance", "sync-rules.json"),
+    JSON.stringify({ syncGroups: [{ name: "api-architecture", watch: ["src/**"], require: ["docs/ARCHITECTURE.md"] }] })
+  );
+  write(path.join(dir, ".governance", "state.json"), JSON.stringify({ task_start_sha: "" }));
+  fs.mkdirSync(path.join(dir, "scripts"), { recursive: true });
+  fs.copyFileSync(SYNC_CHECK, path.join(dir, "scripts/check-sync.js"));
+  const r = spawnSync(process.execPath, [SYNC_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 0;
+});
+
+test("validator: missing check-sync.js exits 1", () => {
+  const dir = tmp("nosync");
+  buildFullDefault(dir);
+  fs.rmSync(path.join(dir, "scripts/check-sync.js"));
+  const r = run(dir);
+  return r.status === 1 && r.stdout.includes("Sync groups check");
 });
 
 // ---------- 9. Doc parity check (scripts/check-doc-parity.js) ----------

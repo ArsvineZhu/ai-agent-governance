@@ -8,7 +8,7 @@
 npm test        # 或 node tests/run-tests.js
 ```
 
-测试套件覆盖：空项目（exit 1）、完整默认结构（exit 0，20 项检查）、自定义文档根经 manifest（manifest 模式）、缺 governance_version（exit 1）、`--json` 输出、`--help`、无 `.agent` 残留、`validation.json` 可选、CHANGELOG 格式检查、锁检查（无状态 / 未持锁 / 持锁）、Git 策略检查（非法策略 / 受保护分支阻止 / 特性分支通过）、密钥扫描（命中 exit 1 且不泄露 token / 干净 exit 0 / 缺门禁使校验器失败）、发布规划（SemVer 分类：docs/重构 → patch、CLI 命令 → minor、删除公开 API → major、不确定性 → 澄清、`--file` 输入）与审批门禁（未批准 → 无 tag，批准 → 创建 annotated tag）、文档一致性（三树平行 exit 0 / 标题漂移 exit 1 / 缺失文件 exit 1）、知识新鲜度（git log 日期检测 stale/very-stale）、内容一致性（干净 exit 0 / 版本示例标记 / 坏链标记）与 --json score（全过 1.0 / 部分 0.95）。CI 每次 push/PR 运行。
+测试套件覆盖：空项目（exit 1）、完整默认结构（exit 0，21 项检查）、自定义文档根经 manifest（manifest 模式）、缺 governance_version（exit 1）、`--json` 输出、`--help`、无 `.agent` 残留、`validation.json` 可选、CHANGELOG 格式检查、锁检查（无状态 / 未持锁 / 持锁）、Git 策略检查（非法策略 / 受保护分支阻止 / 特性分支通过）、密钥扫描（命中 exit 1 且不泄露 token / 干净 exit 0 / 缺门禁使校验器失败）、发布规划（SemVer 分类：docs/重构 → patch、CLI 命令 → minor、删除公开 API → major、不确定性 → 澄清、`--file` 输入）与审批门禁（未批准 → 无 tag，批准 → 创建 annotated tag）、文档一致性（三树平行 exit 0 / 标题漂移 exit 1 / 缺失文件 exit 1）、知识新鲜度（git log 日期检测 stale/very-stale）、内容一致性（干净 exit 0 / 版本示例标记 / 坏链标记）与 --json score（全过 1.0 / 部分 0.95）。CI 每次 push/PR 运行。
 
 ## 各目录用途
 

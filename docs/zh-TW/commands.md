@@ -123,6 +123,7 @@ Git 工作流程治理沒有獨立提示詞 —— 它作為執行期規則自�
 | repository-inspection | `inspect the repo` · `what is the stack` · `check environment` | 偵測環境，返回技術棧報告 |
 | state-manager | `update state` · `record progress` | 把進度持久化到 `.governance/state.json` |
 | plan-manager | `plan this task` · `create task plan` · `update development plan` · `check off milestone` · `mark task completed` | 建立 TASK 計劃、勾選里程碑、標記任務完成 |
+| review-manager | `review this` · `review the changes` · `audit recent changes` · `review my changes` | 多 Agent 深度審核（5 個固定領域、按嚴重度排序報告、修復 + 門禁驗證） |
 | release-manager | `release` · `publish version` · `/release vX.Y.Z` | 執行帶審批閘門的發佈流程 |
 
 ### 執行規則

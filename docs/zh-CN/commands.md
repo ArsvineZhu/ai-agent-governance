@@ -122,6 +122,7 @@ Git 工作流治理没有独立提示词 —— 它作为运行期规则自动�
 | repository-inspection | `inspect the repo` · `what is the stack` · `check environment` | 检测环境，返回技术栈报告 |
 | state-manager | `update state` · `record progress` | 把进度持久化到 `.governance/state.json` |
 | plan-manager | `plan this task` · `create task plan` · `update development plan` · `check off milestone` · `mark task completed` | 创建 TASK 计划、勾选里程碑、标记任务完成 |
+| review-manager | `review this` · `review the changes` · `audit recent changes` · `review my changes` | 多 Agent 深度评审（5 固定领域、按严重度排序报告、修复 + 门禁验证） |
 | release-manager | `release` · `publish version` · `/release vX.Y.Z` | 执行带审批门禁的发布流程 |
 
 ### 执行规则

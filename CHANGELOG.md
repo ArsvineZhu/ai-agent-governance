@@ -7,6 +7,8 @@ All notable changes to this project will be documented here.
 ### Added
 
 - **Impact-face check** — before touching any public interface/module/file, agents must search its references (`rg`) and include found files in the Affected Files plan (Phase 2/3); at task end, Phase 6 compares actual changed files against the planned list (listed-but-unchanged → fix or justify; changed-but-not-listed → explain). Mitigates AI "skipped file" lapses; wired into lifecycle.policy.md, agents-md.template.md, AGENTS.md
+- **Review manager sub-skill (implemented)** — 8th sub-skill template in `sub-skills.md`: multi-agent deep review of a change set (5 fixed review domains: correctness, consistency, security, performance, maintainability), severity-ranked findings, review scope = the planned `git diff` change set; wired into `commands.md` (Runtime Components prompt), `SKILL.md` sub-skill list, and `architecture.md`
+- **Sync groups L2 mechanical check** — `scripts/check-sync.js` (zero-dependency, read-only): compares the task change set (commits since `state.json` `task_start_sha` plus uncommitted changes) against `.governance/sync-rules.json`; watch hit without require file = BLOCKED (exit 1), `--advisory` downgrades to exit 0, `--json` for CI; wired into `verify_governance.js` default and manifest check lists
 
 ### Changed
 

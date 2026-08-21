@@ -102,7 +102,7 @@ State machine: `understand → plan → implement → validate → synchronize �
 At the end of every task (or on interruption), update `.governance/state.json`:
 
 ```json
-{"maturity":"","phase":"","agent_id":"","task_id":"","locked":null,"completed":[],"blocked":[],"updatedAt":"<ISO>"}
+{"maturity":"","phase":"","agent_id":"","task_id":"","locked":null,"completed":[],"blocked":[],"task_start_sha":"","updatedAt":"<ISO>"}
 ```
 
 - `maturity`: LEVEL_0_EMPTY / LEVEL_1_PROTOTYPE / LEVEL_2_ACTIVE / LEVEL_3_PRODUCTION
@@ -111,6 +111,7 @@ At the end of every task (or on interruption), update `.governance/state.json`:
 - `locked`: set while actively modifying a file; null when done
 - `completed`: list of done items (docs, agents, rules, security, ci, state)
 - `blocked`: external blockers with reason (e.g. "github_permission")
+- `task_start_sha`: at task start, write `git rev-parse HEAD` here; resume keeps the original (never overwrite mid-task); consumed by `scripts/check-sync.js` as the change-set base
 
 Multi-agent rule: before starting, run `node scripts/check-lock.js` (exit 1 = another agent holds `locked`) or read state.json — wait or coordinate, never edit the same file in parallel. Never remove a completed entry. If a previous run left state, resume from it instead of restarting.
 
@@ -330,3 +331,42 @@ Archiving happens at RELEASE (release-manager), NOT here.
 - Never delete a completed milestone or TASK file; archiving preserves originals.
 - If a previous session left a TASK file or state, resume from it instead of recreating.
 ````
+## 8. review-manager
+
+```
+---
+name: review-manager
+description: Use to perform a multi-agent deep review of a change set before commit/release. Dispatch parallel subagents over 5 fixed domains, produce a severity-sorted issue list, fix severe and general items, then run the gate group. Triggers on "review this" · "review the changes" · "audit recent changes" · "review my changes".
+---
+
+# Review Manager
+
+Standardize the multi-agent deep review into a fixed workflow — no improvisation, every review covers the same five domains.
+
+## Workflow
+
+1. **Determine scope** — `git diff <baseline>..HEAD` plus uncommitted changes; baseline defaults to the last review point (manually specified in v1, no auto-recording). Scope = the change set + directly affected files (tests affected by changed scripts, generated artifacts affected by changed policies), NOT the whole project — whole-project review only on explicit user request.
+2. **Dispatch parallel subagents** (fixed 5 domains, no dynamic expansion in v1):
+   - Script logic — correctness, edge cases, error handling
+   - Doc consistency — three language trees, links, version examples, CHANGELOG reconciliation (invokes drift-check scripts as input)
+   - Test coverage — fixture realism, assertion strength, flaky risk
+   - Governance artifacts — policies, templates vs implementation, protected lists
+   - Security — secrets, permission rules, sensitive data
+3. **Summarize** — sorted by severity (severe / general / trivial), each with file path + line number + evidence
+4. **Fix** — severe and general must be fixed; trivial items reported for the user to decide
+5. **Gate verification** — after fixes, run `npm run check` (tests + parity) and record real output
+
+## Boundary with drift-check (explicit)
+
+| | review-manager | drift-check |
+| --- | --- | --- |
+| Layer | deep (multi-agent problem-finding) | mechanical (omission-catching) |
+| Input | git diff + related project files | manifest + script check classes |
+| Output | severity-sorted issue list + fixes | drift-report.json |
+| Trigger | `review this` | `check governance drift` |
+
+Complementary: the review-manager's "doc consistency" subagent invokes drift-check scripts; no duplication.
+
+Governed-project note: review-manager focuses on governance artifacts + recent changes; business-logic review scope is decided by the project's own conventions, not enforced.
+```
+

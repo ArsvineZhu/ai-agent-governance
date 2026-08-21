@@ -67,6 +67,7 @@ AGENTS.md 只保留生命周期摘要，本文件是完整执行规范。所有 
   - watch 命中且 require 未更新 → ❌ 漏同步，补齐后才算完成
   - watch 未命中 → ⚠️ not-applicable（无同步义务），报告中标注即可
   - 逐组报告 ✅ 已同步 / ⚠️ 不适用（见 `references/templates/sync-rules.template.md` 生成规则）
+- **机械验证（gate）** —— 在中/大型改动声明完成前运行 `node scripts/check-sync.js`（默认 gate 模式；exit 0 = 通过、exit 1 = 漏同步组）；`--advisory` 模式仅报告不阻断；详见 `scripts/check-sync.js` 与 `references/templates/sync-rules.template.md`
 - 更新 CHANGELOG.md（已完成变更，[Unreleased]；时机按 Change Classification 的更新时机规则）
 - 更新 Feature Registry（docs/features/，如涉及功能）
 - 更新 Architecture Documentation（如架构变化）

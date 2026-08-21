@@ -81,7 +81,7 @@ ai-agent-governance/
 │   ├── templates/
 │   │   ├── agents-md.template.md   # AGENTS.md template
 │   │   ├── feature-doc.template.md # feature doc template (anti-fabrication rules)
-│   │   ├── sub-skills.md           # generated agent modules (incl. drift-check, release-manager, plan-manager)
+│   │   ├── sub-skills.md           # generated agent modules (incl. drift-check, release-manager, plan-manager, review-manager)
 │   │   ├── env-example.template.md # .env.example template (placeholders, dependency-trimmed)
 │   │   ├── gitmessage.template.md  # .gitmessage.txt template (commit conventions)
 │   │   └── git-policy.template.md  # .governance/git-policy.json template (Git workflow policy)

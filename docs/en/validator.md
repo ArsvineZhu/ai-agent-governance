@@ -22,7 +22,7 @@ Exit code 0 when every governance artifact exists, 1 otherwise.
 ```
 AGENTS.md / CHANGELOG.md / CHANGELOG format / docs/ARCHITECTURE.md / docs/features/ / docs/plans/ /
 docs/rules/ / .gitignore / .env.example / CI workflow / scripts/verify-governance.js / scripts/check-lock.js /
-scripts/check-git-policy.js / scripts/check-secrets.js / .governance/ directory / manifest.json / state.json /
+scripts/check-git-policy.js / scripts/check-secrets.js / scripts/check-sync.js / .governance/ directory / manifest.json / state.json /
 preflight.json / git-policy.json / governance_version
 ```
 
