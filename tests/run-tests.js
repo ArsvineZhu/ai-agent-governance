@@ -348,6 +348,40 @@ test("check-sync: changed src AND ARCHITECTURE.md exits 0", () => {
   return r.status === 0;
 });
 
+test("check-sync: existing task_start_sha is honoured (resume, not recomputed)", () => {
+  const dir = tmp("sync-resume");
+  gitInit(dir);
+  const firstSha = gitHead(dir);
+  // a second commit happens mid-task: the recorded task_start_sha must still be the first
+  fs.mkdirSync(path.join(dir, "src"), { recursive: true });
+  write(path.join(dir, "src", "a.ts"), "x");
+  spawnSync("git", ["add", "src/a.ts"], { cwd: dir });
+  spawnSync("git", ["commit", "-q", "-m", "mid-task commit"], { cwd: dir });
+  write(path.join(dir, ".governance", "sync-rules.json"),
+    JSON.stringify({ syncGroups: [{ name: "api-architecture", watch: ["src/**"], require: ["docs/ARCHITECTURE.md"] }] }));
+  write(path.join(dir, ".governance", "state.json"), JSON.stringify({ task_start_sha: firstSha }));
+  const r = spawnSync(process.execPath, [SYNC_CHECK, "--json"], { cwd: dir, encoding: "utf8" });
+  const out = JSON.parse(r.stdout);
+  // base must equal the recorded SHA (resume), and the committed src change must be detected
+  return out.base === firstSha && r.status === 1 && out.unsynced.some((u) => u.group === "api-architecture");
+});
+
+test("check-sync: writes the sync section into drift-report.json", () => {
+  const dir = tmp("sync-drift");
+  gitInit(dir);
+  fs.mkdirSync(path.join(dir, "src"), { recursive: true });
+  write(path.join(dir, "src", "a.ts"), "x");
+  spawnSync("git", ["add", "src/a.ts"], { cwd: dir });
+  write(path.join(dir, ".governance", "sync-rules.json"),
+    JSON.stringify({ syncGroups: [{ name: "api-architecture", watch: ["src/**"], require: ["docs/ARCHITECTURE.md"] }] }));
+  write(path.join(dir, ".governance", "state.json"), JSON.stringify({ task_start_sha: "" }));
+  spawnSync(process.execPath, [SYNC_CHECK], { cwd: dir, encoding: "utf8" });
+  const dr = path.join(dir, ".governance", "drift-report.json");
+  if (!fs.existsSync(dr)) return false;
+  const j = JSON.parse(fs.readFileSync(dr, "utf8"));
+  return j.sync && j.sync.clean === false && j.sync.unsynced.includes("api-architecture");
+});
+
 test("validator: missing check-sync.js exits 1", () => {
   const dir = tmp("nosync");
   buildFullDefault(dir);
@@ -831,11 +865,112 @@ test("check-plan-delivery: design-only plan is skipped", () => {
   return r.status === 0;
 });
 
-test("generate-governance: unimplemented generator fails without --allow-stub", () => {
-  const dir = tmp("gen-stub-fail");
+test("check-plan-delivery: behavioural declaration is verified (writes: X in Y)", () => {
+  const dir = tmp("plandel-behaviour");
+  fs.mkdirSync(path.join(dir, "docs/archive"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "scripts"), { recursive: true });
+  write(path.join(dir, "docs/archive/p.md"), "# P\n\n### Affected Files\n\n- writes: `report.json` in `scripts/x.js`\n");
+  write(path.join(dir, "scripts/x.js"), "// nothing");
+  const bad = spawnSync(process.execPath, [PLAN_DELIVERY, "--gate"], { cwd: dir, encoding: "utf8" });
+  write(path.join(dir, "scripts/x.js"), "fs.writeFileSync(\"report.json\", d)");
+  const good = spawnSync(process.execPath, [PLAN_DELIVERY, "--gate"], { cwd: dir, encoding: "utf8" });
+  return bad.status === 1 && /behaviour/.test(bad.stdout) && good.status === 0;
+});
+
+test("generate-governance: phase C is fully implemented (no stubs left)", () => {
+  const dir = tmp("gen-phase-c");
+  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "S", "--phase", "C", "--json"], { encoding: "utf8" });
+  if (r.status !== 0) return false;
+  const out = JSON.parse(r.stdout);
+  const stubs = out.results.filter((x) => x.action === "skipped" && /not implemented/.test(x.note || ""));
+  return stubs.length === 0;
+});
+
+test("generate-governance: sub-skills generator writes all 8 sub-skills", () => {
+  const dir = tmp("gen-subskills");
   const r = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "S", "--phase", "C"], { encoding: "utf8" });
-  const r2 = spawnSync(process.execPath, [GENERATOR, "--target", tmp("gen-stub-ok"), "--project-name", "S", "--phase", "C", "--allow-stub"], { encoding: "utf8" });
-  return r.status === 1 && r2.status === 0;
+  if (r.status !== 0) return false;
+  const base = path.join(dir, ".governance/generated/skills");
+  if (!fs.existsSync(base)) return false;
+  const names = fs.readdirSync(base);
+  const expected = ["repository-inspection", "ci-generator", "governance-validator", "state-manager", "drift-check", "release-manager", "plan-manager", "review-manager"];
+  return expected.every((e) => names.includes(e) && fs.existsSync(path.join(base, e, "SKILL.md")));
+});
+
+test("generate-governance: CI workflow is selected by stack", () => {
+  const nodeDir = tmp("gen-ci-node");
+  spawnSync(process.execPath, [GENERATOR, "--target", nodeDir, "--project-name", "S", "--phase", "B", "--stack", "node"], { encoding: "utf8" });
+  const pyDir = tmp("gen-ci-py");
+  spawnSync(process.execPath, [GENERATOR, "--target", pyDir, "--project-name", "S", "--phase", "B", "--stack", "python"], { encoding: "utf8" });
+  const nodeCi = path.join(nodeDir, ".github/workflows/ci.yml");
+  const pyCi = path.join(pyDir, ".github/workflows/ci.yml");
+  if (!fs.existsSync(nodeCi) || !fs.existsSync(pyCi)) return false;
+  return fs.readFileSync(nodeCi, "utf8").includes("pnpm") && fs.readFileSync(pyCi, "utf8").includes("ruff");
+});
+
+test("generate-governance: gitlab platform writes .gitlab-ci.yml, none skips CI", () => {
+  const glDir = tmp("gen-ci-gl");
+  spawnSync(process.execPath, [GENERATOR, "--target", glDir, "--project-name", "S", "--phase", "B", "--ci-platform", "gitlab"], { encoding: "utf8" });
+  const noneDir = tmp("gen-ci-none");
+  spawnSync(process.execPath, [GENERATOR, "--target", noneDir, "--project-name", "S", "--phase", "B", "--ci-platform", "none"], { encoding: "utf8" });
+  return fs.existsSync(path.join(glDir, ".gitlab-ci.yml")) && !fs.existsSync(path.join(noneDir, ".github/workflows/ci.yml"));
+});
+
+test("generate-governance: L0/L1 write, L3 audits only, --force-l3 overrides", () => {
+  const l0 = tmp("gen-l0");
+  spawnSync(process.execPath, [GENERATOR, "--target", l0, "--project-name", "S", "--phase", "B", "--maturity", "LEVEL_0_EMPTY"], { encoding: "utf8" });
+  const l1 = tmp("gen-l1");
+  spawnSync(process.execPath, [GENERATOR, "--target", l1, "--project-name", "S", "--phase", "B", "--maturity", "LEVEL_1_PROTOTYPE"], { encoding: "utf8" });
+  const l3 = tmp("gen-l3");
+  const r3 = spawnSync(process.execPath, [GENERATOR, "--target", l3, "--project-name", "S", "--phase", "B", "--maturity", "LEVEL_3_PRODUCTION"], { encoding: "utf8" });
+  const l3f = tmp("gen-l3-force");
+  spawnSync(process.execPath, [GENERATOR, "--target", l3f, "--project-name", "S", "--phase", "B", "--maturity", "LEVEL_3_PRODUCTION", "--force-l3"], { encoding: "utf8" });
+  return fs.existsSync(path.join(l0, "AGENTS.md")) &&
+    fs.existsSync(path.join(l1, "AGENTS.md")) &&
+    r3.status === 0 && !fs.existsSync(path.join(l3, "AGENTS.md")) &&
+    fs.existsSync(path.join(l3f, "AGENTS.md"));
+});
+
+test("generate-governance: existing doc root is respected (doc_root remap)", () => {
+  const dir = tmp("gen-docroot");
+  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "S", "--phase", "B", "--doc-root", "documentation"], { encoding: "utf8" });
+  if (r.status !== 0) return false;
+  const m = JSON.parse(fs.readFileSync(path.join(dir, ".governance/manifest.json"), "utf8"));
+  return fs.existsSync(path.join(dir, "documentation/ARCHITECTURE.md")) &&
+    !fs.existsSync(path.join(dir, "docs")) &&
+    m.doc_root === "documentation" &&
+    m.artifacts.some((a) => a.path.startsWith("documentation/"));
+});
+
+test("generate-governance: L3 audit writes nothing at all (manifest included)", () => {
+  const dir = tmp("gen-l3-nowrite");
+  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "S", "--phase", "B", "--maturity", "LEVEL_3_PRODUCTION"], { encoding: "utf8" });
+  if (r.status !== 0) return false;
+  return !fs.existsSync(path.join(dir, "AGENTS.md")) && !fs.existsSync(path.join(dir, ".governance/manifest.json"));
+});
+
+test("generate-governance: second identical run creates nothing (true idempotency)", () => {
+  const dir = tmp("gen-idem");
+  spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "S", "--phase", "C"], { encoding: "utf8" });
+  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "S", "--phase", "C", "--json"], { encoding: "utf8" });
+  if (r.status !== 0) return false;
+  const out = JSON.parse(r.stdout);
+  const created = out.results.filter((x) => x.action === "created" || x.action === "created-dir");
+  return created.length === 0;
+});
+
+test("generate-governance: manifest records the platform-specific CI path", () => {
+  const gh = tmp("gen-mani-gh");
+  spawnSync(process.execPath, [GENERATOR, "--target", gh, "--project-name", "S", "--phase", "B", "--ci-platform", "github", "--stack", "node"], { encoding: "utf8" });
+  const gl = tmp("gen-mani-gl");
+  spawnSync(process.execPath, [GENERATOR, "--target", gl, "--project-name", "S", "--phase", "B", "--ci-platform", "gitlab", "--stack", "node"], { encoding: "utf8" });
+  const mgh = JSON.parse(fs.readFileSync(path.join(gh, ".governance/manifest.json"), "utf8"));
+  const mgl = JSON.parse(fs.readFileSync(path.join(gl, ".governance/manifest.json"), "utf8"));
+  const ghOk = mgh.artifacts.some((a) => a.path === ".github/workflows/ci.yml");
+  const glOk = mgl.artifacts.some((a) => a.path === ".gitlab-ci.yml");
+  // every manifest-listed artifact must actually exist
+  const allExist = mgl.artifacts.every((a) => fs.existsSync(path.join(gl, a.path)));
+  return ghOk && glOk && allExist;
 });
 // ---------- runner (must stay after ALL test registrations) ----------
 let failed = 0;

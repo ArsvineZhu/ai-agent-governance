@@ -257,46 +257,45 @@ Phase 0 检测时同时判定项目成熟度，按等级调整初始化策略：
 
 开始写入前先记录 `.governance/preflight.json`（Git 状态摘要 + 已存在文件清单 + 时间戳），作为回滚依据（见 .governance/ 机器可读状态）。
 
-### Phase 1：治理体系构建（按序执行）
+### Phase 1：治理体系构建（生成器执行 + Agent 判断与确认门）
 
-**脚本化生成（无判断的静态文件机械生成）**：第 1–11 步中无需判断的静态文件由生成器生成：`node scripts/generate-governance.js --target <项目根> --phase B --file <inspection.json>`（产物清单与规范见 `references/init-spec.json`，单一事实源；幂等——已存在文件跳过不覆盖；`--phase A` 只出静态骨架，`--phase B` 出配置/状态/脚本）。生成后必须跑 `verify-governance.js` 退出码 0（e2e 已在测试覆盖）。Agent 仍负责：Phase 0 检测判断（生成 inspection.json）、确认门（依赖变更 / git 身份 / CI 推送）、生成器未覆盖的步骤（第 3 步 CLAUDE.md 等按工具检测、第 8 步 README 语言布局与合并不覆盖、第 12 步 CI 选择、第 13 步子技能生成）与结构适配（既有文档根、合并既有内容）。
+**写文件的活全部交给生成器**，Agent 只负责判断、确认与人工兜底。产物清单与生成规则的单一事实源是 `references/init-spec.json`（**本节不复述工件列表**，避免双源漂移）；人类可读的产物一览见 `docs/<lang>/bootstrap-output.md`。
 
-**目录结构适配规则**：以下结构是**默认布局**，不是强制迁移目标。若项目已有成熟结构（如已有 `documentation/`、`docs/` 被产品文档占用、monorepo 用 `packages/*/docs`），**适配现有体系**：把治理文件放进既有文档根，并把实际路径写入 `.governance/manifest.json`。`verify-governance.js` 以 manifest 声明的路径为准。禁止创建第二个平行文档中心。
+**1. Agent 判断（Phase 0 的检测结论 → 生成器输入）**
 
-1. **docs/rules/** —— 先建规则文件（AGENTS.md 要 `@` 引用它们）；内容从本 Skill 的 `references/policies/` 生成，替换 `{{...}}` 占位符：
-   - `references/policies/lifecycle.policy.md` → `docs/rules/lifecycle.md`
-   - `references/policies/git.policy.md` → `docs/rules/git-policy.md`
-   - `references/policies/security.policy.md` → `docs/rules/security.md`
-   - `references/policies/coding.policy.md` → `docs/rules/coding.md`
-   - `references/policies/testing.policy.md` → `docs/rules/testing.md`
-2. **AGENTS.md** —— 按 `references/templates/agents-md.template.md` 生成。保持精简（≤150 行），章节内嵌、规范 `@` 引用 rules 文件。语言：默认英文，除非项目约定另指。
-3. **CLAUDE.md** —— `@AGENTS.md` 引用即可。按检测到的工具生成对应入口文件（如 `.cursor/rules/*.mdc`、`.github/copilot-instructions.md`、`opencode.json`；Cursor 旧机制 `.cursorrules` 已弃用，不再生成）。
-4. **CHANGELOG.md** —— Keep a Changelog 格式；`[Unreleased]` 只记已完成变更；SemVer 版本号。
-   **Change Classification（何时写 CHANGELOG）**：
-   - 仅文档改动（README/注释/typo）→ 不更新 CHANGELOG
-   - Bug 修复 → `Fixed`
-   - 新能力 → `Added`
-   - 架构/行为/破坏性变更 → `Changed`
-5. **docs/plans/DEVELOPMENT_PLAN.md** —— 里程碑计划（勾选框 + 状态标记 + 验收标准）；提供单任务模板 `TASK_<name>.md`（Status / Task Purpose / Current Problem / Proposed Solution / Affected Files / Risks / Validation Method）供 Lifecycle Phase 2 使用。同时生成 `docs/plans/archive/` 归档目录（完成的里程碑与 TASK 归档于此，见生命周期 Phase 5 规则——归档而非删除）。
-6. **docs/features/** —— Feature Registry，按 `references/templates/feature-doc.template.md` 生成；**只登记真实功能**（见反虚构规则与 Feature 占位策略）。
-   **登记对象判定**：
-   - 必须登记：用户可见能力、独立业务模块、核心基础设施（数据库适配层等）、对外 API。
-   - 不登记：普通工具函数（如 `utils/date.ts`）、测试辅助代码、临时脚本。防止 Feature 文档爆炸。
-7. **docs/ARCHITECTURE.md** —— 数据流 + ADR + 组件登记表（New Code Registration 的登记去处）。
-   **组件登记分级**：
-   - Level 1 必须登记：服务、模块、子系统、数据流节点。
-   - Level 2 不登记：普通类、工具函数、UI 组件（如 Button/Modal）。
-   **防膨胀**：单文件超过约 300 行时拆分到 `docs/architecture/<module>.md`，主文件只留导航与摘要。
-8. **README.md** —— 若项目**无 README**：生成**拆分式 README**（按语言政策：开发者面向文档多语言、Agent 面向文件单语；**根目录每种工件只保留英文一份，语言变体下沉到 `docs/`**）。默认生成根 `README.md`（英文主页，顶部放语言切换链接）+ `docs/README.zh-CN.md`（简体，源语言）；项目约定为纯英文受众 → 只生成根 `README.md`；项目需要更多语言（如繁体）→ 追加 `docs/README.zh-TW.md` 等。**禁止**单文件多语言合并、**禁止**把 `README.zh-CN.md` 等语言变体堆在项目根目录。文档索引链接 AGENTS.md / docs/ARCHITECTURE.md / docs/features/ 等治理文档。若已有 README：仅补文档索引与 CI 徽章，**合并不覆盖**已有内容，不擅自拆分（拆分需项目明确约定）。另建提交信息模板 `.gitmessage.txt`（按 `references/templates/gitmessage.template.md`）并配置为仓库级默认。
-9. **安全基线** —— `.env.example`（按 `references/templates/env-example.template.md` 生成，占位无真实值、按检测到的依赖裁剪）、完善 `.gitignore`（.env、*.key、*.pem、构建产物、依赖目录）、按 CI 平台启用密钥扫描/dependabot（模板见 `references/workflows/ci.md`）。
-10. **.governance/** —— 机器可读状态目录（见下）；生成时附 `README.md`（见 `references/policies/governance-files.policy.md` 模板），说明各文件用途与 Git 跟踪策略，避免误删/混淆。同时生成 `.governance/git-policy.json`（按 `references/templates/git-policy.template.md`，Git 工作流策略：受保护分支 / 禁止直推 / 要求审核 / 禁止 force push）与 `.governance/sync-rules.json`（按 `references/templates/sync-rules.template.md`，项目同步组：声明哪些文件改动必须联动哪些文件，Phase 5 对照执行，见生命周期 Phase 5）。
-11. **scripts/** -- 从本 Skill 复制 `scripts/verify-governance.js`（校验器）、`scripts/check-lock.js`（锁检查）、`scripts/check-git-policy.js`（Git 策略门禁）、`scripts/check-secrets.js`（密钥扫描门禁）、`scripts/check-sync.js`（同步组门禁）、`scripts/check-doc-freshness.js`（知识新鲜度，建议性）与 `scripts/check-doc-consistency.js`（内容一致性，建议性）到项目 `scripts/`，注册为项目命令（如 `npm run governance-check`；建议性脚本可注册 `npm run docs:freshness` / `npm run docs:consistency`，恒 exit 0 不阻塞）。`scripts/check-doc-parity.js`（三语树一致性）仅当项目采用多语言文档树时复制。
-12. **CI workflow** —— 按检测到的平台/栈从 `references/workflows/ci.md` 选择模板生成；推送与 PR 自动运行。**管线步骤按 CI Pipeline Capability Detection 决定，不强制全部存在**：
-    - 每种栈管线统一：安装 → **format 检查** → lint → typecheck（如适用）→ test → build → 产物上传。format 用各栈标准工具：Node/TS → Prettier（`pnpm format`）；Python → `ruff format --check`；Rust → `cargo fmt --check`；Go → `gofmt -l`；Java(Maven) → `spotless:check`；C++ → `clang-format --dry-run --Werror`；纯文档项目 → markdown lint + 链接检查，无构建。
-    - 栈模板：Node/TS（+typecheck）、Python（ruff check + mypy 可选）、Rust（clippy）、Go（go vet）、Java（spotless + google-java-format **必配**，INIT 写入 pom.xml）、C++（clang-tidy 可选，CMake/CTest 或 Make 按检测选择；同时生成 `.clang-format` 风格基线）。
-    - format 配置策略：**必须带配置才能检查**的栈（Java spotless、C++ clang-format）由 INIT 生成配置；**默认即可运行**的栈（Node/Python）默认用工具默认值，定制才生成 `.prettierrc` / `[tool.ruff]`；Go（gofmt）、Rust（rustfmt）零配置。
-    - 若项目脚本缺失，对应步骤只保留 `echo "No <tool> configured yet"`（黄字警告），**不得强行编写无法执行的命令**；包管理器以锁文件为准（见默认值约定）。
-13. **.governance/generated/skills/** —— 按 `references/templates/sub-skills.md` 生成子技能（repository-inspection / ci-generator / governance-validator / state-manager / **drift-check** / **release-manager** / **plan-manager** / **review-manager**），并写入 `opencode.json` 的 `skills.paths` 使其被加载（如项目用 opencode）。其中 `drift-check` 承担长期巡检（治理健康报告、版本漂移检测），`release-manager` 承担版本发布（RELEASE 模式），`plan-manager` 承担开发计划管理（TASK 创建 / 里程碑勾选 / 完成标记），`review-manager` 承担变更集评审（双模式：轻量 5 固定领域 + 门禁；全量 = 逐行通读 / 对照开发计划 / 执行级验证 / 不信任门禁）。
+| 输入 | 判断依据 |
+| --- | --- |
+| `--project-name` | 仓库名/package 名 |
+| `--maturity` | Project Maturity Detection 结论（L0/L1/L2/L3） |
+| `--doc-root` | 既有文档根（`docs`、`documentation`、monorepo 布局等）——**适配现有体系，禁止创建第二个平行文档中心** |
+| `--stack` | 检测到的主栈（node/python/rust/go/java/cpp/docs-only），决定 CI 模板 |
+| `--ci-platform` | 检测到的 CI 平台（github/gitlab/none） |
+
+**2. 运行生成器**
+
+```bash
+node scripts/generate-governance.js --target <项目根> --phase C \
+  --project-name <名称> --maturity <等级> --doc-root <文档根> \
+  --stack <栈> --ci-platform <平台>
+```
+
+- 幂等：已存在文件**跳过不覆盖**，可反复运行
+- 成熟度策略由生成器执行：L0/L1 全量生成；L2 只补缺失项；**L3 默认审计模式（只报告不写）**，需 `--force-l3` 才写入
+- `--dry-run` 先看清单；`--json` 输出机器可读结果
+- 任何未实现的生成器都会 **exit 1**（不静默跳过），除非显式 `--allow-stub`
+
+**3. Agent 兜底（生成器不做判断的部分）**
+
+- **CLAUDE.md 与各工具入口**：按检测到的工具生成（`.cursor/rules/*.mdc`、`.github/copilot-instructions.md`、`opencode.json` 的 `skills.paths`）；`.cursorrules` 已弃用，不再生成
+- **README 语言布局**：按语言政策决定是否生成 `docs/README.zh-CN.md` 等变体；**已有 README 只补文档索引与徽章，合并不覆盖**
+- **Feature Registry 内容**：生成器只建目录与占位，**真实功能条目由 Agent 按登记判定补写**（反虚构：不得登记不存在的功能）
+- **ARCHITECTURE.md 实质内容**：生成器给骨架，Agent 必须填真实架构与组件登记（校验器会拒绝未填的模板骨架）
+- **CI 管线降级**：项目缺失的脚本对应步骤保留 `echo "No <tool> configured yet"`，**不得强行编写无法执行的命令**
+- **L2/L3 既有内容合并**：生成器跳过已存在文件后，Agent 负责把治理要求合并进既有文件（合并不覆盖）
+
+**4. 确认门（必须用户明确同意）**
+
+- 依赖变更 · Git 身份未配置 · CI 首次推送 · L3 项目写入（`--force-l3`）· 跨 3 个以上文件的额外改动
 
 ### .governance/ 机器可读状态
 

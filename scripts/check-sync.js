@@ -93,6 +93,21 @@ for (const g of policy.syncGroups) {
 const advisory = process.argv.includes("--advisory");
 const json = process.argv.includes("--json");
 
+// Append to .governance/drift-report.json under `sync` (runtime output, git-ignored,
+// optional: never let a report-write failure change the check result).
+try {
+  const driftPath = path.join(process.cwd(), ".governance", "drift-report.json");
+  const drift = fs.existsSync(driftPath) ? JSON.parse(fs.readFileSync(driftPath, "utf8")) : {};
+  drift.sync = {
+    base,
+    clean: unsynced.length === 0,
+    unsynced: unsynced.map((u) => u.group),
+    checked_at: "",
+  };
+  fs.mkdirSync(path.dirname(driftPath), { recursive: true });
+  fs.writeFileSync(driftPath, JSON.stringify(drift, null, 2) + "\n");
+} catch {}
+
 if (json) {
   process.stdout.write(JSON.stringify({ clean: unsynced.length === 0, base, unsynced }, null, 2) + "\n");
   process.exit(unsynced.length === 0 || advisory ? 0 : 1);

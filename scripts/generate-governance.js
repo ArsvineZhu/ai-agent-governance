@@ -29,6 +29,11 @@ Options:
   --phase <A|B|C>       Phases to generate (default: A)
   --dry-run             List files that would be created, write nothing
   --allow-stub          Tolerate not-yet-implemented generators (skip instead of fail)
+  --stack <s>           node|python|rust|go|java|cpp|docs-only (selects the CI template)
+  --ci-platform <p>     github|gitlab|none
+  --maturity <m>        LEVEL_0_EMPTY|LEVEL_1_PROTOTYPE|LEVEL_2_ACTIVE|LEVEL_3_PRODUCTION
+  --doc-root <dir>      Existing documentation root (default docs; e.g. documentation)
+  --force-l3            Write even at LEVEL_3_PRODUCTION (default there is audit-only)
   --json                Output file list as JSON
   --file <path>         Read inputs from JSON file
   --help                Show this help`);
@@ -53,13 +58,18 @@ function writeIfAbsent(filepath, content) {
 }
 
 function ensureDir(dirpath) {
+  const existedBefore = fs.existsSync(dirpath);
   fs.mkdirSync(dirpath, { recursive: true });
   const keep = path.join(dirpath, ".gitkeep");
   const others = fs.readdirSync(dirpath).filter((f) => f !== ".gitkeep");
+  let wroteKeep = false;
   if (!fs.existsSync(keep) && others.length === 0) {
     fs.writeFileSync(keep, "", "utf8");
+    wroteKeep = true;
   }
-  return { path: dirpath, action: "created-dir" };
+  // Report honestly: an already-present directory is a skip, not a creation. Otherwise a
+  // second identical run reports "created N files" and the idempotency claim is unverifiable.
+  return { path: dirpath, action: existedBefore && !wroteKeep ? "skipped" : "created-dir" };
 }
 
 function resolvePlaceholders(content, placeholders, inputs) {
@@ -145,12 +155,97 @@ function generateState(inputs) {
   }, null, 2) + "\n";
 }
 
+// CI workflow generator — selects the matching template from references/workflows/ci.md.
+// The JUDGEMENT (which stack / which platform) comes from inputs (agent detection);
+// the WRITING is mechanical, which is what makes it deterministic.
+const CI_SECTIONS = {
+  node: /## GitHub Actions[^\n]*Node\.js/i,
+  python: /## GitHub Actions[^\n]*Python/i,
+  rust: /## GitHub Actions[^\n]*Rust/i,
+  go: /## GitHub Actions[^\n]*Go（/i,
+  java: /## GitHub Actions[^\n]*Java/i,
+  cpp: /## GitHub Actions[^\n]*C\+\+/i,
+  "docs-only": /## 纯文档项目/,
+  gitlab: /## GitLab CI/,
+};
+
+function extractCiTemplate(ciMd, key) {
+  const re = CI_SECTIONS[key];
+  if (!re) return null;
+  const m = ciMd.match(re);
+  if (!m) return null;
+  const start = m.index;
+  // section body = up to the next "## " heading
+  const rest = ciMd.slice(start + m[0].length);
+  const nextIdx = rest.search(/\r?\n## /);
+  const body = nextIdx >= 0 ? rest.slice(0, nextIdx) : rest;
+  // take the first fenced code block inside the section (the workflow YAML).
+  // CRLF-safe: templates are authored with Windows line endings in this repo.
+  const fence = body.match(/```(?:ya?ml)?\r?\n([\s\S]*?)```/);
+  if (!fence) return null;
+  // normalise to LF so generated CI files are byte-identical across platforms
+  return fence[1].replace(/\r\n/g, "\n");
+}
+
+function generateCi(inputs, skillDir) {
+  const platform = inputs.ci_platform || "github";
+  if (platform === "none") return null; // nothing to write
+  const ciMd = fs.readFileSync(path.join(skillDir, "references", "workflows", "ci.md"), "utf8");
+  const key = platform === "gitlab" ? "gitlab" : (inputs.stack || "docs-only");
+  const tpl = extractCiTemplate(ciMd, key);
+  if (!tpl) return null;
+  return tpl.endsWith("\n") ? tpl : tpl + "\n";
+}
+
+// Sub-skills generator — splits references/templates/sub-skills.md into one file per
+// sub-skill: .governance/generated/skills/<name>/SKILL.md. Each template section is
+// "## N. <name>" followed by a fenced block whose body is the sub-skill file itself.
+function parseSubSkills(md) {
+  const out = [];
+  const lines = md.replace(/\r\n/g, "\n").split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const h = lines[i].match(/^##\s+\d+\.\s+(\S+)\s*$/);
+    if (!h) continue;
+    const name = h[1];
+    // find the opening fence after the heading
+    let j = i + 1;
+    while (j < lines.length && !/^`{3,}/.test(lines[j])) {
+      if (/^##\s/.test(lines[j])) break; // next section without a fence
+      j++;
+    }
+    if (j >= lines.length || !/^`{3,}/.test(lines[j])) continue;
+    const fence = lines[j].match(/^(`{3,})/)[1];
+    // body until the matching closing fence of the same length
+    const body = [];
+    let k = j + 1;
+    for (; k < lines.length; k++) {
+      if (lines[k].startsWith(fence) && lines[k].trim().length === fence.length) break;
+      body.push(lines[k]);
+    }
+    out.push({ name, body: body.join("\n").replace(/\s+$/, "") + "\n" });
+    i = k;
+  }
+  return out;
+}
+
+function generateSubSkills(inputs, skillDir, targetAbs, dirRel) {
+  const md = fs.readFileSync(path.join(skillDir, "references", "templates", "sub-skills.md"), "utf8");
+  const skills = parseSubSkills(md);
+  const written = [];
+  for (const sk of skills) {
+    const filePath = path.join(targetAbs, dirRel.replace(/\/+$/, ""), sk.name, "SKILL.md");
+    const r = writeIfAbsent(filePath, sk.body);
+    written.push({ name: sk.name, action: r.action });
+  }
+  return written;
+}
+
 function generateManifest(inputs, spec, entries) {
   const version = inputs.governance_version || "0.9.0";
   const manifest = {
     schema_version: "1.0",
     governance_version: version,
-    doc_root: inputs.doc_root || "docs",
+    doc_root: (inputs.doc_root || "docs").replace(/\/+$/, ""),
     artifacts: entries,
   };
   if (inputs.release_version) {
@@ -177,8 +272,13 @@ function main() {
   const phase = (argValue(args, "--phase") || "A").toUpperCase();
   const dryRun = args.includes("--dry-run");
   const allowStub = args.includes("--allow-stub");
+  const forceL3 = args.includes("--force-l3");
   const json = args.includes("--json");
   const file = argValue(args, "--file");
+  const stackArg = argValue(args, "--stack");
+  const ciPlatformArg = argValue(args, "--ci-platform");
+  const maturityArg = argValue(args, "--maturity");
+  const docRootArg = argValue(args, "--doc-root");
 
   if (!target) { console.error("error: --target is required"); process.exit(2); }
   if (!projectName && !file) { console.error("error: --project-name is required (or use --file)"); process.exit(2); }
@@ -194,6 +294,12 @@ function main() {
   inputs.governance_cmd = inputs.governance_cmd || "npm run governance-check";
   inputs.convention = inputs.convention || "Conventional Commits";
   inputs.doc_root = inputs.doc_root || "docs";
+  if (stackArg) inputs.stack = stackArg;
+  if (maturityArg) inputs.maturity = maturityArg;
+  if (docRootArg) inputs.doc_root = docRootArg;
+  if (ciPlatformArg) inputs.ci_platform = ciPlatformArg;
+  inputs.stack = inputs.stack || "docs-only";
+  inputs.ci_platform = inputs.ci_platform || "github";
 
   const spec = readJSON(SPEC_PATH);
   const maxPhaseIdx = PHASE_ORDER.indexOf(phase);
@@ -205,6 +311,20 @@ function main() {
   });
 
   const targetAbs = path.resolve(target);
+
+  // ---- Structure-adaptive behaviour (maturity + doc_root) ----
+  // L0/L1 -> full skeleton; L2 -> incremental (only missing items, existing files never
+  // touched); L3 -> audit mode: report what WOULD be created, write nothing unless the
+  // developer explicitly forces it (mirrors SKILL.md's maturity strategy table).
+  const maturity = inputs.maturity || "LEVEL_0_EMPTY";
+  const auditOnly = maturity === "LEVEL_3_PRODUCTION" && !forceL3;
+  const effectiveDryRun = dryRun || auditOnly;
+
+  // Existing doc root adaptation: a project whose documentation lives in e.g.
+  // "documentation/" gets governance docs written there instead of "docs/".
+  const docRoot = (inputs.doc_root || "docs").replace(/\/+$/, "");
+  const remap = (rel) => (docRoot === "docs" ? rel : rel.replace(/^docs(?=\/|$)/, docRoot));
+
   const results = [];
   const commonPlaceholders = {
     "GOVERNANCE_VERSION": "governance_version",
@@ -214,9 +334,10 @@ function main() {
 
   for (const art of artifacts) {
     if (art.generator === "manifest") continue; // generated last, from actually-created artifacts
-    const targetPath = path.join(targetAbs, art.path);
-    if (dryRun) {
-      results.push({ path: art.path, action: "would-create", type: art.type });
+    const artPath = remap(art.path);
+    const targetPath = path.join(targetAbs, artPath);
+    if (effectiveDryRun) {
+      results.push({ path: artPath, action: auditOnly && !dryRun ? "audit-would-create" : "would-create", type: art.type });
       continue;
     }
     let result;
@@ -224,7 +345,7 @@ function main() {
       case "copy": {
         const sourcePath = path.join(SKILL_DIR, art.source);
         if (!fs.existsSync(sourcePath)) {
-          result = { path: art.path, action: "error", error: "source not found: " + art.source };
+          result = { path: artPath, action: "error", error: "source not found: " + art.source };
         } else {
           result = writeIfAbsent(targetPath, fs.readFileSync(sourcePath, "utf8"));
         }
@@ -233,7 +354,7 @@ function main() {
       case "template": {
         const sourcePath = path.join(SKILL_DIR, art.source);
         if (!fs.existsSync(sourcePath)) {
-          result = { path: art.path, action: "error", error: "source not found: " + art.source };
+          result = { path: artPath, action: "error", error: "source not found: " + art.source };
         } else {
           const raw = fs.readFileSync(sourcePath, "utf8");
           const body = extractCodeBlock(raw);
@@ -255,15 +376,41 @@ function main() {
         if (art.generator === "state") content = generateState(inputs);
         else if (art.generator === "gitignore") content = GITIGNORE_CONTENT;
         else if (art.generator === "preflight") content = PREFLIGHT_CONTENT;
+        else if (art.generator === "sub-skills") {
+          const written = generateSubSkills(inputs, SKILL_DIR, targetAbs, art.path);
+          if (written.length === 0) {
+            result = { path: artPath, action: "error", error: "no sub-skills parsed from sub-skills.md" };
+          } else {
+            const created = written.filter((w) => w.action === "created").length;
+            result = { path: artPath, action: created > 0 ? "created" : "skipped", note: written.length + " sub-skills (" + created + " created)" };
+          }
+          results.push(result);
+          continue;
+        }
+        else if (art.generator === "ci") {
+          const ci = generateCi(inputs, SKILL_DIR);
+          if (ci === null) {
+            result = { path: artPath, action: "skipped", note: "ci_platform=none or no template for stack '" + (inputs.stack || "") + "'" };
+            results.push(result);
+            continue;
+          }
+          content = ci;
+          // GitLab uses a root-level file instead of .github/workflows/
+          if ((inputs.ci_platform || "github") === "gitlab") {
+            result = writeIfAbsent(path.join(targetAbs, ".gitlab-ci.yml"), content);
+            results.push(result);
+            continue;
+          }
+        }
         else if (allowStub) {
-          result = { path: art.path, action: "skipped", note: "generator '" + art.generator + "' not yet implemented (--allow-stub)" };
+          result = { path: artPath, action: "skipped", note: "generator '" + art.generator + "' not yet implemented (--allow-stub)" };
           results.push(result);
           continue;
         } else {
           // An unimplemented generator is an UNDELIVERED artifact: it must fail loudly,
           // otherwise "generated, 1 skipped, exit 0" reads as success (this is exactly how
           // Phase C looked complete while sub-skills generation was never implemented).
-          result = { path: art.path, action: "error", error: "generator '" + art.generator + "' not implemented — pass --allow-stub to proceed without it" };
+          result = { path: artPath, action: "error", error: "generator '" + art.generator + "' not implemented — pass --allow-stub to proceed without it" };
           results.push(result);
           continue;
         }
@@ -271,7 +418,7 @@ function main() {
         break;
       }
       default:
-        result = { path: art.path, action: "error", error: "unknown type: " + art.type };
+        result = { path: artPath, action: "error", error: "unknown type: " + art.type };
     }
     results.push(result);
   }
@@ -282,15 +429,21 @@ function main() {
   if (manifestSpec) {
     const manifestIdx = PHASE_ORDER.indexOf(manifestSpec.phase);
     if (manifestIdx >= 0 && manifestIdx <= maxPhaseIdx) {
-      const targetPath = path.join(targetAbs, manifestSpec.path);
+      const targetPath = path.join(targetAbs, remap(manifestSpec.path));
       const entries = spec.artifacts
         .filter((a) => {
           const idx = PHASE_ORDER.indexOf(a.phase);
           return idx >= 0 && idx <= maxPhaseIdx && a !== manifestSpec;
         })
         .map((a) => {
-          const isDir = a.path.endsWith("/");
-          const p = isDir ? a.path.slice(0, -1) : a.path;
+          // the CI artifact's real path depends on the platform (gitlab writes a root file)
+          const platformPath =
+            a.generator === "ci" && (inputs.ci_platform || "github") === "gitlab"
+              ? ".gitlab-ci.yml"
+              : a.path;
+          const rp = remap(platformPath);
+          const isDir = rp.endsWith("/");
+          const p = isDir ? rp.slice(0, -1) : rp;
           return {
             name: a.name || path.basename(p),
             path: p,
@@ -303,8 +456,8 @@ function main() {
           const p = path.join(targetAbs, e.path);
           return fs.existsSync(p);
         });
-      if (dryRun) {
-        results.push({ path: manifestSpec.path, action: "would-create", type: "generated" });
+      if (effectiveDryRun) {
+        results.push({ path: remap(manifestSpec.path), action: auditOnly && !dryRun ? "audit-would-create" : "would-create", type: "generated" });
       } else {
         results.push(writeIfAbsent(targetPath, generateManifest(inputs, spec, entries)));
       }
@@ -317,8 +470,9 @@ function main() {
     const created = results.filter((r) => r.action === "created" || r.action === "created-dir").length;
     const skipped = results.filter((r) => r.action === "skipped").length;
     const errors = results.filter((r) => r.action === "error").length;
-    if (dryRun) {
-      console.log("dry-run: " + results.length + " files would be created in " + targetAbs);
+    if (effectiveDryRun) {
+      const label = auditOnly && !dryRun ? "audit (LEVEL_3_PRODUCTION, nothing written; use --force-l3 to write)" : "dry-run";
+      console.log(label + ": " + results.length + " files would be created in " + targetAbs);
     } else {
       console.log("generated " + created + " files, " + skipped + " skipped, " + errors + " errors in " + targetAbs);
     }

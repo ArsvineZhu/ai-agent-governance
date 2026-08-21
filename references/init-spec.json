@@ -9,7 +9,7 @@
     },
     "B": {
       "name": "config, state and scripts",
-      "description": "Config files (.gitignore, .env.example, .gitmessage), .governance/ state files, scripts copies. CI selection and sub-skills generation remain agent-driven (deferred to Phase C parity).",
+      "description": "Config files (.gitignore, .env.example, .gitmessage), CI workflow selected by stack/platform, .governance/ state files, scripts copies. Sub-skills generation is Phase C.",
       "shipped": "v0.9.0"
     },
     "C": {
@@ -19,19 +19,101 @@
     }
   },
   "inputs": {
-    "target": { "type": "string", "required": true, "description": "Target project root (CLI: --target)" },
-    "project_name": { "type": "string", "required": true, "description": "Project name for AGENTS.md heading and README" },
-    "description": { "type": "string", "default": "", "description": "One-sentence project description (AGENTS.md Project Overview, ARCHITECTURE Overview)" },
-    "maturity": { "type": "enum", "values": ["LEVEL_0_EMPTY", "LEVEL_1_PROTOTYPE", "LEVEL_2_ACTIVE", "LEVEL_3_PRODUCTION"], "default": "LEVEL_0_EMPTY", "description": "Maturity level (written to state.json; structure-adaptive behavior is Phase C)" },
-    "doc_root": { "type": "string", "default": "docs", "description": "Documentation root directory" },
-    "language": { "type": "string", "default": "en", "description": "Primary documentation language (Phase C uses it for README layout)" },
-    "test_cmd": { "type": "string", "default": "npm test", "description": "Test command for AGENTS.md" },
-    "lint_cmd": { "type": "string", "default": "npm run lint", "description": "Lint command for AGENTS.md" },
-    "build_cmd": { "type": "string", "default": "npm run build", "description": "Build command for AGENTS.md" },
-    "governance_cmd": { "type": "string", "default": "npm run governance-check", "description": "Governance check command for AGENTS.md" },
-    "convention": { "type": "string", "default": "Conventional Commits", "description": "Commit message convention for AGENTS.md" },
-    "governance_version": { "type": "string", "default": "0.9.0", "description": "Governance framework version stamped into manifest/CHANGELOG" },
-    "release_version": { "type": "string", "optional": true, "description": "If provided, manifest gains a release object (version/tag/validated). Omitted for fresh INIT - a new project has not released anything." }
+    "target": {
+      "type": "string",
+      "required": true,
+      "description": "Target project root (CLI: --target)"
+    },
+    "project_name": {
+      "type": "string",
+      "required": true,
+      "description": "Project name for AGENTS.md heading and README"
+    },
+    "description": {
+      "type": "string",
+      "default": "",
+      "description": "One-sentence project description (AGENTS.md Project Overview, ARCHITECTURE Overview)"
+    },
+    "maturity": {
+      "type": "enum",
+      "values": [
+        "LEVEL_0_EMPTY",
+        "LEVEL_1_PROTOTYPE",
+        "LEVEL_2_ACTIVE",
+        "LEVEL_3_PRODUCTION"
+      ],
+      "default": "LEVEL_0_EMPTY",
+      "description": "Maturity level (written to state.json; structure-adaptive behavior is Phase C)"
+    },
+    "doc_root": {
+      "type": "string",
+      "default": "docs",
+      "description": "Documentation root directory"
+    },
+    "language": {
+      "type": "string",
+      "default": "en",
+      "description": "Primary documentation language (Phase C uses it for README layout)"
+    },
+    "test_cmd": {
+      "type": "string",
+      "default": "npm test",
+      "description": "Test command for AGENTS.md"
+    },
+    "lint_cmd": {
+      "type": "string",
+      "default": "npm run lint",
+      "description": "Lint command for AGENTS.md"
+    },
+    "build_cmd": {
+      "type": "string",
+      "default": "npm run build",
+      "description": "Build command for AGENTS.md"
+    },
+    "governance_cmd": {
+      "type": "string",
+      "default": "npm run governance-check",
+      "description": "Governance check command for AGENTS.md"
+    },
+    "convention": {
+      "type": "string",
+      "default": "Conventional Commits",
+      "description": "Commit message convention for AGENTS.md"
+    },
+    "governance_version": {
+      "type": "string",
+      "default": "0.9.0",
+      "description": "Governance framework version stamped into manifest/CHANGELOG"
+    },
+    "release_version": {
+      "type": "string",
+      "optional": true,
+      "description": "If provided, manifest gains a release object (version/tag/validated). Omitted for fresh INIT - a new project has not released anything."
+    },
+    "stack": {
+      "type": "enum",
+      "values": [
+        "node",
+        "python",
+        "rust",
+        "go",
+        "java",
+        "cpp",
+        "docs-only"
+      ],
+      "default": "docs-only",
+      "description": "Detected primary stack; selects the CI template from references/workflows/ci.md"
+    },
+    "ci_platform": {
+      "type": "enum",
+      "values": [
+        "github",
+        "gitlab",
+        "none"
+      ],
+      "default": "github",
+      "description": "Detected CI platform; github -> .github/workflows/ci.yml, gitlab -> .gitlab-ci.yml, none -> skipped"
+    }
   },
   "artifacts": [
     {
@@ -166,6 +248,15 @@
       "source": "references/templates/gitmessage.template.md",
       "type": "template",
       "description": "Commit message template"
+    },
+    {
+      "phase": "B",
+      "path": ".github/workflows/ci.yml",
+      "source": "references/workflows/ci.md",
+      "type": "generated",
+      "generator": "ci",
+      "name": "CI workflow",
+      "description": "CI pipeline selected from ci.md by stack + ci_platform (gitlab writes .gitlab-ci.yml instead; ci_platform=none skips)"
     },
     {
       "phase": "B",

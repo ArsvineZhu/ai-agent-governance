@@ -16,7 +16,7 @@
 
 - **改动集** —— `git diff --name-only <task-start-sha>..HEAD` 加上未暂存/已暂存改动；task-start-sha 由 state-manager 在任务开始时写入 `.governance/state.json`（新字段 `task_start_sha`，取自 `git rev-parse HEAD`）
 - **规则评估** —— 对 `.governance/sync-rules.json` 每个 syncGroup：任一 `watch` glob 命中改动路径、但没有任何 `require` 路径改动 → 报告 `unsynced: <group.name>`（门禁模式 exit 1；`--advisory` 模式 exit 0）
-- **输出** —— 人类摘要 + `--json`；追加到 `.governance/drift-report.json` 的 `sync` 字段
+- **输出** —— 人类摘要 + `--json`；写入: `drift-report.json` 于 `scripts/check-sync.js`（`sync` 字段）
 - **Glob 匹配器** —— 仅前缀 + `**`（与未来消费方共享辅助函数；v1 不用正则）
 - **接入** —— 生命周期 Phase 5 结束时：宣称完成前跑 `node scripts/check-sync.js`（门禁模式）；RELEASE 前置 `sync.passed`
 

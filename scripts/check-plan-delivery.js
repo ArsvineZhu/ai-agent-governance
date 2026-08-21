@@ -8,6 +8,11 @@
 // (real case: sync-groups-mechanical-check declared a `sync.passed` release precondition
 // that was never added). This check turns that judgement into a mechanical comparison.
 //
+// Plans may also declare BEHAVIOUR (not just files), which path checks cannot verify:
+//   - writes: `<file>` in `<script>`      (e.g. writes: `drift-report.json` in `scripts/check-sync.js`)
+//   - wires:  `<identifier>` in `<file>`
+// 中文同义词亦可：写入/接线。
+//
 // Usage:
 //   node scripts/check-plan-delivery.js [--json] [--gate] [--plan <file>]
 // Exit 0: every declared item is delivered (or --advisory default when not --gate).
@@ -171,6 +176,30 @@ function verifyIdentifier(id) {
     : { ok: false, how: "identifier never wired in (searched references/, scripts/, tests/, root docs)" };
 }
 
+// Behavioural declarations: "writes: X in Y" / "wires: X in Y" (also 写入/接线).
+// These catch promises that path-existence checks cannot (e.g. "appends to drift-report.json").
+const BEHAVIOUR_RE = /(?:writes|wires|写入|接线)\s*[:：]\s*`([^`]+)`\s*(?:in|于|进)\s*`([^`]+)`/gi;
+
+function verifyBehaviours(content) {
+  const out = [];
+  let m;
+  BEHAVIOUR_RE.lastIndex = 0;
+  while ((m = BEHAVIOUR_RE.exec(content))) {
+    const what = m[1].trim();
+    const where = m[2].trim();
+    const target = readFileSafe(where);
+    if (target === null) {
+      out.push({ kind: "behaviour", item: what + " in " + where, detail: "target file not found: " + where });
+      continue;
+    }
+    const needle = what.includes("/") ? path.basename(what) : what;
+    if (!target.includes(needle)) {
+      out.push({ kind: "behaviour", item: what + " in " + where, detail: "declared behaviour not implemented (\"" + needle + "\" absent from " + where + ")" });
+    }
+  }
+  return out;
+}
+
 function extractSection(content, names) {
   const re = new RegExp("###\\s*(?:" + names.join("|") + ")([\\s\\S]*?)(?=\\n###|$)", "i");
   const m = content.match(re);
@@ -195,9 +224,21 @@ function auditPlan(relPath) {
   if (isDesignOnly(relPath, content)) return { plan: relPath, findings: [], skipped: "design-only (not implemented yet)" };
   const findings = [];
 
+  // tokens already covered by a behavioural declaration are excluded from path checks
+  const behaviourTokens = new Set();
+  {
+    let bm;
+    BEHAVIOUR_RE.lastIndex = 0;
+    while ((bm = BEHAVIOUR_RE.exec(content))) {
+      behaviourTokens.add(bm[1].trim());
+      behaviourTokens.add(bm[2].trim());
+    }
+  }
+
   const af = extractSection(content, ["受影响文件", "Affected Files", "受影響檔案"]);
   if (af) {
-    const ticked = [...new Set((af.match(/`([^`]+)`/g) || []).map((s) => s.slice(1, -1)))];
+    const ticked = [...new Set((af.match(/`([^`]+)`/g) || []).map((s) => s.slice(1, -1)))]
+      .filter((t) => !behaviourTokens.has(t));
     for (const t of ticked) {
       if (t.includes(" ") || t.startsWith("--")) continue;
       const looksPath = /[\/]/.test(t) || /\.[a-z]{2,4}$/i.test(t);
@@ -211,6 +252,8 @@ function auditPlan(relPath) {
       }
     }
   }
+
+  findings.push(...verifyBehaviours(content));
 
   return { plan: relPath, findings };
 }
