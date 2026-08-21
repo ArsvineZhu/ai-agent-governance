@@ -156,7 +156,7 @@ Proceed with release?
 
 - 轻量级门禁**总是自动跑**（标准验证序列，见 lifecycle Phase 4）--底线，零成本
 - 高风险清单**明确列举**（见上表），不依赖 AI 自由裁量；边界模糊时**取更高级别**
-- review-manager 已实现（sub-skills.md 第 8 节）：高风险变更默认运行 review-manager（范围 = 计划中的 `git diff` 变更集，5 固定领域并行评审）；开发者也可选择逐项明确确认替代
+- review-manager 已实现（sub-skills.md 第 8 节）：**高风险变更默认运行「全量深度 × 本次变更集范围」**（逐行通读 + 对照开发计划 + 执行级验证 + 不信任门禁；范围 = 计划中的 `git diff` 变更集，不是全项目——全项目彻查成本高，仅在开发者显式要求时使用）；开发者也可选择逐项明确确认替代（二选一，不允许跳过）
 
 批准后把 Proposal 记录到 `.governance/release-proposal.json`（运行时输出，git 忽略，非 required artifact）作为审批证据。
 

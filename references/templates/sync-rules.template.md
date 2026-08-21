@@ -5,9 +5,9 @@ INIT 时复制为 `<project>/.governance/sync-rules.json`，替换 `{{...}}` 占
 ```json
 {
   "syncGroups": [
-    { "name": "api-architecture", "watch": ["src/**", "lib/**"], "require": ["docs/ARCHITECTURE.md", "CHANGELOG.md"] },
+    { "name": "api-architecture", "watch": ["src/**", "lib/**", "app/**", "apps/**", "services/**", "packages/**", "modules/**"], "require": ["docs/ARCHITECTURE.md", "CHANGELOG.md"] },
     { "name": "rules-summary", "watch": ["docs/rules/**"], "require": ["AGENTS.md"] },
-    { "name": "feature-registry", "watch": ["src/**", "app/**"], "require": ["docs/features/"] }
+    { "name": "feature-registry", "watch": ["src/**", "app/**", "apps/**", "services/**", "packages/**"], "require": ["docs/features/"] }
   ]
 }
 ```
@@ -22,7 +22,7 @@ INIT 时复制为 `<project>/.governance/sync-rules.json`，替换 `{{...}}` 占
 
 ## 生成规则
 
-- 默认组保守（上表三组）：`src/**`/`lib/**` 改动必须同步架构文档与 CHANGELOG；`docs/rules/**` 改动必须同步 AGENTS.md 摘要；功能代码改动必须登记 Feature Registry
+- 默认组保守（上表三组）：任何常见源码目录（`src/**`、`lib/**`、`app/**`、`apps/**`、`services/**`、`packages/**`、`modules/**`）改动必须同步架构文档与 CHANGELOG；`docs/rules/**` 改动必须同步 AGENTS.md 摘要；功能代码改动必须登记 Feature Registry
 - 项目可增删改组（新术语/新同步关系由项目约定决定）；修改本文件属于治理文件变更（走「治理文件保护」流程）
 - **目录匹配**：`require` 里带尾部 `/` 的（如 `docs/features/`）视为目录前缀，其下任一文件改动即满足
 - **无 watch 命中 = 无同步义务**：任务未涉及任何 watch 路径时，Phase 5 报告该组为 ⚠️ not-applicable，不算漏

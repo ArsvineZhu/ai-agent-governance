@@ -54,7 +54,7 @@ function buildFullDefault(dir) {
   const files = [
     ["AGENTS.md", "x"],
     ["CHANGELOG.md", "## [Unreleased]\n"],
-    ["docs/ARCHITECTURE.md", "x"],
+    ["docs/ARCHITECTURE.md", "# Arch\n\n## Component Registry\n\n| Component | Responsibility | Dependencies | Entry |\n| --- | --- | --- | --- |\n| auth | login | db | src/auth.ts |\n"],
     ["docs/features/auth.md", "x"],
     ["docs/plans/DEVELOPMENT_PLAN.md", "x"],
     ["docs/rules/lifecycle.md", "x"],
@@ -80,6 +80,38 @@ test("full default structure exits 0 (defaults mode)", () => {
 
   const r = run(dir);
   return r.status === 0 && r.stdout.includes("21/21 checks passed.");
+});
+
+test("skeleton ARCHITECTURE.md fails (wrong-but-present)", () => {
+  const dir = tmp("arch-skeleton");
+  buildFullDefault(dir);
+  write(path.join(dir, "docs", "ARCHITECTURE.md"), "# Architecture\n\n## Component Registry\n\n| Component | Responsibility | Dependencies | Entry |\n| --- | --- | --- | --- |\n| <!-- add rows as components are registered --> | | | |\n");
+  const r = run(dir);
+  return r.status === 1 && r.stdout.includes("Architecture doc");
+});
+
+test("ARCHITECTURE.md in list/prose form passes (form is not constrained)", () => {
+  const dir = tmp("arch-list");
+  buildFullDefault(dir);
+  write(path.join(dir, "docs", "ARCHITECTURE.md"), "# Architecture\n\n## Components\n\n- auth: login (src/auth.ts)\n- db: persistence\n");
+  const r = run(dir);
+  return r.status === 0;
+});
+
+test("ARCHITECTURE.md unreplaced placeholder fails", () => {
+  const dir = tmp("arch-placeholder");
+  buildFullDefault(dir);
+  write(path.join(dir, "docs", "ARCHITECTURE.md"), "# Architecture\n\n{{ONE_SENTENCE_DESCRIPTION}}\n");
+  const r = run(dir);
+  return r.status === 1;
+});
+
+test("ARCHITECTURE.md headings-only skeleton fails", () => {
+  const dir = tmp("arch-headings");
+  buildFullDefault(dir);
+  write(path.join(dir, "docs", "ARCHITECTURE.md"), "# Architecture\n\n## Overview\n\n## Data Flow\n\n<!-- describe -->\n");
+  const r = run(dir);
+  return r.status === 1;
 });
 
 // ---------- 3. Custom structure via manifest ----------

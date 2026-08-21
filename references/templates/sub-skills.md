@@ -315,6 +315,8 @@ Active
 
 Small changes (typo, single-function tweak) may skip the TASK file but must state the reason in the final report.
 
+**Present & confirm** — after creating the plan, present it to the user (Proposed Solution, Affected Files, Risks, Validation Method) and get explicit confirmation before implementation proceeds. Changes spanning 3+ files require user confirmation regardless of size judgement. Do not start implementing without confirmation (unless the user explicitly waives it).
+
 ## Phase 5 — Update plans on completion
 
 After the task passes validation and its knowledge sync:
@@ -336,19 +338,22 @@ Archiving happens at RELEASE (release-manager), NOT here.
 ```
 ---
 name: review-manager
-description: Perform a change-set review before commit/release in one of two modes — lightweight (5 fixed domains, parallel subagents, quick pass) or full audit (line-by-line read of every changed file, cross-referenced against dev plans, execution-level verification, distrust-of-gates). Triggers on "review this" · "review the changes" · "audit recent changes" · "review my changes" · "审核一下" (lightweight) · "deep review" · "full review" · "audit everything" · "全面审查" · "彻底审查" · "逐行审查" (full audit).
+description: Perform a review across two independent dimensions — depth (lightweight quick pass vs full audit: line-by-line, dev-plan cross-reference, execution-level verification, distrust-of-gates) and scope (the change set by default, a specified path, or the whole project). Triggers on "review this" · "review the changes" · "audit recent changes" · "review my changes" · "审核一下" (light/change-set) · "deep review" · "full review" · "全面审查" · "彻底审查" · "逐行审查" (full/change-set) · "review the whole project" · "全项目审核" (light/whole-project) · "audit everything" · "全项目彻查" (full/whole-project); append a path argument to scope it (review <path> / deep review <path> / 审核 <路径>).
 ---
 
 # Review Manager
 
-Standardize change-set review into two fixed modes — no improvisation. Every review covers the same five domains; the mode decides depth and which mandatory steps run.
+Standardize review into fixed modes — no improvisation. Every review covers the same five domains; **depth** decides how hard each file is examined and which mandatory steps run, **scope** decides which files enter the review.
 
-## Mode selection
+## Mode selection — depth × scope (two independent dimensions)
 
-| Mode | Triggers | Depth | Use for |
-| --- | --- | --- | --- |
-| Lightweight | `review this` · `review the changes` · `audit recent changes` · `review my changes` · `审核一下` | 5 domains, one parallel pass each; severity-sorted report; fix severe/general; run gates | routine changes, pre-commit quick check |
-| Full audit | `deep review` · `full review` · `audit everything` · `全面审查` · `彻底审查` · `逐行审查` | line-by-line read of the entire change set + dev-plan cross-reference + execution-level verification + distrust-of-gates | release gate, high-risk changes, post-incident re-review |
+**Depth** decides how hard each file is examined; **scope** decides which files enter the review. Parse them independently: `deep`/`彻底`/`逐行` set depth; `whole project`/`everything`/`全项目` set scope; a path argument sets scope. Unspecified scope = the change set.
+
+| | Lightweight (quick pass) | Full audit (line-by-line + 6 mandatory steps) |
+| --- | --- | --- |
+| **Change set** (default) | `review this` · `review the changes` · `audit recent changes` · `review my changes` · `审核一下` — pre-commit quick check | `deep review` · `full review` · `全面审查` · `彻底审查` · `逐行审查` — release gate, high-risk changes, post-incident re-review |
+| **Specified path** | `review <path>` · `审核 <路径>` (e.g. `review src/auth`) — single-module quick check | `deep review <path>` · `彻底审查 <路径>` — single-module deep dive (before refactor, inheriting unfamiliar code) |
+| **Whole project** | `review the whole project` · `全项目审核` — global health pass (mechanical checks + sampling, no line-by-line promise) | `audit everything` · `全项目彻查` — full-repository audit (highest cost, use sparingly) |
 
 Both modes run the same 5 domains (fixed, no dynamic expansion in v1):
 
@@ -360,7 +365,10 @@ Both modes run the same 5 domains (fixed, no dynamic expansion in v1):
 
 ## Lightweight workflow
 
-1. **Determine scope** — `git diff <baseline>..HEAD` plus uncommitted changes; baseline defaults to the last review point (manually specified in v1, no auto-recording). Scope = the change set + directly affected files (tests affected by changed scripts, generated artifacts affected by changed policies), NOT the whole project — whole-project review only on explicit user request.
+1. **Determine scope** — resolve the scope dimension first, then collect files:
+   - **Change set (default)** — `git diff <baseline>..HEAD` + `git status --porcelain` (uncommitted); baseline defaults to the last review point (manually specified in v1, no auto-recording). Includes directly affected files (tests affected by changed scripts, generated artifacts affected by changed policies).
+   - **Specified path** — every file under the given path glob including subdirectories, **not limited to what changed**.
+   - **Whole project** — all repository files, **excluding** `node_modules/`, build output, `.git/`.
 2. **Dispatch parallel subagents** — the 5 fixed domains above, one pass each.
 3. **Summarize** — sorted by severity (severe / general / trivial), each with file path + line number + evidence.
 4. **Fix** — severe and general must be fixed; trivial items reported for the user to decide.
@@ -370,12 +378,18 @@ Both modes run the same 5 domains (fixed, no dynamic expansion in v1):
 
 The full audit runs the lightweight steps PLUS the following — each is a hard requirement, not optional:
 
-1. **Enumerate the change set exhaustively** — `git show --stat` + `git diff --name-only` + `git status --porcelain` (uncommitted) → complete file list. No sampling.
-2. **Read every changed file in full, line by line** — summaries and "trust the author's description" are forbidden. This is the core difference from lightweight mode.
-3. **Cross-reference against dev plans** — for each plan doc under `plans/` touching the change set: compare phase alignment, Affected Files, Validation Method, shipped-vs-planned. Flag deviations (e.g. plan says Phase B, implementation put it in Phase A; plan lists a required doc that is missing).
+1. **Enumerate the scope exhaustively** — for the change-set scope: `git show --stat` + `git diff --name-only` + `git status --porcelain` (uncommitted); for a path scope: list every file under the path; for whole-project scope: list all repository files (excluding `node_modules/`, build output, `.git/`) → complete file list. No sampling.
+2. **Read every file in scope in full, line by line** — summaries and "trust the author's description" are forbidden. This is the core difference from lightweight depth.
+3. **Cross-reference against dev plans** — for each plan doc under `plans/` touching the reviewed scope: compare phase alignment, Affected Files, Validation Method, shipped-vs-planned. Flag deviations (e.g. plan says Phase B, implementation put it in Phase A; plan lists a required doc that is missing).
 4. **Execution-level verification** — do not stop at reading code; actually run the artifacts and check the output is valid (e.g. generate JSON and verify it parses; re-run the e2e command in an isolated temp dir). Assumption is that output is broken until proven otherwise.
 5. **Distrust the gates** — a green result is not proof the check ran. Verify the verification: confirm the test harness actually executed the relevant tests (e.g. ✓ line count matches the denominator; tests are registered before the runner loop, not after); re-run the suite independently; cross-check numeric claims in docs against the validator source.
 6. **Evidence-form report** — every finding carries file:line + real output excerpt (command output, parsed JSON, etc.), sorted by severity. Fix severe and general items, then re-run gates and record real output.
+
+## Cost guardrails (scope × depth)
+
+- **Whole project × Full audit** — before starting, report the file count and estimated effort and wait for user confirmation (prevents runaway cost).
+- **Whole project × Lightweight** — rely on mechanical checks (drift-check scripts + gates) plus sampled human-style review; do NOT promise line-by-line coverage.
+- **Specified path × Full audit** — no guardrail needed (scope is bounded).
 
 Anti-confirmation-bias rule for both modes but especially full audit: assume bugs exist and hunt them; never conclude "no issues" from reading your own just-written code without execution-level evidence.
 
@@ -386,7 +400,7 @@ Anti-confirmation-bias rule for both modes but especially full audit: assume bug
 | Layer | deep (problem-finding, two depths) | mechanical (omission-catching) |
 | Input | git diff + related project files + (full audit) dev plans | manifest + script check classes |
 | Output | severity-sorted issue list + fixes | drift-report.json |
-| Trigger | `review this` (light) / `deep review` (full) | `check governance drift` |
+| Trigger | `review this` (light) / `deep review` (full) / + path or `全项目` for scope | `check governance drift` |
 
 Complementary: the review-manager's "doc consistency" subagent invokes drift-check scripts; no duplication.
 

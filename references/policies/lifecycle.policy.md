@@ -14,13 +14,15 @@ AGENTS.md 只保留生命周期摘要，本文件是完整执行规范。所有 
 
 ## Phase 1 — Understand（理解）
 
-开始前必须读取：
+开始前必须读取（**未读完不得进入 Phase 2/Implement，不得声称已理解架构**）：
 - AGENTS.md
 - docs/ARCHITECTURE.md
 - docs/features/（列目录发现全部功能）
 - 最近 CHANGELOG.md
 
 确认：当前系统结构、已存在功能、相关约束、相关 Feature 文档的 Modification Rules。
+
+**硬性要求**：以上文件未实际读完（读其内容，而非仅列路径），禁止开始任何修改。理解不是"感觉懂了"，是能说清"现在系统长什么样、我要动的部分在哪、碰了会影响谁"。
 
 ## Phase 2 — Plan（计划）
 
@@ -35,6 +37,8 @@ AGENTS.md 只保留生命周期摘要，本文件是完整执行规范。所有 
 
 **小型**改动（见"规模分级"）跳过本阶段，直接进入 Implement；报告中一句话说明规模判定即可，无需逐条理由。
 
+**用户确认门**：中/大型的 TASK 计划创建后，**必须展示给用户确认**（展示 Proposed Solution、Affected Files、Risks、Validation Method），用户明确同意后才进入 Phase 3。跨 3 个以上文件的改动，即使规模判定为"中"，同样必须先经用户确认。未获确认不得开始实现（除非用户明确豁免）。
+
 ## Phase 3 — Implement（实现）
 
 - 遵循架构约束（docs/ARCHITECTURE.md）
@@ -47,6 +51,8 @@ AGENTS.md 只保留生命周期摘要，本文件是完整执行规范。所有 
 ## Phase 4 — Validate（验证）
 
 完成后必须按标准验证序列执行并记录**真实输出**（不是"应该没问题"）。命令按 AGENTS.md 的 Development Commands 裸命令运行，输出摘录进任务报告。
+
+**证据要求**：每项验证结果必须附**证据** —— 实际运行的裸命令 + 真实输出摘录（关键行），不得只写"✓ 通过/测试通过"。无法提供输出摘录的"通过"视为未验证。
 
 **标准验证序列（按序执行）：**
 
@@ -68,6 +74,7 @@ AGENTS.md 只保留生命周期摘要，本文件是完整执行规范。所有 
   - watch 未命中 → ⚠️ not-applicable（无同步义务），报告中标注即可
   - 逐组报告 ✅ 已同步 / ⚠️ 不适用（见 `references/templates/sync-rules.template.md` 生成规则）
 - **机械验证（gate）** —— 在中/大型改动声明完成前运行 `node scripts/check-sync.js`（默认 gate 模式；exit 0 = 通过、exit 1 = 漏同步组）；`--advisory` 模式仅报告不阻断；详见 `scripts/check-sync.js` 与 `references/templates/sync-rules.template.md`
+- **文档引用规则、不复述规则** —— 同步知识时，`docs/` 里的内容（README、feature 文档、架构文档）只能**引用** `docs/rules/**` 与 AGENTS.md 中的规则（文件 + 章节指针），不得把规则原文复制进项目知识文档。规则变更 → 只改 `docs/rules/**`（单一事实源）；文档随之更新为引用，不复制。判断标准：这条内容"Agent 必须遵守" → 规则，进 `docs/rules/`；"只是帮助理解" → 知识，进 `docs/` 引用规则。
 - 更新 CHANGELOG.md（已完成变更，[Unreleased]；时机按 Change Classification 的更新时机规则）
 - 更新 Feature Registry（docs/features/，如涉及功能）
 - 更新 Architecture Documentation（如架构变化）

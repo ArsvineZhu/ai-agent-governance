@@ -26,6 +26,7 @@
 - **分级审核门禁** —— release/push 风险分级（低 = 仅轻量级；中 = 批准时建议深度审查；高 = 必须 review-manager）；轻量级脚本总是自动跑。设计：[plans/tiered-review-gate.md](plans/tiered-review-gate.md)
 - **被治理项目同步组** —— 两层：（L1）声明式 `.governance/sync-rules.json`（watch/require）+ 清单驱动 Phase 5；（L2）`scripts/check-sync.js` 对照实际改动集机械验证。设计：[plans/governed-project-sync-groups.md](plans/governed-project-sync-groups.md) + [plans/sync-groups-mechanical-check.md](plans/sync-groups-mechanical-check.md)
 - **INIT 生成器脚本化** —— 确定性、可快照测试的 INIT 生成（`scripts/generate-governance.js`）；分 A → B → C 三期。设计：[plans/init-scripted-generator.md](plans/init-scripted-generator.md)
+- **规则捕获** —— 不让口头要求只活在对话上下文里：Agent 对每条要求预分类（持久 / 一次性 / 模糊），开发者在 Phase 6 裁定，确认的规则写入 `AGENTS.md` / `docs/rules/**`，未确认的在行为轨迹里留 `rules_pending` 痕迹。设计：[plans/rule-capture.md](plans/rule-capture.md)
 
 ### 中期
 

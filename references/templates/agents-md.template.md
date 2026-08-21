@@ -21,6 +21,10 @@ Do NOT maintain a fixed inventory here. Two docs are mandatory and must stay fre
 - `docs/ARCHITECTURE.md` — system architecture, ADRs, component registry
 - `CHANGELOG.md` — completed changes
 
+**Content classification (where new content goes):**
+- **Runtime rules** live only in `AGENTS.md` + `docs/rules/**` (single source of truth) — the rules the agent must obey.
+- **Everything else under `docs/`** (README, feature docs, plans, architecture) is project knowledge — reference the rules, never restate them. When adding a new doc, ask "is this a rule the agent must obey, or knowledge?" Rules → `docs/rules/**`; knowledge → the appropriate `docs/` location.
+
 ## Agent Operating Lifecycle
 All agents MUST follow this lifecycle for every dev task. Scope tiers: small (single file, <50 lines, no public-interface change) runs Understand → Implement → Validate → Report only; medium/large run the full lifecycle with a TASK plan. Full detail: @docs/rules/lifecycle.md
 - **Phase 1 Understand**: read AGENTS.md, docs/ARCHITECTURE.md, docs/features/, recent CHANGELOG.md before acting.
@@ -67,6 +71,7 @@ Secrets, unrelated refactors, restructuring without cause, skipping Definition o
 | Read | automatic |
 | Create Documentation | automatic |
 | Modify Code | allowed, must validate |
+| Modify 3+ Files at Once | confirmation required |
 | Delete Code | confirmation required |
 | Dependency Change | confirmation required |
 | Git Commit | confirmation required |

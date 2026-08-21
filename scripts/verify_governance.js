@@ -28,7 +28,7 @@ const DEFAULTS = [
   ["AGENTS.md", "AGENTS.md", isFile],
   ["CHANGELOG.md", "CHANGELOG.md", isFile],
   ["CHANGELOG format", "CHANGELOG.md", hasChangelogFormat],
-  ["Architecture doc", "docs/ARCHITECTURE.md", isFile],
+  ["Architecture doc", "docs/ARCHITECTURE.md", hasRealArchitecture],
   ["Feature registry", "docs/features", isDir],
   ["Plans", "docs/plans", isDir],
   ["Rules", "docs/rules", isDir],
@@ -59,6 +59,32 @@ function isFile(p) {
 function isDir(p) {
   try {
     return fs.statSync(p).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+// Architecture doc must exist AND not be the untouched INIT template skeleton.
+// A fresh skeleton is a wrong-but-present artifact: it passes isFile but documents nothing.
+// Only deterministic bad signals are rejected (unreplaced placeholders / the placeholder
+// comment row); the doc's FORM is not constrained — tables, lists and prose are all valid
+// ways to document architecture, so no structural shape is required.
+function hasRealArchitecture(p) {
+  if (!isFile(p)) return false;
+  try {
+    const c = fs.readFileSync(p, "utf8");
+    if (c.includes("{{ONE_SENTENCE_DESCRIPTION}}")) return false;
+    if (c.includes("<!-- add rows as components are registered -->")) return false;
+    // Must carry substance: strip headings, HTML comments, table separators and blanks —
+    // something must remain (an untouched skeleton is only headings + comments).
+    const body = c
+      .split("\n")
+      .filter((l) => !/^\s*#/.test(l))
+      .filter((l) => !/^\s*<!--/.test(l))
+      .filter((l) => !/^\s*\|\s*---/.test(l))
+      .filter((l) => l.trim() !== "")
+      .join("");
+    return body.trim().length > 0;
   } catch {
     return false;
   }

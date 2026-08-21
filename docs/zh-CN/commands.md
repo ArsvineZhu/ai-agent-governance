@@ -122,7 +122,7 @@ Git 工作流治理没有独立提示词 —— 它作为运行期规则自动�
 | repository-inspection | `inspect the repo` · `what is the stack` · `check environment` | 检测环境，返回技术栈报告 |
 | state-manager | `update state` · `record progress` | 把进度持久化到 `.governance/state.json` |
 | plan-manager | `plan this task` · `create task plan` · `update development plan` · `check off milestone` · `mark task completed` | 创建 TASK 计划、勾选里程碑、标记任务完成 |
-| review-manager | 轻量：`review this` · `review the changes` · `audit recent changes` · `review my changes` · `审核一下` — 全量：`deep review` · `full review` · `audit everything` · `全面审查` · `彻底审查` · `逐行审查` | 变更集评审，双模式（轻量 / 全量） |
+| review-manager | 深度：`review this` · `review the changes` · `audit recent changes` · `review my changes` · `审核一下`（轻量）— `deep review` · `full review` · `全面审查` · `彻底审查` · `逐行审查`（全量）— 范围：默认本次变更集，加路径参数限定范围，或 `review the whole project` · `全项目审核`（轻量）/ `audit everything` · `全项目彻查`（全量） | 深度 × 范围二维评审（轻量/全量 × 变更集/指定路径/全项目） |
 | release-manager | `release` · `publish version` · `/release vX.Y.Z` | 执行带审批门禁的发布流程 |
 
 ### 执行规则
