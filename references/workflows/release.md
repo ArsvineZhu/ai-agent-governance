@@ -36,6 +36,8 @@ AI 仅在前两阶段自动行动（分析 + 提案，只读）；任何写操�
 | `release.proposal_approved` | Release Proposal 已生成（`scripts/release-manager.js plan`）且开发者已**明确批准** | ⚠️ Blocked，等待批准 |
 | `validator.passed` | `scripts/verify-governance.js` 退出码 0 | ❌ 停止发布。**豁免**：skill 仓库自身发布不适用本项（skill 仓库无 `.governance/`、无软件项目形态工件，validator 按默认检查必然失败）；skill 仓库自身以 `tests.required`（npm test 退出码 0）替代 |
 | `docs.parity_passed` | `scripts/check-doc-parity.js` 退出码 0（三语文档树结构平行） | ⚠️ Blocked，先同步缺失/漂移的文档；仅适用于维护三语文档树的仓库 |
+| `sync.passed` | `scripts/check-sync.js` 退出码 0（同步组无漏项：watch 命中的组其 require 文件已一并更新） | ❌ 停止发布，先补齐漏同步的文件 |
+| `plan.delivery_verified` | `scripts/check-plan-delivery.js` 退出码 0（待归档计划声明的 Affected Files / 标识符 / 验证手段均已实际交付） | ❌ 停止发布，先补齐声明未交付项或修正计划 |
 
 ## 版本一致性规则
 
@@ -173,21 +175,22 @@ Proceed with release?
 
 1. **再次检查仓库状态**：`git status`、`git rev-parse HEAD`。要求工作区干净、HEAD 与 Proposal 中 `headSha` 一致；若检测到变化 → **停止执行并重新分析版本**（重新走 Phase 1-3）。
 2. **版本同步**：更新 `package.json` → CHANGELOG（`[Unreleased]` 移入 `[X.Y.Z]`）→ `.governance/manifest.json` 的 `governance_version` 与 `release` 字段。
-3. **归档计划**：本版本已完成的里程碑条目（含勾选状态与验收结果）聚合写入 `docs/plans/archive/vX.Y.Z.md`（一个版本一个文件）；已完成的 `TASK_<name>.md` 以独立文件原样移入 `docs/plans/archive/`（保留原文件名）。**保留原文，绝不删除**。未完成的里程碑继续留在 `docs/plans/`。
-4. **提交 release commit**：`git add`（仅版本同步与归档相关文件）→ `git commit -m "release: vX.Y.Z - <summary>"`。**版本变更与归档必须进入同一个提交**——tag 稍后指向的 HEAD 必须包含它们。
-5. **校验**：运行 `scripts/verify-governance.js`，退出码必须为 0。
-6. **生成/更新 Proposal**：把 Proposal 的 `headSha` 更新为新 HEAD、`recommended` 为 `X.Y.Z`，写入 `.governance/release-proposal.json`（execute 依此做发布前重新验证）。
-7. **创建 annotated tag**：
+3. **计划交付对账（gate）**：归档前运行 `node scripts/check-plan-delivery.js --gate`（退出码必须 0）——比对待归档计划声明的 Affected Files / 标识符是否已实际交付。**声明未交付不得归档**：要么补齐交付，要么修正过时的计划声明。纯设计计划（顶部显式标注 `Status: design plan, not implemented`）跳过对账，也不得归档。
+4. **归档计划**：本版本已完成的里程碑条目（含勾选状态与验收结果）聚合写入 `docs/plans/archive/vX.Y.Z.md`（一个版本一个文件）；已完成的 `TASK_<name>.md` 以独立文件原样移入 `docs/plans/archive/`（保留原文件名）。**保留原文，绝不删除**。未完成的里程碑继续留在 `docs/plans/`。
+5. **提交 release commit**：`git add`（仅版本同步与归档相关文件）→ `git commit -m "release: vX.Y.Z - <summary>"`。**版本变更与归档必须进入同一个提交**——tag 稍后指向的 HEAD 必须包含它们。
+6. **校验**：运行 `scripts/verify-governance.js`，退出码必须为 0。
+7. **生成/更新 Proposal**：把 Proposal 的 `headSha` 更新为新 HEAD、`recommended` 为 `X.Y.Z`，写入 `.governance/release-proposal.json`（execute 依此做发布前重新验证）。
+8. **创建 annotated tag**：
 
    ```bash
    node scripts/release-manager.js execute --proposal .governance/release-proposal.json --yes
    ```
 
    `--yes` 是开发者批准的记录标记；**没有 `--yes` 该工具拒绝一切写操作**（等价于手工 `git tag -a vX.Y.Z -m "Release vX.Y.Z: <summary>"`）。execute 会再次检查工作区干净且 HEAD == proposal `headSha`。
-8. **推送**：`git push origin main` → `git push origin vX.Y.Z`（写操作均需用户确认，见权限）。
-9. **创建 Release**：GitHub 项目执行 `gh release create vX.Y.Z --title "vX.Y.Z" --notes "<Release Notes>"`（gh 未登录/未安装 → ⚠️ Blocked，提示用户）。
-10. **打包并上传技能载荷资产**：运行 `bash scripts/package-skill.sh vX.Y.Z` 生成 `dist/ai-agent-governance-skill.tar.gz`（版本稳定名，只含 SKILL.md + references/ + scripts/ + LICENSE，见 SKILL.md 安装载荷定义），随后 `gh release upload vX.Y.Z dist/ai-agent-governance-skill.tar.gz`。**校验**：`tar -tzf` 列出的内容必须只有载荷，不得含 docs/、tests/、README 等基础设施文件。
-11. **更新状态**：把 `.governance/manifest.json` 的 `release.validated` 置为 `true`，重新校验并记录到 `validation.json`。
+9. **推送**：`git push origin main` → `git push origin vX.Y.Z`（写操作均需用户确认，见权限）。
+10. **创建 Release**：GitHub 项目执行 `gh release create vX.Y.Z --title "vX.Y.Z" --notes "<Release Notes>"`（gh 未登录/未安装 → ⚠️ Blocked，提示用户）。
+11. **打包并上传技能载荷资产**：运行 `bash scripts/package-skill.sh vX.Y.Z` 生成 `dist/ai-agent-governance-skill.tar.gz`（版本稳定名，只含 SKILL.md + references/ + scripts/ + LICENSE，见 SKILL.md 安装载荷定义），随后 `gh release upload vX.Y.Z dist/ai-agent-governance-skill.tar.gz`。**校验**：`tar -tzf` 列出的内容必须只有载荷，不得含 docs/、tests/、README 等基础设施文件。
+12. **更新状态**：把 `.governance/manifest.json` 的 `release.validated` 置为 `true`，重新校验并记录到 `validation.json`。
 
 ## 安全规则
 

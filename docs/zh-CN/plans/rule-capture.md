@@ -2,6 +2,8 @@
 
 [English](../../en/plans/rule-capture.md) · [简体中文](rule-capture.md) · [繁體中文](../../zh-TW/plans/rule-capture.md)
 
+> **状态：设计计划，未实现。** 交付对账（`scripts/check-plan-delivery.js`）跳过纯设计计划；本行即标记。
+
 ### 任务目的
 
 不让治理要求只活在对话上下文里。开发者在任务过程中提出的每条**持久性**要求，必须在任务宣称完成前落进规则文件（`AGENTS.md` / `docs/rules/**`）——这样换开发者、换电脑、换会话时，新 Agent 继承的是同一套约束，而不是又开始"想当然"地乱改。

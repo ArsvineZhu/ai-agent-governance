@@ -4,6 +4,17 @@ All notable changes to this project will be documented here.
 
 ## [Unreleased]
 
+### Added
+
+- **Plan delivery gate** — `scripts/check-plan-delivery.js`: mechanically compares what a TASK plan DECLARED (Affected Files paths, wired identifiers) against what exists in the tree. Runs advisory in `npm run check:all` and **fail-closed before archiving** in the release flow (`release.md` Phase 4 step 3 + `plan.delivery_verified` precondition), so a plan can no longer be archived while parts of it were never delivered. Explicit normalisation table handles the known equivalences (three-language doc trees, runtime artifacts, governed-project-only files, bare filenames) to keep false positives out; plans marked `Status: design plan, not implemented` are skipped by design.
+
+### Fixed
+
+- **Missing `sync.passed` release precondition** — the archived `sync-groups-mechanical-check` plan declared it in Affected Files but it was never added to `release_requirements`; releases therefore never verified sync groups. Added, together with `plan.delivery_verified`. Found by the new plan-delivery audit.
+- **Unimplemented generators silently passed** — `generate-governance.js --phase C` reported `1 skipped` with exit 0, making an unimplemented sub-skills generator look like success. Stub generators now exit 1 unless `--allow-stub` is passed explicitly.
+- **Plan status was not machine-readable** — `rule-capture` carried no status marker, so delivery verification could not tell design-only plans from undelivered work. Plans now use an explicit `Status: design plan, not implemented` marker and the checker relies on it instead of guessing from prose.
+- **Obsolete declaration in an archived plan** — `governed-project-sync-groups` cited `sync-rules.template.json`; the delivered file is `sync-rules.template.md`. Corrected.
+
 ## [0.9.1] - 2026-08-21
 
 ### Fixed

@@ -8,7 +8,8 @@
     "docs:parity": "node scripts/check-doc-parity.js",
     "docs:layout": "node scripts/check-layout-sync.js",
     "check": "npm test && npm run docs:parity && npm run docs:layout",
-    "check:all": "npm run check && node scripts/check-doc-freshness.js && node scripts/check-doc-consistency.js"
+    "check:all": "npm run check && node scripts/check-doc-freshness.js && node scripts/check-doc-consistency.js && npm run plans:delivery",
+    "plans:delivery": "node scripts/check-plan-delivery.js"
   },
   "engines": {
     "node": ">=18"

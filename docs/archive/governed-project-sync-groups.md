@@ -37,7 +37,7 @@ INIT 生成 `.governance/sync-rules.json`：
 
 - `SKILL.md` —— Phase 1 生成 `.governance/sync-rules.json`；Phase 5 章节引用它
 - `references/policies/lifecycle.policy.md` —— Phase 5 重写为清单驱动同步
-- `references/templates/` —— 新增 `sync-rules.template.json`（或 SKILL.md 内嵌 JSON）+ sub-skills.md 报告格式（state-manager/plan-manager 报告节）
+- `references/templates/` —— 新增 `sync-rules.template.md`（或 SKILL.md 内嵌 JSON）+ sub-skills.md 报告格式（state-manager/plan-manager 报告节）
 - `references/policies/governance-files.policy.md` —— sync-rules.json 声明为受跟踪状态
 - `docs/{en,zh-CN,zh-TW}/` —— bootstrap-output.md（生成工件）、commands.md（报告措辞）、CHANGELOG
 

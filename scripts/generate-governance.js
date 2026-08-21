@@ -28,6 +28,7 @@ Options:
   --project-name <name> Project name for AGENTS.md heading
   --phase <A|B|C>       Phases to generate (default: A)
   --dry-run             List files that would be created, write nothing
+  --allow-stub          Tolerate not-yet-implemented generators (skip instead of fail)
   --json                Output file list as JSON
   --file <path>         Read inputs from JSON file
   --help                Show this help`);
@@ -175,6 +176,7 @@ function main() {
   const projectName = argValue(args, "--project-name");
   const phase = (argValue(args, "--phase") || "A").toUpperCase();
   const dryRun = args.includes("--dry-run");
+  const allowStub = args.includes("--allow-stub");
   const json = args.includes("--json");
   const file = argValue(args, "--file");
 
@@ -253,8 +255,15 @@ function main() {
         if (art.generator === "state") content = generateState(inputs);
         else if (art.generator === "gitignore") content = GITIGNORE_CONTENT;
         else if (art.generator === "preflight") content = PREFLIGHT_CONTENT;
-        else {
-          result = { path: art.path, action: "skipped", note: "generator '" + art.generator + "' not yet implemented (phase C)" };
+        else if (allowStub) {
+          result = { path: art.path, action: "skipped", note: "generator '" + art.generator + "' not yet implemented (--allow-stub)" };
+          results.push(result);
+          continue;
+        } else {
+          // An unimplemented generator is an UNDELIVERED artifact: it must fail loudly,
+          // otherwise "generated, 1 skipped, exit 0" reads as success (this is exactly how
+          // Phase C looked complete while sub-skills generation was never implemented).
+          result = { path: art.path, action: "error", error: "generator '" + art.generator + "' not implemented — pass --allow-stub to proceed without it" };
           results.push(result);
           continue;
         }

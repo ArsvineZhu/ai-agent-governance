@@ -16,6 +16,7 @@ const SECRET_CHECK = path.join(__dirname, "..", "scripts", "check-secrets.js");
 const SYNC_CHECK = path.join(__dirname, "..", "scripts", "check-sync.js");
 const GENERATOR = path.join(__dirname, "..", "scripts", "generate-governance.js");
 const LAYOUT_CHECK = path.join(__dirname, "..", "scripts", "check-layout-sync.js");
+const PLAN_DELIVERY = path.join(__dirname, "..", "scripts", "check-plan-delivery.js");
 const TMP_ROOT = fs.mkdtempSync(path.join(os.tmpdir(), "ai-agent-governance-test-"));
 
 function tmp(name) {
@@ -797,6 +798,45 @@ test("check-layout-sync: missing file in tree exits 1", () => {
   return r.status === 1 && r.stdout.includes("missing: check-b.js");
 });
 
+
+// ---------- 26. check-plan-delivery.js ----------
+function buildPlanRepo(dir, planBody) {
+  fs.mkdirSync(path.join(dir, "docs/en/plans"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "docs/archive"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "references/templates"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "scripts"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "docs/archive/some-plan.md"), planBody, "utf8");
+}
+
+test("check-plan-delivery: archived plan declaring a missing file exits 1 in gate mode", () => {
+  const dir = tmp("plandel-missing");
+  buildPlanRepo(dir, "# P\n\n### Affected Files\n\n- `references/templates/never-created.md` — new\n");
+  const r = spawnSync(process.execPath, [PLAN_DELIVERY, "--gate"], { cwd: dir, encoding: "utf8" });
+  return r.status === 1 && r.stdout.includes("never-created.md");
+});
+
+test("check-plan-delivery: delivered declaration exits 0", () => {
+  const dir = tmp("plandel-ok");
+  buildPlanRepo(dir, "# P\n\n### Affected Files\n\n- `references/templates/real.md` — new\n");
+  fs.writeFileSync(path.join(dir, "references/templates/real.md"), "x", "utf8");
+  const r = spawnSync(process.execPath, [PLAN_DELIVERY, "--gate"], { cwd: dir, encoding: "utf8" });
+  return r.status === 0;
+});
+
+test("check-plan-delivery: design-only plan is skipped", () => {
+  const dir = tmp("plandel-design");
+  fs.mkdirSync(path.join(dir, "docs/en/plans"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "docs/en/plans/future.md"), "# F\n\n> **Status: design plan, not implemented.**\n\n### Affected Files\n\n- `references/templates/not-yet.md` — new\n", "utf8");
+  const r = spawnSync(process.execPath, [PLAN_DELIVERY, "--gate"], { cwd: dir, encoding: "utf8" });
+  return r.status === 0;
+});
+
+test("generate-governance: unimplemented generator fails without --allow-stub", () => {
+  const dir = tmp("gen-stub-fail");
+  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "S", "--phase", "C"], { encoding: "utf8" });
+  const r2 = spawnSync(process.execPath, [GENERATOR, "--target", tmp("gen-stub-ok"), "--project-name", "S", "--phase", "C", "--allow-stub"], { encoding: "utf8" });
+  return r.status === 1 && r2.status === 0;
+});
 // ---------- runner (must stay after ALL test registrations) ----------
 let failed = 0;
 for (const t of tests) {

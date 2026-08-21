@@ -37,6 +37,7 @@ ai-agent-governance/
 │   ├── check-doc-consistency.js # cross-doc contradictions (advisory, exit 0)
 │   ├── check-doc-parity.js     # trilingual tree parity (CI + release precondition)
 │   ├── check-layout-sync.js    # architecture.md Repository Layout vs references/ + scripts/ (fail-closed gate)
+│   ├── check-plan-delivery.js  # plan declarations vs actual delivery (gate before archiving)
 │   ├── generate-governance.js  # INIT scripted generator (deterministic bootstrap, spec: references/init-spec.json)
 │   ├── package-skill.sh        # release payload tarball packaging
 │   └── release-manager.js      # plan (read-only) + execute (approval-gated) release tool

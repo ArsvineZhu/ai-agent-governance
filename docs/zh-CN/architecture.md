@@ -37,6 +37,7 @@ ai-agent-governance/
 │   ├── check-doc-consistency.js # 文档间矛盾（建议性，exit 0）
 │   ├── check-doc-parity.js     # trilingual tree parity (CI + release precondition)
 │   ├── check-layout-sync.js    # architecture.md 仓库布局 vs references/ + scripts/（fail-closed 门禁）
+│   ├── check-plan-delivery.js  # 计划声明 vs 实际交付（归档前门禁）
 │   ├── generate-governance.js  # INIT 脚本化生成器（确定性引导，规范：references/init-spec.json）
 │   ├── package-skill.sh        # 发布载荷 tarball 打包
 │   └── release-manager.js      # plan（只读）+ execute（审批门禁）发布工具

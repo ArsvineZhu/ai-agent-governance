@@ -2,6 +2,8 @@
 
 [English](rule-capture.md) · [简体中文](../../zh-CN/plans/rule-capture.md) · [繁體中文](../../zh-TW/plans/rule-capture.md)
 
+> **Status: design plan, not implemented.** Delivery verification (`scripts/check-plan-delivery.js`) skips design-only plans; this line is what marks it.
+
 ### Task Purpose
 
 Stop governance requirements from living only in conversation context. Every persistent requirement a developer states during a task must land in a rule file (`AGENTS.md` / `docs/rules/**`) before the task is declared done — so a new developer, a new machine or a fresh session inherits the same constraints instead of watching the agent "reasonably" break things again.
