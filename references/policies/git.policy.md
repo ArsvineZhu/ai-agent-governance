@@ -40,6 +40,8 @@
 - 即使用户说"完成任务"、"wrap it up"、"发布吧"，也**不得**在没有明确写操作指令（如 "Commit these changes"、"Push now"、"Run git push"）的情况下自动提交或推送。
 - 有疑问时，**永远先问**。
 
+**例外 —— 发布序列（RELEASE）**：在 Approval Gate 批准一次 Release Proposal，即覆盖**该次发布序列的全部写操作**（版本同步 → 归档 → release commit → tag → push 分支 → push tag → GitHub Release → 资产上传），不再逐步追问（见 `references/workflows/release.md`：「批准覆盖本次 release 序列的全部写操作」）。前提：完整 Proposal 已展示且获明确批准、工作区与 HEAD 仍与批准时的 `headSha` 一致、不触碰发布序列之外的内容。中途任一校验失败 → 停止并重新走 plan，不得擅自跳过。
+
 ## Mandatory Pre-commit Checklist
 
 push/PR 前必须确认：

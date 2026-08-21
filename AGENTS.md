@@ -65,3 +65,5 @@ Run the gate group (`npm run check`) before declaring any task done; run the ful
 ## Git Operation Safety Protocol (HIGHEST PRIORITY)
 
 Read-only git ops (`status`/`log`/`diff`/`show`/`fetch`/`remote`/`branch`) are free. All write ops (`add`/`commit`/`push`/`merge`/`rebase`/`reset`/`stash`/`revert`/`clean`/`pull`) are **forbidden without explicit consent**. Consent is **turn-scoped** — a prior "确认" does not carry over; each write op needs its own fresh confirmation. Echo the exact command before running it. When in doubt, ask first.
+
+**Exception — release sequence.** Approving a Release Proposal at the Approval Gate covers **every write op in that one release sequence** (version sync → archive → release commit → tag → push branch → push tag → GitHub Release → asset upload); do not re-ask per step. Per `references/workflows/release.md`: "批准覆盖本次 release 序列的全部写操作". Conditions: the full Proposal was shown and explicitly approved, the working tree/HEAD still match the approved `headSha`, and nothing outside the release sequence is touched. If any check fails mid-sequence, stop and re-plan (do not improvise past it).
