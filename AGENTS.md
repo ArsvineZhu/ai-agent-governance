@@ -2,16 +2,9 @@
 
 Guidelines for agents working on the ai-agent-governance skill repo itself. This repo is a skill distribution repository (not a governed software project) — it uses lightweight governance: release flow + plans/archive + ADRs + tests.
 
-## Repository architecture (what each directory is FOR)
+## Repository architecture
 
-| Path | Role | Reader | Language |
-| --- | --- | --- | --- |
-| `SKILL.md` | Skill entry point / product spec | agents (skill users) | single |
-| `references/` | **Skill body — the only place skill behavior lives.** Policies, templates, workflows that get copied into governed projects or define how the skill acts. | agents (skill users) | single |
-| `scripts/` | Skill runtime scripts (validator, checks, generators, release tool) — part of the install payload | agents/CI | code |
-| `LICENSE` | MIT license — part of the install payload | installers | — |
-| `docs/` | **User/developer manual. NOT part of the skill payload.** Explains how to use the skill (trigger words in `commands.md`), design plans (`plans/`), roadmap, glossary. | users/developers | trilingual |
-| `tests/`, `package.json`, `.github/`, `CHANGELOG.md`, `CONTRIBUTING.md`, `README.md`, `AGENTS.md` | Repo infrastructure: CI, release flow, change log, contributor guide | repo maintainers | per file |
+See [docs/en/architecture.md](docs/en/architecture.md) — the single source of truth for repository layout (what each directory is FOR, install payload vs repo infrastructure split).
 
 Hard rules that follow from this:
 

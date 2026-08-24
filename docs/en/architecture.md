@@ -6,6 +6,17 @@ This page is the repository layout — a developer-facing map of what each direc
 
 The skill's behavior (operating modes INIT/AUDIT/RELEASE, lifecycle pipeline, design principles) is defined in the skill body, not here: see [SKILL.md](../../SKILL.md) and `references/`. This page only records where things live.
 
+### Directory Roles
+
+| Path | Role | Reader | Language |
+| --- | --- | --- | --- |
+| `SKILL.md` | Skill entry point / product spec | agents (skill users) | single |
+| `references/` | **Skill body — the only place skill behavior lives.** Policies, templates, workflows that get copied into governed projects or define how the skill acts. | agents (skill users) | single |
+| `scripts/` | Skill runtime scripts (validator, checks, generators, release tool) — part of the install payload | agents/CI | code |
+| `LICENSE` | MIT license — part of the install payload | installers | — |
+| `docs/` | **User/developer manual. NOT part of the skill payload.** Explains how to use the skill (trigger words in `commands.md`), design plans (`plans/`), roadmap, glossary. | users/developers | trilingual |
+| `tests/`, `package.json`, `.github/`, `CHANGELOG.md`, `CONTRIBUTING.md`, `README.md`, `AGENTS.md` | Repo infrastructure: CI, release flow, change log, contributor guide | repo maintainers | per file |
+
 ### Repository Layout
 
 ```
