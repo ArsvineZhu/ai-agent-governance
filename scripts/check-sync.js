@@ -7,17 +7,10 @@
 const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
+const { argValue, readJSON } = require("./_lib.js");
 
 const POLICY = path.join(process.cwd(), ".governance", "sync-rules.json");
 const STATE = path.join(process.cwd(), ".governance", "state.json");
-
-function readJSON(p) {
-  try {
-    return JSON.parse(fs.readFileSync(p, "utf8"));
-  } catch {
-    return null;
-  }
-}
 
 function globMatch(pattern, file) {
   if (pattern === file) return true;
@@ -54,18 +47,13 @@ if (process.argv.includes("--help") || process.argv.includes("-h")) {
   process.exit(0);
 }
 
-function argValue(name) {
-  const i = process.argv.indexOf(name);
-  return i >= 0 && i + 1 < process.argv.length ? process.argv[i + 1] : null;
-}
-
 const policy = readJSON(POLICY);
 if (!policy || !Array.isArray(policy.syncGroups)) {
   console.error("check-sync: no .governance/sync-rules.json - nothing to check");
   process.exit(0);
 }
 
-let base = argValue("--base");
+let base = argValue(process.argv, "--base");
 if (!base) {
   const st = readJSON(STATE);
   base = st && st.task_start_sha ? st.task_start_sha : null;
@@ -106,7 +94,9 @@ try {
   };
   fs.mkdirSync(path.dirname(driftPath), { recursive: true });
   fs.writeFileSync(driftPath, JSON.stringify(drift, null, 2) + "\n");
-} catch {}
+} catch (e) {
+  if (process.env.DEBUG) console.error(`[DEBUG] Failed to update drift-report.json: ${e.message}`);
+}
 
 if (json) {
   process.stdout.write(JSON.stringify({ clean: unsynced.length === 0, base, unsynced }, null, 2) + "\n");

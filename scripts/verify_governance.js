@@ -8,13 +8,28 @@
 const fs = require("fs");
 const path = require("path");
 
+function getVersion() {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf8"));
+    return pkg.version;
+  } catch {
+    return "unknown";
+  }
+}
+
 if (process.argv.includes("--help") || process.argv.includes("-h")) {
   console.log(`Usage:
   verify-governance.js [options]
 
 Options:
   --json       Output JSON report
+  --version    Show version
   --help       Show help`);
+  process.exit(0);
+}
+
+if (process.argv.includes("--version") || process.argv.includes("-v")) {
+  console.log(getVersion());
   process.exit(0);
 }
 

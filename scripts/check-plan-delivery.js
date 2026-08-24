@@ -20,9 +20,15 @@
 
 const fs = require("fs");
 const path = require("path");
+const { argValue, readFileSafe } = require("./_lib.js");
 
 const ROOT = process.cwd();
 const TREES = ["en", "zh-CN", "zh-TW"];
+
+// Wrapper for readFileSafe that handles relative paths from ROOT
+function readRelativeFile(relPath) {
+  return readFileSafe(path.join(ROOT, relPath));
+}
 
 // ---------------------------------------------------------------------------
 // Normalisation rules — the source of false positives if left implicit.
@@ -55,14 +61,6 @@ const GOVERNED_ONLY = [
   [".gitmessage.txt", ["references/templates/gitmessage.template.md"]],
   ["scripts/verify-governance.js", ["scripts/verify_governance.js"]],
 ];
-
-function readFileSafe(p) {
-  try {
-    return fs.readFileSync(path.join(ROOT, p), "utf8");
-  } catch {
-    return null;
-  }
-}
 
 function existsAny(candidates) {
   return candidates.some((c) => fs.existsSync(path.join(ROOT, c)));
@@ -115,7 +113,7 @@ function verifyDeclaredPath(declared) {
   for (const [frag, proofs] of RUNTIME_ARTIFACTS) {
     if (raw.includes(frag) || frag.includes(raw)) {
       const found = proofs.filter((pf) => {
-        const c = readFileSafe(pf);
+        const c = readRelativeFile(pf);
         return c && c.includes(path.basename(frag));
       });
       return found.length > 0
@@ -162,7 +160,7 @@ function corpus() {
   searchCorpus = [];
   for (const r of SEARCH_ROOTS) {
     for (const f of walkFiles(r)) {
-      const c = readFileSafe(f);
+      const c = readRelativeFile(f);
       if (c) searchCorpus.push([f, c]);
     }
   }
@@ -187,7 +185,7 @@ function verifyBehaviours(content) {
   while ((m = BEHAVIOUR_RE.exec(content))) {
     const what = m[1].trim();
     const where = m[2].trim();
-    const target = readFileSafe(where);
+    const target = readRelativeFile(where);
     if (target === null) {
       out.push({ kind: "behaviour", item: what + " in " + where, detail: "target file not found: " + where });
       continue;
@@ -219,7 +217,7 @@ function isDesignOnly(relPath, content) {
 }
 
 function auditPlan(relPath) {
-  const content = readFileSafe(relPath);
+  const content = readRelativeFile(relPath);
   if (!content) return null;
   if (isDesignOnly(relPath, content)) return { plan: relPath, findings: [], skipped: "design-only (not implemented yet)" };
   const findings = [];

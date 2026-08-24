@@ -4,7 +4,18 @@
 // execute: create the annotated git tag AFTER developer approval (--yes), re-verifying state first.
 
 const fs = require("fs");
+const path = require("path");
 const { spawnSync } = require("child_process");
+const { argValue } = require("./_lib.js");
+
+function getVersion() {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf8"));
+    return pkg.version;
+  } catch {
+    return "unknown";
+  }
+}
 
 const USAGE = `Usage:
   release-manager.js plan --json <input>          Analyze changes, propose a version (read-only)
@@ -16,6 +27,7 @@ Options:
   --proposal <file>  Proposal JSON file produced by 'plan'
   --yes              Record of developer approval — REQUIRED for any write operation
   --push             Also push the tag (requires approval, network access)
+  --version          Show version
   --help             Show help
 
 Exit codes: 0 ok · 1 usage/input error · 2 clarification required · 3 not approved · 4 state check failed · 5 write failed`;
@@ -23,11 +35,6 @@ Exit codes: 0 ok · 1 usage/input error · 2 clarification required · 3 not app
 function fail(msg, code = 1) {
   console.error(msg);
   process.exit(code);
-}
-
-function argValue(argv, name) {
-  const i = argv.indexOf(name);
-  return i >= 0 && i + 1 < argv.length ? argv[i + 1] : null;
 }
 
 // ---------- SemVer ----------
@@ -174,6 +181,15 @@ function execute(argv) {
   }
   const existing = git(["tag", "-l", tag]);
   if (String(existing.stdout || "").trim() !== "") fail(`execute: tag ${tag} already exists`, 4);
+  
+  // Verify we're on a release branch (main or master) unless --force is passed
+  if (!argv.includes("--force")) {
+    const branch = git(["branch", "--show-current"]);
+    const currentBranch = String(branch.stdout || "").trim();
+    if (currentBranch && !["main", "master"].includes(currentBranch)) {
+      fail(`execute: on branch '${currentBranch}', not main/master — use --force to override`, 4);
+    }
+  }
 
   const summary = proposal.summary || `Release ${fmt(ver)}`;
   const t = git(["tag", "-a", tag, "-m", `Release ${fmt(ver)}: ${summary}`]);
@@ -191,6 +207,11 @@ function execute(argv) {
 
 if (process.argv.includes("--help") || process.argv.includes("-h")) {
   console.log(USAGE);
+  process.exit(0);
+}
+
+if (process.argv.includes("--version") || process.argv.includes("-v")) {
+  console.log(getVersion());
   process.exit(0);
 }
 

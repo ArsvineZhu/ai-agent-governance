@@ -12,6 +12,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const { argValue, readJSON, writeIfAbsent, ensureDir } = require("./_lib.js");
 
 const SKILL_DIR = path.resolve(__dirname, "..");
 const SPEC_PATH = path.join(SKILL_DIR, "references", "init-spec.json");
@@ -37,39 +38,6 @@ Options:
   --json                Output file list as JSON
   --file <path>         Read inputs from JSON file
   --help                Show this help`);
-}
-
-function readJSON(p) {
-  return JSON.parse(fs.readFileSync(p, "utf8"));
-}
-
-function argValue(args, name) {
-  const i = args.indexOf(name);
-  return i >= 0 && i + 1 < args.length ? args[i + 1] : null;
-}
-
-function writeIfAbsent(filepath, content) {
-  fs.mkdirSync(path.dirname(filepath), { recursive: true });
-  if (fs.existsSync(filepath)) {
-    return { path: filepath, action: "skipped" };
-  }
-  fs.writeFileSync(filepath, content, "utf8");
-  return { path: filepath, action: "created" };
-}
-
-function ensureDir(dirpath) {
-  const existedBefore = fs.existsSync(dirpath);
-  fs.mkdirSync(dirpath, { recursive: true });
-  const keep = path.join(dirpath, ".gitkeep");
-  const others = fs.readdirSync(dirpath).filter((f) => f !== ".gitkeep");
-  let wroteKeep = false;
-  if (!fs.existsSync(keep) && others.length === 0) {
-    fs.writeFileSync(keep, "", "utf8");
-    wroteKeep = true;
-  }
-  // Report honestly: an already-present directory is a skip, not a creation. Otherwise a
-  // second identical run reports "created N files" and the idempotency claim is unverifiable.
-  return { path: dirpath, action: existedBefore && !wroteKeep ? "skipped" : "created-dir" };
 }
 
 function resolvePlaceholders(content, placeholders, inputs) {

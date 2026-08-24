@@ -972,6 +972,107 @@ test("generate-governance: manifest records the platform-specific CI path", () =
   const allExist = mgl.artifacts.every((a) => fs.existsSync(path.join(gl, a.path)));
   return ghOk && glOk && allExist;
 });
+
+// ---------- 27. Edge case tests for missing .governance/ directory ----------
+test("verify-governance: missing .governance directory exits 1", () => {
+  const dir = tmp("no-governance-dir");
+  fs.mkdirSync(path.join(dir, "docs"), { recursive: true });
+  write(path.join(dir, "AGENTS.md"), "x");
+  write(path.join(dir, "CHANGELOG.md"), "## [Unreleased]\n");
+  write(path.join(dir, "docs/ARCHITECTURE.md"), "# Arch\n\n## Component Registry\n\n| Component | Responsibility | Dependencies | Entry |\n| --- | --- | --- | --- |\n| auth | login | db | src/auth.ts |\n");
+  fs.mkdirSync(path.join(dir, "docs/features"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "docs/plans"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "docs/rules"), { recursive: true });
+  write(path.join(dir, ".gitignore"), "x");
+  write(path.join(dir, ".env.example"), "x");
+  fs.mkdirSync(path.join(dir, ".github/workflows"), { recursive: true });
+  write(path.join(dir, ".github/workflows/ci.yml"), "x");
+  fs.mkdirSync(path.join(dir, "scripts"), { recursive: true });
+  fs.copyFileSync(VALIDATOR, path.join(dir, "scripts/verify-governance.js"));
+  fs.copyFileSync(LOCK_CHECK, path.join(dir, "scripts/check-lock.js"));
+  fs.copyFileSync(GIT_POLICY_CHECK, path.join(dir, "scripts/check-git-policy.js"));
+  fs.copyFileSync(SECRET_CHECK, path.join(dir, "scripts/check-secrets.js"));
+  fs.copyFileSync(SYNC_CHECK, path.join(dir, "scripts/check-sync.js"));
+  const r = run(dir);
+  return r.status === 1 && r.stdout.includes(".governance state dir");
+});
+
+// ---------- 28. Invalid JSON in manifest ----------
+test("verify-governance: invalid manifest JSON exits 1", () => {
+  const dir = tmp("invalid-manifest");
+  buildFullDefault(dir);
+  write(path.join(dir, ".governance/manifest.json"), "{ invalid json }");
+  const r = run(dir);
+  return r.status === 1;
+});
+
+// ---------- 29. check-layout-sync: missing architecture.md ----------
+test("check-layout-sync: missing architecture.md exits 1", () => {
+  const dir = tmp("layout-no-arch");
+  fs.mkdirSync(path.join(dir, "docs/en"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "docs/zh-CN"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "docs/zh-TW"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "references/templates"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "scripts"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "references/templates/a.template.md"), "x", "utf8");
+  const r = spawnSync(process.execPath, [LAYOUT_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 1;
+});
+
+// ---------- 30. check-layout-sync: missing Repository Layout section ----------
+test("check-layout-sync: missing Repository Layout section exits 1", () => {
+  const dir = tmp("layout-no-section");
+  fs.mkdirSync(path.join(dir, "docs/en"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "docs/zh-CN"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "docs/zh-TW"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "references/templates"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "scripts"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "references/templates/a.template.md"), "x", "utf8");
+  fs.writeFileSync(path.join(dir, "scripts/check-a.js"), "x", "utf8");
+  const fence = String.fromCharCode(96, 96, 96);
+  const layout = "# Architecture\n\nSome content without the layout section\n";
+  for (const lang of ["en", "zh-CN", "zh-TW"]) {
+    fs.writeFileSync(path.join(dir, `docs/${lang}/architecture.md`), layout, "utf8");
+  }
+  const r = spawnSync(process.execPath, [LAYOUT_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 1;
+});
+
+// ---------- 31. Shared library tests ----------
+test("_lib.js: argValue extracts correct values", () => {
+  const lib = require("../scripts/_lib.js");
+  const args = ["--target", "/path/to/dir", "--project-name", "TestApp", "--phase", "A"];
+  return lib.argValue(args, "--target") === "/path/to/dir" &&
+    lib.argValue(args, "--project-name") === "TestApp" &&
+    lib.argValue(args, "--phase") === "A" &&
+    lib.argValue(args, "--missing") === null;
+});
+
+test("_lib.js: readJSON handles invalid JSON gracefully", () => {
+  const lib = require("../scripts/_lib.js");
+  const dir = tmp("lib-json");
+  write(path.join(dir, "invalid.json"), "{ not valid }");
+  const result = lib.readJSON(path.join(dir, "invalid.json"));
+  return result === null;
+});
+
+test("_lib.js: readFileSafe handles missing files", () => {
+  const lib = require("../scripts/_lib.js");
+  const result = lib.readFileSafe("/nonexistent/file/path.json");
+  return result === null;
+});
+
+test("_lib.js: walk returns sorted markdown files", () => {
+  const lib = require("../scripts/_lib.js");
+  const dir = tmp("lib-walk");
+  fs.mkdirSync(path.join(dir, "docs"), { recursive: true });
+  write(path.join(dir, "docs/z.md"), "z");
+  write(path.join(dir, "docs/a.md"), "a");
+  write(path.join(dir, "docs/m.md"), "m");
+  const files = lib.walk(path.join(dir, "docs"));
+  return Array.isArray(files) && files.length === 3 && files[0] === "a.md" && files[2] === "z.md";
+});
+
 // ---------- runner (must stay after ALL test registrations) ----------
 let failed = 0;
 for (const t of tests) {

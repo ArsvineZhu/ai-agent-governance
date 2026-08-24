@@ -12,6 +12,8 @@ const PATTERNS = [
   { name: "openai-style-key", re: /sk-[A-Za-z0-9]{20,}/ },
   { name: "private-key-header", re: /-----BEGIN [A-Z ]*PRIVATE KEY-----/ },
   { name: "credential-assignment", re: /(?:password|passwd|secret|token|api[_-]?key)\s*[:=]\s*["']?[A-Za-z0-9_\-\.]{8,}/i },
+  { name: "slack-token", re: /xox[bpsar]-[0-9]{10,}-[A-Za-z0-9-]+/ },
+  { name: "generic-connection-string", re: /(?:mongodb|postgres|mysql|redis|amqp):\/\/[^:]+:[^@]+@/i },
 ];
 
 const IGNORED_PATHS = /(^|\/)(\.env|\.env\.[^/]+)$/;
