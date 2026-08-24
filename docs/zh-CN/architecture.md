@@ -28,6 +28,7 @@ ai-agent-governance/
 │       ├── ci.md               # CI 模板（能力检测 + 降级）
 │       └── release.md          # 发布前置检查 + 版本一致性
 ├── scripts/                    # skill 运行时脚本
+│   ├── _lib.js                 # 共享工具库（argValue, readJSON, readFileSafe, walk）
 │   ├── verify_governance.js    # 校验引擎（manifest 驱动路径 + governance_version）
 │   ├── check-lock.js           # 多 Agent 锁检查（只读，exit 1 = 持锁）
 │   ├── check-git-policy.js     # Git 工作流门禁（受保护分支 + directPush=false → exit 1）
