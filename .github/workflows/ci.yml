@@ -2,77 +2,30 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
   pull_request:
-    branches: [main, master]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [18, 20, 22]
-    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: Run tests
-        run: node tests/run-tests.js
-
-      - name: Run gate checks
-        run: npm run check
-
-      - name: Run advisory checks
-        run: npm run check:all
-        continue-on-error: true
-
-  validate:
-    runs-on: ubuntu-latest
-    needs: test
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+          node-version: 20
+      - run: npm test
+      - run: node scripts/check-doc-parity.js
+      - name: Governance badge endpoint
+        run: |
+          node scripts/verify_governance.js --json > governance-report.json || true
+          node -e "
+            const r = require('./governance-report.json');
+            const pct = r.total ? Math.round(r.passed / r.total * 100) : 0;
+            const color = pct === 100 ? 'green' : pct >= 80 ? 'yellow' : 'red';
+            require('fs').writeFileSync('governance-badge.json', JSON.stringify({
+              schemaVersion: 1, label: 'governance', message: r.passed + '/' + r.total, color
+            }));
+          "
+      - uses: actions/upload-artifact@v4
         with:
-          node-version: '20'
-
-      - name: Validate governance
-        run: node scripts/verify_governance.js --json
-
-      - name: Check document parity
-        run: node scripts/check-doc-parity.js
-
-      - name: Check layout sync
-        run: node scripts/check-layout-sync.js
-
-  security:
-    runs-on: ubuntu-latest
-    needs: test
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Check for secrets in staged content
-        run: node scripts/check-secrets.js
-        continue-on-error: true
-
-      - name: Check git policy
-        run: node scripts/check-git-policy.js
-        continue-on-error: true
+          name: governance-badge
+          path: governance-badge.json

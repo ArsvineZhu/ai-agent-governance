@@ -15,7 +15,7 @@
     "C": {
       "name": "structure-adaptive",
       "description": "Advisory scripts (freshness/consistency), sub-skills generation, existing doc root detection, merge-not-overwrite for existing content, parity with all 13 Phase-1 steps (CI selection, CLAUDE.md, README language layout)",
-      "shipped": "v0.9.1"
+      "shipped": "later"
     }
   },
   "inputs": {

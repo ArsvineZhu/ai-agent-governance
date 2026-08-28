@@ -39,7 +39,6 @@ ai-agent-governance/
 │       ├── ci.md               # CI templates (capability detection + degradation)
 │       └── release.md          # release preconditions + version consistency
 ├── scripts/                    # skill runtime scripts
-│   ├── _lib.js                 # shared utilities (argValue, readJSON, readFileSafe, walk)
 │   ├── verify_governance.js    # validator (manifest-driven paths + governance_version)
 │   ├── check-lock.js           # multi-agent lock check (read-only, exit 1 = lock held)
 │   ├── check-git-policy.js     # Git workflow gate (protected branch + directPush=false → exit 1)

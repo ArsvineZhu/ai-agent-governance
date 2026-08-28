@@ -13,14 +13,34 @@
 const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
-const { walk, readFileSafe, readJSON } = require("./_lib.js");
 
 const ROOT = process.cwd();
 const DOCS = path.join(ROOT, "docs");
 
+function walk(dir, base = dir) {
+  const out = [];
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) out.push(...walk(p, base));
+    else if (e.name.endsWith(".md")) out.push(path.relative(base, p));
+  }
+  return out.sort();
+}
+
+function readFile(p) {
+  try {
+    return fs.readFileSync(p, "utf8");
+  } catch {
+    return null;
+  }
+}
+
 function currentVersion() {
-  const pkg = readJSON(path.join(ROOT, "package.json"));
-  return pkg ? pkg.version : null;
+  try {
+    return JSON.parse(readFile(path.join(ROOT, "package.json"))).version;
+  } catch {
+    return null;
+  }
 }
 
 function mdFiles() {
@@ -50,7 +70,7 @@ function main() {
   if (version) {
     const files = mdFiles().filter((f) => !f.startsWith("CHANGELOG") && !f.startsWith("docs/archive/"));
     for (const f of files) {
-      const c = readFileSafe(path.join(ROOT, f));
+      const c = readFile(path.join(ROOT, f));
       if (!c) continue;
       const re = /(?:governance_version|"version")["']?\s*[:=]\s*["']?(\d+\.\d+\.\d+)/g;
       let m;
@@ -62,7 +82,7 @@ function main() {
 
   // ---- 2. protected-files sync ----
   // Single source of truth: references/policies/governance-files.policy.md table.
-  const policy = readFileSafe(path.join(ROOT, "references", "policies", "governance-files.policy.md")) || "";
+  const policy = readFile(path.join(ROOT, "references", "policies", "governance-files.policy.md")) || "";
   const protectedPaths = [];
   const tableRe = /^\|\s*`([^`]+)`\s*\|/gm;
   let tm;
@@ -75,7 +95,7 @@ function main() {
   if (protectedPaths.length > 0) {
     const summaries = mdFiles().filter((f) => f !== "CHANGELOG.md" && !f.startsWith("docs/archive/"));
     for (const f of summaries) {
-      const c = readFileSafe(path.join(ROOT, f));
+      const c = readFile(path.join(ROOT, f));
       if (!c) continue;
       if (f.includes("governance-files.policy.md") || f.includes("adr-000")) continue;
       if (/治理文件保护|Governance File Protection|Governance file protection/i.test(c)) {
@@ -89,12 +109,12 @@ function main() {
   }
 
   // ---- 3. ADR status sync ----
-  const changelog = readFileSafe(path.join(ROOT, "CHANGELOG.md")) || "";
+  const changelog = readFile(path.join(ROOT, "CHANGELOG.md")) || "";
   const releasedVersions = [...changelog.matchAll(/^## \[(\d+\.\d+\.\d+)\]/gm)].map((m) => m[1]);
   const adrDir = path.join(DOCS, "design-decisions");
   if (fs.existsSync(adrDir)) {
     for (const f of walk(adrDir)) {
-      const c = readFileSafe(path.join(adrDir, f));
+      const c = readFile(path.join(adrDir, f));
       if (!c) continue;
       if (/Unreleased|未发布/i.test(c) && !/Status: (Proposed|Superseded|Deprecated)/.test(c)) {
         if (releasedVersions.length > 0) issues.adr_statuses.push(`${f}: marked Unreleased but releases exist`);
@@ -105,7 +125,7 @@ function main() {
   // ---- 4. link validity ----
   const linkFiles = mdFiles();
   for (const f of linkFiles) {
-    const c = readFileSafe(path.join(ROOT, f));
+    const c = readFile(path.join(ROOT, f));
     if (!c) continue;
     const re = /\[[^\]]*\]\(([^)#]+)(?:#[^)]*)?\)/g;
     let m;
@@ -120,13 +140,13 @@ function main() {
 
   // ---- 5. numeric claims ----
   // validator check count: docs must claim the same count as the DEFAULTS array
-  const validator = readFileSafe(path.join(ROOT, "scripts", "verify_governance.js")) || readFileSafe(path.join(ROOT, "scripts", "verify-governance.js")) || "";
+  const validator = readFile(path.join(ROOT, "scripts", "verify_governance.js")) || readFile(path.join(ROOT, "scripts", "verify-governance.js")) || "";
   const defaultArr = validator.match(/const DEFAULTS = \[([\s\S]*?)\n\];/);
   const defaultCount = defaultArr ? (defaultArr[1].match(/^\s*\["/gm) || []).length : 0;
   const claimRe = /(\d+)\s*(?:checks|项检查|项)/g;
   if (defaultCount > 0) {
     for (const f of ["README.md", "CONTRIBUTING.md"]) {
-      const c = readFileSafe(path.join(ROOT, f));
+      const c = readFile(path.join(ROOT, f));
       if (!c) continue;
       let m;
       while ((m = claimRe.exec(c))) {
@@ -136,7 +156,7 @@ function main() {
   }
 
   // ---- 6. prompt sync (sub-skill triggers must appear in commands.md) ----
-  const subSkills = readFileSafe(path.join(ROOT, "references", "templates", "sub-skills.md")) || "";
+  const subSkills = readFile(path.join(ROOT, "references", "templates", "sub-skills.md")) || "";
   const triggers = new Set();
   for (const line of subSkills.split("\n")) {
     if (!line.includes("Triggers on")) continue;
@@ -146,7 +166,7 @@ function main() {
   }
   if (triggers.size > 0) {
     for (const lang of ["en", "zh-CN", "zh-TW"]) {
-      const cmd = readFileSafe(path.join(DOCS, lang, "commands.md")) || "";
+      const cmd = readFile(path.join(DOCS, lang, "commands.md")) || "";
       if (!cmd) continue;
       for (const t of triggers) {
         if (!cmd.includes("`" + t + "`")) issues.prompt_sync.push(`${lang}/commands.md missing trigger \`${t}\``);
@@ -173,12 +193,10 @@ function main() {
   // Append to drift-report.json if present (runtime output, optional)
   try {
     const driftPath = path.join(ROOT, ".governance", "drift-report.json");
-    const drift = JSON.parse(readFileSafe(driftPath));
+    const drift = JSON.parse(readFile(driftPath));
     drift.consistency = issues;
     fs.writeFileSync(driftPath, JSON.stringify(drift, null, 2) + "\n");
-  } catch (e) {
-    if (process.env.DEBUG) console.error(`[DEBUG] Failed to update drift-report.json: ${e.message}`);
-  }
+  } catch {}
 
   if (json) {
     process.stdout.write(JSON.stringify(report, null, 2) + "\n");

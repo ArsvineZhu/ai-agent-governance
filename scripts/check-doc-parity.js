@@ -9,7 +9,6 @@
 
 const fs = require("fs");
 const path = require("path");
-const { walk } = require("./_lib.js");
 
 const ROOT = process.cwd();
 const DOCS = path.join(ROOT, "docs");
@@ -19,6 +18,16 @@ const ENTRY_MAP = {
   "zh-CN": ["README.md", "CONTRIBUTING.md"], // in-tree translations
   "zh-TW": ["README.md", "CONTRIBUTING.md"],
 };
+
+function walk(dir, base = dir) {
+  const out = [];
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const p = path.join(dir, e.name);
+    if (e.isDirectory()) out.push(...walk(p, base));
+    else if (e.name.endsWith(".md")) out.push(path.relative(base, p));
+  }
+  return out.sort();
+}
 
 // Structural signature of a markdown file: heading levels in order, code-block count,
 // table row/col counts, list-item count. Ignore inline content.

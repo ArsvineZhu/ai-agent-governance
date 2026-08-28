@@ -31,9 +31,7 @@ function docCandidates() {
     if (typeof m.doc_root === "string" && m.doc_root && m.doc_root !== "docs") {
       return docs.map((d) => d.replace(/^docs\//, m.doc_root + "/"));
     }
-  } catch (e) {
-    if (process.env.DEBUG) console.error(`[DEBUG] Failed to read manifest: ${e.message}`);
-  }
+  } catch {}
   return docs;
 }
 
@@ -94,9 +92,7 @@ function main() {
     const drift = JSON.parse(fs.readFileSync(driftPath, "utf8"));
     drift.freshness = { stale, veryStale, checkedAt: report.timestamp };
     fs.writeFileSync(driftPath, JSON.stringify(drift, null, 2) + "\n");
-  } catch (e) {
-    if (process.env.DEBUG) console.error(`[DEBUG] Failed to update drift-report.json: ${e.message}`);
-  }
+  } catch {}
 
   if (json) {
     process.stdout.write(JSON.stringify(report, null, 2) + "\n");
