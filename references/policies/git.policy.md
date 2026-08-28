@@ -57,7 +57,7 @@
 
 **独立确认（不覆盖于提交前确认，需各自单独确认）：**
 
-- `tag`、`reset`、`rebase`、`revert`、`merge`、force push、`clean`、`rm`、`restore`
+- `tag`、`reset`、`rebase`、`revert`、`merge`、force push、`clean`、`rm`、`restore`、`stash`、`pull`（`pull` 可触发 merge/rebase）
 - `checkout` 携带未提交改动切换分支
 - `commit --amend` 已推送的提交（视同 force push）
 

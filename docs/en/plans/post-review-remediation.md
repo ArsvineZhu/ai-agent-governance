@@ -26,6 +26,7 @@ By file, each with line number and evidence.
 6. `scripts/check-secrets.js:11-17` — only 5 patterns; misses Slack/Google/Stripe/Azure/JWT/base64/PEM bodies/punctuated passwords; the credential-assignment charclass excludes `/+=!@$%`; `.env` is skipped wholesale in IGNORED_PATHS (`git add -f .env` passes); `:59` reports `line: "staged-diff"` as a placeholder instead of a real line number. GENERAL.
 7. `scripts/check-doc-consistency.js:110` — `mdFiles` compares `rel.startsWith("archive/")` against the Windows `path.relative` result `archive\a.md`, which never matches, so `docs/archive/` links are never scanned. GENERAL.
 8. `docs/archive/` — because of #7's blind spot, 10 dead links are never reported: the language-tree back-links (`../../en/plans/...`) and `../roadmap.md` inside `sync-groups-mechanical-check.md`, `governed-project-sync-groups.md`, `review-manager.md`, `tiered-review-gate.md`. GENERAL.
+9. `scripts/generate-governance.js:288` — `governance_version` is hardcoded to `"0.9.0"`, one release behind `package.json`. Every INIT-generated `.governance/manifest.json` self-reports 0.9.0; the release version-sync never updates it, so a v0.9.1-initialised project reports the old version. SEVERE (version consistency).
 
 ### 2. Hook reimplementation backlog (B plan — must be done right if re-done)
 
@@ -47,6 +48,7 @@ By file, each with line number and evidence.
 - Items 4/5: `locked:false`, `locked:""`, and corrupt `state.json` must be distinguishable; corrupt state fails closed.
 - Item 6: verify blocking against known real secret shapes (Slack/Google/Stripe/JWT/PEM body/punctuated password/force-added `.env`).
 - Items 7/8: after the fix, `docs/archive/` dead links must be reported by `npm run check` rather than silently green.
+- Item 9: a freshly generated manifest's `governance_version` must match `package.json`; re-running INIT reports the current version instead of 0.9.0.
 - Hook 1-10: once all land, verify with a real git-commit matrix in a real shell; `npm run check` and `npm run check:all` exit 0, test count raised with no tautological assertions.
 
 ### Affected Files
@@ -61,7 +63,7 @@ By file, each with line number and evidence.
 - references/templates/githooks-template.md — hook 1-10
 - references/init-spec.json — hook 1, 7
 - references/policies/governance-files.policy.md — hook 1, 8
-- scripts/generate-governance.js — hook 6
+- scripts/generate-governance.js — hook 6, item 9
 - tests/run-tests.js — hook 9 and regression tests for items 1-6
 
 ### Risks

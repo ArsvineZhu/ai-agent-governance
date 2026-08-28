@@ -15,17 +15,21 @@
 - 校验器内容检查 —— CHANGELOG 格式 + manifest `artifacts[].kind` 有效性
 - Git 工作流治理 —— `.governance/git-policy.json` + `scripts/check-git-policy.js`（受保护分支、分支开发、禁止直推）
 - Agent 行为审计 —— 追加式 .governance/activity.jsonl 逐任务审计轨迹 + drift-check `activity-report` 模式
-- 密钥扫描门禁 —— scripts/check-secrets.js 阻止暂存区密钥类内容（校验器 20 项）
+- 密钥扫描门禁 —— scripts/check-secrets.js 阻止暂存区密钥类内容（校验器 21 项）
 - 治理健康分 —— 校验器 `--json` 输出综合 `score`（v1 等权）+ CI 产出 shields.io 徽章 endpoint 工件
 - 知识新鲜度 —— `scripts/check-doc-freshness.js` 经 `git log` 提交日期标记过时治理文档（仅建议性）
 - 内容一致性 —— `scripts/check-doc-consistency.js` 标记文档间交叉矛盾（版本示例/受保护清单/ADR 状态/roadmap 目标/链接/数值声明；仅建议性）
 - **审核管理器** —— 第 8 个子技能：多智能体深度审查工作流（固定 5 领域、严重度排序报告、修复 + 门禁验证）。设计：[../archive/review-manager.md](../archive/review-manager.md)
 - **分级审核门禁** —— release/push 风险分级（低 = 仅轻量级；中 = 批准时建议深度审查；高 = 必须 review-manager）；轻量级脚本总是自动跑。设计：[../archive/tiered-review-gate.md](../archive/tiered-review-gate.md)
 - **被治理项目同步组** —— 两层：（L1）声明式 `.governance/sync-rules.json`（watch/require）+ 清单驱动 Phase 5；（L2）`scripts/check-sync.js` 对照实际改动集机械验证。设计：[../archive/governed-project-sync-groups.md](../archive/governed-project-sync-groups.md) + [../archive/sync-groups-mechanical-check.md](../archive/sync-groups-mechanical-check.md)
+- **INIT 生成器脚本化** —— 确定性、可快照测试的 INIT 生成（`scripts/generate-governance.js`）；分 A → B → C 三期。设计：[../archive/init-scripted-generator.md](../archive/init-scripted-generator.md)
+- **计划交付门禁** —— `scripts/check-plan-delivery.js`：计划与实际交付的机械对账（归档前 fail-closed）
+- **安装载荷完整性门禁** —— 3 项测试证明复制的门禁脚本自包含（无兄弟 `require`）且 `init-spec.json` 的复制清单与 INIT 实际写入一致
+- **确认政策重写** —— 跨五个同步点提交前一次确认；计划批准降为意图对齐（`consent-policy-hardening` 计划）
+- **治理原则索引** —— 18 条原则的纯指针索引 + 一个 `--gate` 检查保持每条来源可解析
 
 ### 近期
 
-- **INIT 生成器脚本化** —— 确定性、可快照测试的 INIT 生成（`scripts/generate-governance.js`）；分 A → B → C 三期。设计：[plans/init-scripted-generator.md](plans/init-scripted-generator.md)
 - **规则捕获** —— 不让口头要求只活在对话上下文里：Agent 对每条要求预分类（持久 / 一次性 / 模糊），开发者在 Phase 6 裁定，确认的规则写入 `AGENTS.md` / `docs/rules/**`，未确认的在行为轨迹里留 `rules_pending` 痕迹。设计：[plans/rule-capture.md](plans/rule-capture.md)
 
 ### 中期

@@ -38,17 +38,32 @@ const CONSENT_SYNC_GROUPS = [
   ["AGENTS.md"],
   ["references/policies/git.policy.md", "docs/rules/git-policy.md"],
   ["references/templates/agents-md.template.md"],
+  ["references/policies/lifecycle.policy.md", "docs/rules/lifecycle.md"],
   ["SKILL.md"],
 ];
+// A marker's `files` restriction is compared by its basename, with dots and dashes
+// normalised away: references/policies/git.policy.md and its governed rendering
+// docs/rules/git-policy.md both reduce to "gitpolicymd", so the restriction covers both
+// domains (they express the same rule, one in the skill repo, one in the governed project).
+// Without this, a governed-project docs/rules file would be skipped from M3/M4/M5 because
+// "git-policy.md" never matched the literal "git.policy.md".
+const consentBasename = (s) => path.basename(s).replace(/[ .-]/g, "").toLowerCase();
 const CONSENT_MARKERS = [
   // Universal: every sync point must state the one-confirmation principle (the pre-commit
   // echo is the single authorisation point; a user's write instruction triggers the echo
   // but is NOT the consent itself) and the intent-alignment demotion of plan approval.
-  { name: "one confirmation per change set (pre-commit echo; instruction is not consent)", re: /one confirmation per change set|一次确认|确认一次/i, files: null },
+  // M1 anchors on the echo + full-sequence substance, NOT the bare "一次确认" wording: a
+  // section heading like "确认范围（一次确认 per 变更集）" would otherwise satisfy the
+  // marker while the substantive rule it heads was deleted (false negative found by review).
+  { name: "one confirmation per change set (pre-commit echo; instruction is not consent)", re: /^(?=[\s\S]*(?:回显|echo))(?=[\s\S]*(?:命令序列|command sequence|add.{0,25}commit.{0,25}push))/i, files: null },
   { name: "plan approval is intent alignment, not commit authorisation", re: /intent alignment|意图对齐|不是提交授权|不是提交确认/i, files: null },
   // Release alignment point — lifecycle.policy.md is a lifecycle doc and carries no
   // release-approval clause by design; only files that own release flow must state it.
-  { name: "release: Proposal at Approval Gate covers the sequence", re: /Approval Gate|批准.*发布序列|发布序列.*批准/i,
+  // M3 anchors on approval COVERING the sequence/write-ops, not the bare "Approval Gate"
+  // token: git.policy.md's git-tag bullet ("须先经 Approval Gate") and SKILL.md's
+  // artifacts mention ("由 RELEASE 的 Approval Gate 产生") both carry the token but state
+  // nothing about coverage — deleting the real release clause left the gate green (review).
+  { name: "release: Proposal at Approval Gate covers the sequence", re: /^(?=[\s\S]*(?:Approval Gate|获批准|获批))(?=[\s\S]*(?:covers?\s+[^.\n]{0,40}(?:sequence|write\s*ops?)|覆盖[^。\n]{0,30}(?:序列|写操作|发布序列)))/i,
     files: ["AGENTS.md", "references/policies/git.policy.md", "references/templates/agents-md.template.md", "SKILL.md"] },
   // Universal hard constraints — the echo IS the sequence and execution never deviates;
   // any step fails → stop and report (never retry differently); push rejected →
@@ -156,12 +171,21 @@ function main() {
       if (f.includes("governance-files.policy.md") || f.includes("adr-000")) continue;
       const mentionsFlow = /治理文件保护|Governance File Protection|Governance file protection/i.test(c);
       if (mentionsFlow) {
-        // Summaries that defer to the single source of truth are exempt by design
-        if (/单一事实源|single source of truth|完整清单见|完整清单以/i.test(c)) continue;
         // Trigger tightening (P1 precondition): only documents that CLAIM to enumerate
         // the list are held to its completeness — the flow mention and the enumeration
         // claim may appear in different places, so each is tested independently.
-        if (!CLAIMS_PROTECTED_LIST.test(c)) continue;
+        const claimsEnum = CLAIMS_PROTECTED_LIST.test(c);
+        if (!claimsEnum) continue;
+        // Single-source-of-truth deferral is exempt BY DESIGN — but only when the
+        // deferral phrase sits in the SAME section as the enumeration claim. A repo can
+        // mention "single source of truth" elsewhere (e.g. the AGENTS.md principles index
+        // table) without deferring this particular listing; an unrelated mention must not
+        // disable the check (review: AGENTS.md was exempted by an index row while its
+        // protection clause sat 10 lines away). Scope the exemption to the section that
+        // actually carries the enumeration claim.
+        const sections = c.split(/\n(?=## )/);
+        const claimSection = sections.find((s) => CLAIMS_PROTECTED_LIST.test(s));
+        if (claimSection && /单一事实源|single source of truth|完整清单见|完整清单以/i.test(claimSection)) continue;
         for (const p of protectedPaths) {
           if (!c.includes(p)) gateIssues.push({ kind: "protected_lists", item: `${f}: missing ${p}` });
         }
@@ -181,7 +205,7 @@ function main() {
       const c = readFile(path.join(ROOT, rel));
       if (!c) continue;
       for (const m of CONSENT_MARKERS) {
-        if (m.files && !m.files.some((f) => rel === f || rel.endsWith("/" + path.basename(f)))) continue;
+        if (m.files && !m.files.some((f) => rel === f || consentBasename(rel) === consentBasename(f))) continue;
         if (!m.re.test(c)) {
           gateIssues.push({ kind: "consent_cluster", item: `${rel}: missing marker ${m.name}` });
         }

@@ -672,6 +672,23 @@ test("release execute: approved release creates annotated tag", () => {
   return gitTags(dir) === "v1.0.1" && String(type.stdout).trim() === "tag";
 });
 
+test("release execute: proposal without headSha is rejected (identity binding)", () => {
+  // A hand-written proposal that never recorded headSha must not bypass the HEAD check;
+  // the release is scoped to a specific commit, so its absence is a hard rejection.
+  const dir = tmp("rel-nohead");
+  gitInit(dir);
+  const proposal = {
+    current: "1.0.0",
+    recommended: "1.0.1",
+    releaseType: "patch",
+    summary: "no headSha",
+  };
+  const proposalPath = path.join(dir, ".governance", "release-proposal.json");
+  write(proposalPath, JSON.stringify(proposal));
+  const r = runRelease(dir, ["execute", "--proposal", proposalPath, "--yes"]);
+  return r.status !== 0 && gitTags(dir) === "" && /headSha/.test(r.stdout + r.stderr);
+});
+
 // ---------- 24. generate-governance.js ----------
 function listFiles(dir) {
   const out = [];
@@ -877,6 +894,30 @@ test("check-plan-delivery: behavioural declaration is verified (writes: X in Y)"
   return bad.status === 1 && /behaviour/.test(bad.stdout) && good.status === 0;
 });
 
+test("check-plan-delivery: --plan on a missing file errors, not silent pass", () => {
+  const dir = tmp("plandel-planmissing");
+  fs.mkdirSync(path.join(dir, "docs/en/plans"), { recursive: true });
+  const r = spawnSync(process.execPath, [PLAN_DELIVERY, "--plan", "docs/en/plans/absent.md"], { cwd: dir, encoding: "utf8" });
+  return r.status === 1 && r.stdout.includes("plan not found");
+});
+
+test("check-plan-delivery: a bare bashname matches its runtime artifact (normalisation)", () => {
+  // A plan citing the bare "git-policy.json" resolves to the .governance/git-policy.json
+  // runtime artifact — must NOT be a vacuous substring pass of an unrelated fragment.
+  const dir = tmp("plandel-basename");
+  fs.mkdirSync(path.join(dir, "docs/archive"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "references/templates"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "scripts"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "references/templates/git-policy.template.md"), "x git-policy.json x", "utf8");
+  fs.writeFileSync(path.join(dir, "scripts/verify_governance.js"), "// governance git-policy.json", "utf8");
+  // A plan declaring "git-policy.json" must resolve (its generating logic exists), and the
+  // identifier corpus must be able to find it WITHOUT the checker's own source counting.
+  fs.writeFileSync(path.join(dir, "docs/archive/p.md"),
+    "# P\n\n### Affected Files\n\n- `git-policy.json` — runtime artifact\n");
+  const r = spawnSync(process.execPath, [PLAN_DELIVERY, "--gate"], { cwd: dir, encoding: "utf8" });
+  return r.status === 0;
+});
+
 test("generate-governance: phase C is fully implemented (no stubs left)", () => {
   const dir = tmp("gen-phase-c");
   const r = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "S", "--phase", "C", "--json"], { encoding: "utf8" });
@@ -940,6 +981,17 @@ test("generate-governance: existing doc root is respected (doc_root remap)", () 
     !fs.existsSync(path.join(dir, "docs")) &&
     m.doc_root === "documentation" &&
     m.artifacts.some((a) => a.path.startsWith("documentation/"));
+});
+
+test("generate-governance: --doc-root with .. cannot escape the target (containment)", () => {
+  const dir = tmp("gen-docroot-escape");
+  // Place a sibling dir two levels up (inside tmp) that a crafted doc-root would target.
+  const escapeTarget = path.resolve(dir, "../../escape-sentinel");
+  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "S", "--phase", "C", "--doc-root", "../../escape-sentinel"], { encoding: "utf8" });
+  // The generator must fail (blocked) rather than write outside. Allow either a nonzero
+  // exit or an exit-0 run that reports the traversal paths as errors — but NEVER write the
+  // sentinel files outside the target.
+  return r.status !== 0 && !fs.existsSync(escapeTarget);
 });
 
 test("generate-governance: L3 audit writes nothing at all (manifest included)", () => {
@@ -1101,9 +1153,9 @@ test("payload: every copied gate script loads in a governed project (no MODULE_N
 const CONSISTENCY = path.join(__dirname, "..", "scripts", "check-doc-consistency.js");
 
 const CONSENT_THREE_MARKERS_TEXT =
-  "One confirmation per change set — the pre-commit echo is the authorisation point.\n" +
+  "One confirmation per change set — echo the full git command sequence before committing.\n" +
   "Plan approval is intent alignment, not a commit authorisation workaround.\n" +
-  "The release sequence is covered by the Proposal at the Approval Gate.\n" +
+  "A Proposal approved at the Approval Gate covers the release sequence.\n" +
   "If any step fails, stop and report — never retry differently.\n" +
   "If push is rejected (non-fast-forward), stop and report — never pull/rebase.";
 
@@ -1168,10 +1220,11 @@ test("consistency --gate: lifecycle doc is exempt from the release marker", () =
   write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
   writeConsentSyncPoint(dir, "AGENTS.md", CONSENT_THREE_MARKERS_TEXT);
   writeConsentSyncPoint(dir, "references/policies/git.policy.md", CONSENT_THREE_MARKERS_TEXT);
-  // lifecycle WITHOUT the release marker — permitted
+  // lifecycle WITHOUT the release marker — permitted (m3 files restriction)
   writeConsentSyncPoint(dir, "references/policies/lifecycle.policy.md",
-    "One confirmation per change set — pre-commit echo.\nPlan approval is intent alignment, not a commit authorisation workaround.\n");
-  writeConsentSyncPoint(dir, "docs/rules/lifecycle.md", "x");
+    "One confirmation per change set — echo the full git command sequence before committing.\nPlan approval is intent alignment, not a commit authorisation workaround.\n");
+  writeConsentSyncPoint(dir, "docs/rules/lifecycle.md",
+    "One confirmation per change set — echo the full git command sequence before committing.\nPlan approval is intent alignment, not a commit authorisation workaround.\n");
   const r = spawnSync(process.execPath, [CONSISTENCY, "--gate", "--json"], { cwd: dir, encoding: "utf8" });
   if (r.status !== 0) return false;
   const out = JSON.parse(r.stdout);
@@ -1193,28 +1246,74 @@ test("consistency --gate: mid-sequence failure marker removed → gate red (regr
   return out.gatePass === false && out.gateIssues.some((g) => g.item.includes("SKILL.md") && g.item.includes("mid-sequence failure"));
 });
 
-test("payload: githooks template generates a self-contained pre-commit hook", () => {
-  const dir = tmp("githook-gen");
-  const g = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "GH", "--phase", "C"], { encoding: "utf8" });
-  if (g.status !== 0) return false;
-  const hookPath = path.join(dir, ".githooks/pre-commit");
-  if (!fs.existsSync(hookPath)) return false;
-  const content = fs.readFileSync(hookPath, "utf8");
-  return content.startsWith("#!/bin/sh") && content.includes("git diff --cached");
+test("consistency --gate: gutted lifecycle.policy.md turns gate red (5th sync point, regression)", () => {
+  // The 5th consent sync point (lifecycle.policy.md) must be a real sync GROUP. Gutting it
+  // of all consent substance must turn the gate red — a bare "一次确认" heading or a mention
+  // in another table must not satisfy it.
+  const dir = tmp("consent-lifecycle-gut");
+  write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
+  for (const rel of ["AGENTS.md", "references/policies/git.policy.md", "references/templates/agents-md.template.md", "SKILL.md"]) {
+    writeConsentSyncPoint(dir, rel, CONSENT_THREE_MARKERS_TEXT);
+  }
+  writeConsentSyncPoint(dir, "references/policies/lifecycle.policy.md", "# Lifecycle\n\nNo consent rules here.\n");
+  const r = spawnSync(process.execPath, [CONSISTENCY, "--gate", "--json"], { cwd: dir, encoding: "utf8" });
+  if (r.status !== 1) return false;
+  const out = JSON.parse(r.stdout);
+  return out.gateIssues.some((g) => g.item.includes("lifecycle.policy.md") && g.item.includes("one confirmation per change set"));
 });
 
-test("payload: consent-fingerprint match logic (Node reproduction of the hook core)", () => {
-  // The sh hook itself cannot execute in the Windows test environment (needs sh); the core
-  // matching logic is reproduced here. Verified separately: matched -> pass, mismatch -> reject.
-  const dir = tmp("hookfn");
-  fs.mkdirSync(path.join(dir, ".governance"), { recursive: true });
-  fs.writeFileSync(path.join(dir, ".gitignore"), ".governance/\n");
-  write(path.join(dir, "c.txt"), "y");
-  const consent = { staged: ["c.txt"], message: ["x"] };
-  const staged = ["c.txt"];
-  const match = consent.staged.slice().sort().join("\n") === staged.slice().sort().join("\n");
-  const mismatch = consent.staged.slice().sort().join("\n") !== ["c.txt", "d.txt"].slice().sort().join("\n");
-  return match && mismatch;
+test("consistency --gate: a section heading alone is not the one-confirmation principle (M1 regression)", () => {
+  // M1 must anchor on the echo + full-sequence substance, NOT the bare "一次确认" wording.
+  // A heading like "确认范围（一次确认 per 变更集）" with no echo/sequence must not satisfy it.
+  const dir = tmp("consent-m1-heading");
+  write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
+  for (const rel of ["AGENTS.md", "references/policies/git.policy.md", "references/templates/agents-md.template.md", "SKILL.md"]) {
+    writeConsentSyncPoint(dir, rel,
+      "## 确认范围（一次确认 per 变更集）\n\nPlan approval is intent alignment, not a commit authorisation.\n" +
+      "A Proposal approved at the Approval Gate covers the release sequence.\n" +
+      "If any step fails, stop and report — never retry differently.\n" +
+      "If push is rejected (non-fast-forward), stop and report — never pull/rebase.\n");
+  }
+  writeConsentSyncPoint(dir, "references/policies/lifecycle.policy.md",
+    "## 确认范围（一次确认 per 变更集）\n\nPlan approval is intent alignment, not a commit authorisation.\n");
+  const r = spawnSync(process.execPath, [CONSISTENCY, "--gate", "--json"], { cwd: dir, encoding: "utf8" });
+  if (r.status !== 1) return false;
+  const out = JSON.parse(r.stdout);
+  return out.gateIssues.some((g) => g.item.includes("one confirmation per change set"));
+});
+
+test("consistency --gate: bare Approval Gate mention is not the release-clause marker (M3 regression)", () => {
+  // M3 must anchor on approval COVERING the sequence/write-ops, not the bare "Approval Gate"
+  // token that also appears in a git-tag bullet. Removing the release clause while leaving a
+  // bare Approval Gate must turn the gate red.
+  const dir = tmp("consent-m3-bare");
+  write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
+  for (const rel of ["AGENTS.md", "references/policies/git.policy.md", "references/templates/agents-md.template.md", "SKILL.md"]) {
+    writeConsentSyncPoint(dir, rel,
+      "One confirmation per change set — echo the full git command sequence before committing.\n" +
+      "Plan approval is intent alignment, not a commit authorisation.\n" +
+      "A release needs to pass through the Approval Gate.\n" +   // bare token, no coverage
+      "If any step fails, stop and report — never retry differently.\n" +
+      "If push is rejected (non-fast-forward), stop and report — never pull/rebase.\n");
+  }
+  writeConsentSyncPoint(dir, "references/policies/lifecycle.policy.md", CONSENT_THREE_MARKERS_TEXT);
+  const r = spawnSync(process.execPath, [CONSISTENCY, "--gate", "--json"], { cwd: dir, encoding: "utf8" });
+  if (r.status !== 1) return false;
+  const out = JSON.parse(r.stdout);
+  return out.gateIssues.some((g) => g.item.includes("Approval Gate covers the sequence"));
+});
+
+test("consistency --gate: governed-project git-policy.md is held to release/mid-sequence markers (files regression)", () => {
+  // The files restriction must match the governed rendering docs/rules/git-policy.md on M3/M4/M5
+  // (basename normalised: git.policy.md == git-policy.md), not just the skill-repo path.
+  const dir = tmp("consent-governed-m345");
+  write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
+  writeConsentSyncPoint(dir, "AGENTS.md", CONSENT_THREE_MARKERS_TEXT);
+  writeConsentSyncPoint(dir, "docs/rules/git-policy.md", /** no M3/M4/M5 */ "One confirmation per change set — echo the full git command sequence before committing.\nPlan approval is intent alignment, not a commit authorisation.\n");
+  const r = spawnSync(process.execPath, [CONSISTENCY, "--gate", "--json"], { cwd: dir, encoding: "utf8" });
+  if (r.status !== 1) return false;
+  const out = JSON.parse(r.stdout);
+  return out.gateIssues.some((g) => g.item.includes("docs/rules/git-policy.md") && /Approval Gate covers the sequence|mid-sequence failure|push rejected/.test(g.item));
 });
 
 test("consistency --gate: protected list trigger is tightened (mere mention exempt)", () => {
@@ -1222,8 +1321,9 @@ test("consistency --gate: protected list trigger is tightened (mere mention exem
   write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
   write(path.join(dir, "references/policies/governance-files.policy.md"),
     "| `AGENTS.md` | policy |\n| `docs/rules/**` | policy |\n");
-  // mentions the protection flow but does NOT claim to enumerate the list
-  write(path.join(dir, "docs/en/README.md"), "# R\n\nThis change should follow the governance-file-protection flow.\n");
+  // mentions the protection flow in the exact casing the regex matches (Governance File
+  // Protection flow) but does NOT claim to enumerate the list
+  write(path.join(dir, "docs/en/README.md"), "# R\n\nThis change should follow the Governance File Protection flow.\n");
   fs.mkdirSync(path.join(dir, "docs/zh-CN"), { recursive: true });
   fs.mkdirSync(path.join(dir, "docs/zh-TW"), { recursive: true });
   write(path.join(dir, "docs/zh-CN/README.md"), "# R\n");

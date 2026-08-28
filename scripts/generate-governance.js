@@ -336,6 +336,13 @@ function main() {
     if (art.generator === "manifest") continue; // generated last, from actually-created artifacts
     const artPath = remap(art.path);
     const targetPath = path.join(targetAbs, artPath);
+    // Containment guard: a crafted --doc-root (e.g. "../../escaped") must not let any
+    // artifact resolve OUTSIDE the target project. path.join resolves "..", so compare the
+    // resolved target against the resolved target root with a trailing separator.
+    if (!targetPath.startsWith(targetAbs + path.sep) && targetPath !== targetAbs) {
+      results.push({ path: artPath, action: "error", error: "path resolves outside target: " + artPath });
+      continue;
+    }
     if (effectiveDryRun) {
       results.push({ path: artPath, action: auditOnly && !dryRun ? "audit-would-create" : "would-create", type: art.type });
       continue;

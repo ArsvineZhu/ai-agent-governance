@@ -1,6 +1,6 @@
 ---
 name: ai-agent-governance
-version: 0.9.1
+version: 0.10.0
 description: >-
   Use when initializing, retrofitting, auditing, OR releasing a project's AI-agent governance framework. Init mode: one-shot bootstrap of AGENTS.md, feature registry, lifecycle, CI validation, security baseline. Audit mode: health-check an already-governed project, detect drift vs .governance/manifest.json, apply minimal fixes. Release mode: version-synced, validated releases via the generated release-manager sub-skill. Triggers on "initialize governance", "setup project for AI agents", "create AGENTS.md framework", "audit governance", "governance health check", "fix governance drift", "release", "publish version", "check skill update", "update this skill". Also loads the generated sub-skills in .governance/generated/skills for ongoing agent work. Do NOT use for normal development tasks.
 ---
@@ -84,7 +84,7 @@ Governance Spec  →  Governance Engine  →  Runtime Contract  →  Coding Agen
 | Dependency Change | confirmation required |
 | Git Commit / Git Push | 一次确认 per 变更集（见下方确认范围） |
 
-**确认范围（一次确认 per 变更集）**：提交前回显完整 git 命令序列——暂存哪些文件、每个 commit 的消息（类型含在消息前缀）、目标 remote/branch——用户确认**一次**，覆盖 add → commit → push。与任务规模无关：小改动也不例外，计划批准不是提交授权（意图对齐），用户说 "push" 等写指令只触发回显，**指令本身不是确认**。范围外操作（tag、reset、rebase、revert、merge、force push、clean、rm、restore、携带未提交改动切换分支、已推送提交的 amend）需各自独立确认。任务级表述（"完成任务"/"发布吧"）不是写指令；歧义表述（"提交一下"）先问。
+**确认范围（一次确认 per 变更集）**：提交前回显完整 git 命令序列——暂存哪些文件、每个 commit 的消息（类型含在消息前缀）、目标 remote/branch——用户确认**一次**，覆盖 add → commit → push。与任务规模无关：小改动也不例外，计划批准不是提交授权（意图对齐），用户说 "push" 等写指令只触发回显，**指令本身不是确认**。范围外操作（tag、reset、rebase、revert、merge、force push、clean、rm、restore、stash、pull、携带未提交改动切换分支、已推送提交的 amend）需各自独立确认。任务级表述（"完成任务"/"发布吧"）不是写指令；歧义表述（"提交一下"）先问。
 
 **发布序列（RELEASE）**：Release Proposal 在 Approval Gate 获批准后，该批准覆盖本次发布序列的全部写操作（版本同步 → 归档 → release commit → tag → push 分支 → push tag → GitHub Release → 资产上传），不再逐步追问。前提：完整 Proposal 已展示且获明确批准、工作区与 HEAD 仍一致。中途任一校验失败 → 停止并重新走 plan。
 
@@ -307,8 +307,8 @@ node scripts/generate-governance.js --target <项目根> --phase C \
 ```json
 {
   "schema_version": "1.0",
-  "governance_version": "0.9.1",
-  "release": { "version": "0.9.1", "tag": "v0.9.1", "validated": false },
+  "governance_version": "0.10.0",
+  "release": { "version": "0.10.0", "tag": "v0.10.0", "validated": false },
   "doc_root": "docs",
   "artifacts": [
     { "name": "AGENTS.md", "path": "AGENTS.md", "kind": "file", "type": "policy" },

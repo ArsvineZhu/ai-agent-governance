@@ -74,8 +74,7 @@ Secrets, unrelated refactors, restructuring without cause, skipping Definition o
 | Modify 3+ Files at Once | confirmation required |
 | Delete Code | confirmation required |
 | Dependency Change | confirmation required |
-| Git Commit | confirmation required |
-| Git Push | forbidden automatically |
+| Git Commit / Git Push | one confirmation per change set (see Git Write Policy) |
 
 ## Rule Priority System
 1. System / Platform Safety → 2. Explicit User Request → 3. Governance Integrity → 4. AGENTS.md → 5. docs/rules/ → 6. Existing Code Convention
@@ -83,7 +82,7 @@ Note: users may request governance changes via explicit instruction (through the
 
 ## Git Write Policy
 - Auto: `git status`, `git diff`, `git add <specific files>`, `git checkout -b` / clean worktree switches
-- Confirm (destructive / out-of-sequence): `git add .`, `git rm`, `git restore`, `git tag`, `git reset`, `git rebase`, `git revert`, `git merge`, `git stash`, `git clean`, `git commit --amend` of a pushed commit (counts as force push), checkout carrying uncommitted changes
+- Confirm (destructive / out-of-sequence): `git add .`, `git rm`, `git restore`, `git tag`, `git reset`, `git rebase`, `git revert`, `git merge`, `git stash`, `git pull` (can trigger merge/rebase), `git clean`, `git commit --amend` of a pushed commit (counts as force push), checkout carrying uncommitted changes
 - **One confirmation per change set.** After any task, before committing: echo the full git command sequence (files to add, each commit message with its type prefix, push target), wait for one explicit confirmation covering `add` → `commit` → `push`. A user's write instruction ("push", "commit these changes") triggers this echo — it is NOT the consent itself. No per-step re-asking.
 - **Plan approval is intent alignment** — aligning "what to change / how", not a commit authorisation. Size tiering decides whether a plan document is written, never whether the user confirms the commit.
 - **Hard constraints:** the echo IS the sequence (never deviate from it); a step fails → stop and report (never retry differently, never improvise); push rejected (non-fast-forward) → stop and report (never pull/rebase yourself); task-level phrasing ("wrap it up", "finish the task") is NOT a write instruction; ambiguous ("提交一下") → ask first.

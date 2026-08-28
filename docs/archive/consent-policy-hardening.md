@@ -51,6 +51,7 @@
 - 凭证 .governance/consent.json（git-ignored）记录用户确认过的提交指纹（文件清单 + commit 消息），hook 比对实际提交与指纹，不符即拒绝。
 - 脆弱性：指纹比对是状态比对——agent 回显后哪怕改一行，指纹就对不上，hook 误拒；主流 hook 做独立可判检查（lint/密钥/格式），不做状态比对。实施前须评估此脆弱性。
 - 边界诚实：凭证由 agent 写入，防"提交偏离已确认的命令序列"，不防"完全绕过确认"；默认不启用。
+- **发布前撤出。** 草拟并随一周期上线，随后从发布撤下：凭证实际未进 .gitignore、`consent.json` 缺失时 hook fail-open、且不校验 commit 消息——足以证明其安全声明不实，不应随版本发布。重做归入 `post-review-remediation` 积压；撤出保持载荷干净。
 
 ### 受影响文件
 
@@ -61,9 +62,7 @@
 - `SKILL.md` —— 权限矩阵与确认范围同步重写
 - `scripts/check-doc-consistency.js` —— consent 簇标记重设计
 - `CHANGELOG.md` —— Changed 条目
-- `tests/run-tests.js` —— consent 相关测试重写 + 新条款存在性测试 + hook 一致性校验测试
-- `references/templates/githooks-template.md` —— pre-commit 钩子模板（方案五）
-- `references/init-spec.json` —— hook 生成声明（方案五）
+- `tests/run-tests.js` —— consent 相关测试重写 + 新条款存在性测试
 
 ### 风险
 

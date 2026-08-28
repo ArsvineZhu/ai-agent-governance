@@ -32,7 +32,6 @@ ai-agent-governance/
 │   │   ├── gitmessage.template.md  # .gitmessage.txt template (commit conventions)
 │   │   ├── git-policy.template.md  # .governance/git-policy.json template (Git workflow policy)
 │   │   └── sync-rules.template.md  # .governance/sync-rules.json template (sync groups)
-│   │   ├── githooks-template.md     # .githooks/pre-commit hook template (consent consistency, off by default)
 │   ├── policies/
 │   │   ├── lifecycle.policy.md / git.policy.md / security.policy.md / coding.policy.md / testing.policy.md
 │   │   └── governance-files.policy.md   # protected files + .governance git-tracking policy

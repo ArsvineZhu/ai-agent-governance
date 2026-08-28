@@ -67,7 +67,7 @@ Run the gate group (`npm run check`) before declaring any task done; run the ful
 - **Impact-face check** — before touching any public interface/module/file, search its references first (`rg "<name>"`); found files enter the Affected Files list. At task end, compare actual changed files (`git diff --name-only`) against that list: listed-but-unchanged → fix or justify; changed-but-not-listed → explain (or revert if it was a lazy side-edit). Also compare the changed set against the plan's `Target`: a file outside the declared domain is an out-of-domain edit and must be explained or reverted — payload edits smuggled into a `repo-infra` task are exactly how the install payload got broken once.
 
 - **Gate layer (fail-closed, exit ≠ 0 blocks):**
-  - `npm test` — 55 tests across all scripts (always)
+  - `npm test` — the full test suite (`tests/run-tests.js`); must exit 0 (always)
   - `node scripts/check-doc-parity.js` — three language trees structurally parallel (after any `docs/` / root `README.md` / `CONTRIBUTING.md` edit)
   - `node scripts/check-layout-sync.js` — `docs/{en,zh-CN,zh-TW}/architecture.md` Repository Layout must list every file under `references/` + `scripts/` (after any `references/` / `scripts/` / `architecture.md` edit)
 - **Advisory layer (exit 0, report only):**
@@ -81,7 +81,12 @@ Run the gate group (`npm run check`) before declaring any task done; run the ful
 - Install payload: the skill consists of `SKILL.md` + `references/` + `scripts/` + `LICENSE` only; `docs/`, `tests/`, `package.json`, `.github/`, README, CONTRIBUTING, CHANGELOG, AGENTS.md are repo infrastructure and must not be copied into skill installations
 - Commit messages: Conventional Commits, in English
 - Sync group: adding or modifying a sub-skill (in `references/templates/sub-skills.md`) or a check script requires updating, in the same change: `docs/{en,zh-CN,zh-TW}/commands.md` (trigger words — user manual duty, see Repository architecture), `docs/{en,zh-CN,zh-TW}/validator.md` (if validator behavior), `CHANGELOG.md` (if behavioral) — `check-doc-consistency.js`'s prompt-sync check enforces the commands.md half
-- Releases follow `references/workflows/release.md`: plan (read-only) → developer approval → tag → GitHub Release. No tag/push/release without explicit approval. **Path mapping for THIS repo** — `release.md` is payload written for governed projects (`docs/plans/` → `docs/plans/archive/`, milestones in `DEVELOPMENT_PLAN.md`); this repo's equivalents are: plans in the three language trees (`docs/{en,zh-CN,zh-TW}/plans/`) → archived to `docs/archive/` (shared, single-language); no `DEVELOPMENT_PLAN.md` — milestone tracking lives in `docs/en/roadmap.md`. Follow release.md's steps, substitute these paths.
+- Releases follow `references/workflows/release.md`: plan (read-only) → developer approval → tag → GitHub Release. No tag/push/release without explicit approval. **Path mapping for THIS repo** — `release.md` is payload written for governed projects (`docs/plans/` → `docs/plans/archive/`, milestones in `DEVELOPMENT_PLAN.md`); this repo's equivalents are: plans in the three language trees (`docs/{en,zh-CN,zh-TW}/plans/`) → archived to `docs/archive/` (shared, single-language); no `DEVELOPMENT_PLAN.md` — milestone tracking lives in `docs/en/roadmap.md`. Follow release.md's steps, substitute these paths. **Caveats unique to this repo** (release.md is written for governed projects and does not cover these):
+  - **No `.governance/manifest.json`** — the five-place `version.manifest_match_tag` rule (package.json / CHANGELOG / manifest `governance_version` / SKILL.md frontmatter / tag) reduces to **three places + tag** here: `package.json`, `CHANGELOG.md` `[Unreleased]`→`[X.Y.Z]`, SKILL.md frontmatter `version`. The manifest step (Phase 4 step 2's manifest write, step 12's `release.validated`) is skipped by design.
+  - **`validator.passed` is exempt** (release.md L37): the skill repo has no `.governance/`/software-project shape, so `verify_governance.js` fails by design here (ADR-0006). Its gate obligation is replaced by `tests.required` (`npm test` exit 0). Do NOT fabricate a `.governance/` to make it pass.
+  - **Script filename is `scripts/verify_governance.js`** (underscore). release.md L181/L186 references `verify-governance.js` (hyphen) — that is a governed-project path; here it is the underscore file and it is not run as a release gate.
+  - **Archive collision** — a plan exists as three language copies (`docs/{en,zh-CN,zh-TW}/plans/X.md`) but `docs/archive/` is shared single-language. The 简体中文 copy wins; the en/zh-TW copies are not archive candidates. Archive one file named `X.md` in `docs/archive/`.
+  - **Roadmap re-baseline is part of the release** (per its maintenance rule), so Phase 4 also updates `docs/en/roadmap.md` when it archives plans.
 - Roadmap horizons are re-baselined at each release (per the maintenance rule in `docs/en/roadmap.md`), not ad-hoc
 
 ## Git Operation Safety Protocol (HIGHEST PRIORITY)
@@ -101,6 +106,6 @@ Read-only git ops (`status`/`log`/`diff`/`show`/`fetch`/`remote`/`branch`) are f
 - Push rejected (non-fast-forward) → stop and report. Never pull/rebase and re-push on your own.
 - Task-level phrasing ("wrap it up", "完成任务", "发布吧") is NOT a write instruction. Ambiguous remarks ("提交一下", "clean up the repo") → ask first.
 
-**Independent confirmation** — never covered by the pre-commit echo: `tag`, `reset`, `rebase`, `revert`, `merge`, force push, `clean`, `rm`, `restore`; checkout carrying uncommitted changes; amend of an already-pushed commit (counts as force push). `checkout -b` and clean-worktree switches are free.
+**Independent confirmation** — never covered by the pre-commit echo: `tag`, `reset`, `rebase`, `revert`, `merge`, force push, `clean`, `rm`, `restore`, `stash`, `pull`; checkout carrying uncommitted changes; amend of an already-pushed commit (counts as force push). `checkout -b` and clean-worktree switches are free.
 
 Before confirming, still run the pre-commit checklist: `scripts/check-secrets.js` exit 0, no sensitive/unrelated files staged. When in doubt, ask first.

@@ -166,11 +166,14 @@ function execute(argv) {
   const st = git(["status", "--porcelain"]);
   if (st.status !== 0) fail("execute: not a git repository", 4);
   if (String(st.stdout || "").trim() !== "") fail("execute: working tree not clean — abort, re-run plan", 4);
-  if (proposal.headSha) {
-    const head = git(["rev-parse", "HEAD"]);
-    if (String(head.stdout || "").trim() !== proposal.headSha) {
-      fail("execute: HEAD changed since proposal — abort, re-analyze and re-approve", 4);
-    }
+  if (!proposal.headSha) {
+    // The HEAD-identity binding is mandatory: approval is scoped to a specific commit, so a
+    // proposal that never recorded one (e.g. hand-written JSON) must not bypass the check.
+    fail("execute: proposal has no headSha — abort, regenerate via plan", 4);
+  }
+  const head = git(["rev-parse", "HEAD"]);
+  if (String(head.stdout || "").trim() !== proposal.headSha) {
+    fail("execute: HEAD changed since proposal — abort, re-analyze and re-approve", 4);
   }
   const existing = git(["tag", "-l", tag]);
   if (String(existing.stdout || "").trim() !== "") fail(`execute: tag ${tag} already exists`, 4);

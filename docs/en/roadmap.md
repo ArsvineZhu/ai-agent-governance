@@ -15,17 +15,21 @@ Horizons: **Done** / **Near-term** / **Mid-term** / **Long-term**
 - Validator content checks — CHANGELOG format + manifest `artifacts[].kind` validity
 - Git workflow governance — `.governance/git-policy.json` + `scripts/check-git-policy.js` (protected branches, branch-based development, no direct push)
 - Agent activity audit — append-only `.governance/activity.jsonl` per-task audit trail + drift-check `activity-report` mode
-- Secret scanning gate — `scripts/check-secrets.js` blocks secret-like staged content (validator 20 checks)
+- Secret scanning gate — `scripts/check-secrets.js` blocks secret-like staged content (validator 21 checks)
 - Governance score — validator `--json` outputs composite `score` (unweighted v1) + CI shields.io badge endpoint artifact
 - Doc freshness — `scripts/check-doc-freshness.js` flags stale governance docs via `git log` commit dates (advisory only)
 - Doc consistency — `scripts/check-doc-consistency.js` flags cross-document contradictions (version examples, protected lists, ADR statuses, roadmap targets, links, numeric claims; advisory only)
 - **Review manager** — 8th sub-skill: multi-agent deep review workflow (5 fixed domains, severity-sorted report, fix + gate verification). Design: [../archive/review-manager.md](../archive/review-manager.md)
 - **Tiered review gate** — release/push risk tiering (low = lightweight only; medium = suggested deep review at approval; high = review-manager required); lightweight scripts always run. Design: [../archive/tiered-review-gate.md](../archive/tiered-review-gate.md)
 - **Governed-project sync groups** — two layers: (L1) declarative `.governance/sync-rules.json` (watch/require) + checklist-driven Phase 5; (L2) `scripts/check-sync.js` mechanical verification against the actual change set. Designs: [../archive/governed-project-sync-groups.md](../archive/governed-project-sync-groups.md) + [../archive/sync-groups-mechanical-check.md](../archive/sync-groups-mechanical-check.md)
+- **INIT scripted generator** — deterministic, snapshot-testable INIT generation (`scripts/generate-governance.js`); phased A → B → C. Design: [../archive/init-scripted-generator.md](../archive/init-scripted-generator.md)
+- **Plan delivery gate** — `scripts/check-plan-delivery.js`: mechanical plan-vs-delivery reconciliation (fail-closed before archiving)
+- **Install-payload integrity gate** — 3 tests proving copied gate scripts are self-contained (no sibling `require`) and that `init-spec.json`'s copy list matches what INIT writes
+- **Consent policy rewrite** — one confirmation per change set across five sync points; plan approval demoted to intent alignment (`consent-policy-hardening` plan)
+- **Governance principles index** — pointers-only index of 18 principles + a `--gate` check that keeps every row's source resolvable
 
 ### Near-term
 
-- **INIT scripted generator** — deterministic, snapshot-testable INIT generation (`scripts/generate-governance.js`); phased A → B → C. Design: [plans/init-scripted-generator.md](plans/init-scripted-generator.md)
 - **Rule capture** — stop stated requirements from living only in chat context: the agent pre-classifies each requirement (persistent / one-off / unclear), the developer adjudicates at Phase 6, confirmed rules are written into `AGENTS.md` / `docs/rules/**`, unconfirmed ones leave a `rules_pending` trace in the activity trail. Design: [plans/rule-capture.md](plans/rule-capture.md)
 
 ### Mid-term

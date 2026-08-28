@@ -113,7 +113,11 @@ function verifyDeclaredPath(declared) {
   const raw = declared.trim().replace(/^`|`$/g, "");
 
   for (const [frag, proofs] of RUNTIME_ARTIFACTS) {
-    if (raw.includes(frag) || frag.includes(raw)) {
+    // Match a declared path to an artifact fragment by exact/prefix path OR by basename
+    // (a plan often cites the bare "git-policy.json" for ".governance/git-policy.json").
+    const fragBase = path.basename(frag);
+    const matchesFrag = raw === frag || raw.startsWith(frag) || raw === fragBase || raw.endsWith("/" + fragBase);
+    if (matchesFrag) {
       const found = proofs.filter((pf) => {
         const c = readFileSafe(pf);
         return c && c.includes(path.basename(frag));
@@ -162,6 +166,10 @@ function corpus() {
   searchCorpus = [];
   for (const r of SEARCH_ROOTS) {
     for (const f of walkFiles(r)) {
+      // Exclude the checker's own source and CHANGELOG: a comment naming an identifier (or a
+      // changelog entry describing a bug about it) is not evidence the identifier is WIRED
+      // in. Self-reference and historical description both create false "verified" hits.
+      if (f === "scripts/check-plan-delivery.js" || f === "CHANGELOG.md") continue;
       const c = readFileSafe(f);
       if (c) searchCorpus.push([f, c]);
     }
@@ -268,6 +276,10 @@ function main() {
 
   const plans = [];
   if (only) {
+    if (!fs.existsSync(path.join(ROOT, only))) {
+      console.log("✗ plan not found: " + only);
+      process.exit(1);
+    }
     plans.push(only);
   } else {
     // plans still in flight (language trees) + already archived

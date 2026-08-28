@@ -26,6 +26,7 @@
 6. `scripts/check-secrets.js:11-17` —— 仅 5 个模式；漏 Slack/Google/Stripe/Azure/JWT/base64/PEM 主体/带标点密码；credential 赋值的字符类排除 `/+=!@$%`；`.env` 在 IGNORED_PATHS 中被整体跳过（`git add -f .env` 通过）；`:59` 报 `line: "staged-diff"` 占位符而非真实行号。GENERAL。
 7. `scripts/check-doc-consistency.js:110` —— `mdFiles` 用 `rel.startsWith("archive/")` 判定，与 Windows 的 `path.relative` 结果 `archive\a.md` 永不相等，`docs/archive/` 的链接永不扫描。GENERAL。
 8. `docs/archive/` —— 因第 7 条的盲点，10 个死链从未被报告：`sync-groups-mechanical-check.md`、`governed-project-sync-groups.md`、`review-manager.md`、`tiered-review-gate.md` 内指向语言树的返回链接（`../../en/plans/...`）及 `../roadmap.md` 均不解析。GENERAL。
+9. `scripts/generate-governance.js:288` —— `governance_version` 硬编码为 `"0.9.0"`，比 `package.json` 落后一个版本。每次 INIT 生成的 `.governance/manifest.json` 都自报 0.9.0；release 版同步流程不更新它，因此由 v0.9.1 初始化的项目各自报到旧版本。SEVERE（版本一致性）。
 
 ### 二、钩子重新实现待办（B 方案，撤出后若要重做必须做对）
 
@@ -47,6 +48,7 @@
 - 第 4/5 条：`locked:false`、`locked:""`、损坏 state.json 各自的行为须可区分，损坏态 fail-closed。
 - 第 6 条：对已知真实密钥形状（Slack/Google/Stripe/JWT/PEM 主体/带标点密码/force-added `.env`）逐一验证阻断。
 - 第 7/8 条：修复后 `docs/archive/` 死链须被 `npm run check` 报出（而非静默绿）。
+- 第 9 条：新生成的 manifest 的 `governance_version` 须与 `package.json` 一致；重跑 INIT 后的 manifest 报当前版本而非 0.9.0。
 - 钩子 1-10：全部落地后，在真 sh 环境用真实 git 提交矩阵验证；`npm run check` 与 `npm run check:all` exit 0，测试数上调且无恒真断言。
 
 ### 受影响文件
@@ -61,7 +63,7 @@
 - references/templates/githooks-template.md —— 钩子 1-10
 - references/init-spec.json —— 钩子 1、7
 - references/policies/governance-files.policy.md —— 钩子 1、8
-- scripts/generate-governance.js —— 钩子 6
+- scripts/generate-governance.js —— 钩子 6、第 9 条
 - tests/run-tests.js —— 钩子 9 及第 1-6 条回归测试
 
 ### 风险

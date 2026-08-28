@@ -32,7 +32,6 @@ ai-agent-governance/
 │   │   ├── gitmessage.template.md  # .gitmessage.txt 範本（提交約定）
 │   │   ├── git-policy.template.md  # .governance/git-policy.json 範本（Git 工作流程策略）
 │   │   └── sync-rules.template.md  # .governance/sync-rules.json 範本（同步組）
-│   │   ├── githooks-template.md     # .githooks/pre-commit 鉤子模板（提交一致性，預設不啟用）
 │   ├── policies/
 │   │   ├── lifecycle.policy.md / git.policy.md / security.policy.md / coding.policy.md / testing.policy.md
 │   │   └── governance-files.policy.md   # 受保護檔案 + .governance Git 追蹤策略
