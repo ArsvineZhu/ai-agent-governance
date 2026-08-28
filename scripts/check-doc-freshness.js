@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// PAYLOAD SCRIPT — copied standalone into governed projects (references/init-spec.json).
+// Keep it self-contained: Node builtins only, never require() a sibling module.
 // Doc Freshness Check — read-only. Flags governance docs gone stale relative to code
 // activity. Uses git commit dates (git log -1 --format=%cs), NOT filesystem mtime —
 // fresh clones have all mtimes equal to checkout time.

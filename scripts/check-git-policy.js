@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// PAYLOAD SCRIPT — copied standalone into governed projects (references/init-spec.json).
+// Keep it self-contained: Node builtins only, never require() a sibling module.
 // Git Policy Check — read-only. Verifies the current branch/state against .governance/git-policy.json.
 // Usage: node scripts/check-git-policy.js [--json]
 // Exit 0: safe to proceed. Exit 1: currently on a protected branch with directPush=false —

@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// PAYLOAD SCRIPT — copied standalone into governed projects (references/init-spec.json).
+// Keep it self-contained: Node builtins only, never require() a sibling module.
 // Lock Check — read-only. Verifies no other agent holds a lock in .governance/state.json.
 // Usage: node scripts/check-lock.js [--json]
 // Exit 0: no lock held (or no state yet). Exit 1: a lock is held — wait or coordinate,

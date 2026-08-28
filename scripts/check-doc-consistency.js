@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// PAYLOAD SCRIPT — copied standalone into governed projects (references/init-spec.json).
+// Keep it self-contained: Node builtins only, never require() a sibling module.
 // Doc Consistency Check — read-only. Detects cross-document contradictions:
 //   1. version-example sync   — examples of governance_version/manifest values vs current
 //   2. protected-files sync   — summary lists vs the single source of truth

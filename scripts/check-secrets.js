@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// PAYLOAD SCRIPT — copied standalone into governed projects (references/init-spec.json).
+// Keep it self-contained: Node builtins only, never require() a sibling module.
 // Secret Scanning Gate — read-only, zero-dependency. Scans the STAGED diff
 // (git diff --cached) for secret-like material. Mirrors check-git-policy.js.
 // Usage: node scripts/check-secrets.js [--json]

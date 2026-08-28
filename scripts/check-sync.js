@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// PAYLOAD SCRIPT — copied standalone into governed projects (references/init-spec.json).
+// Keep it self-contained: Node builtins only, never require() a sibling module.
 // Sync Groups Mechanical Check — read-only, zero-dependency.
 // Verifies a task's change set against .governance/sync-rules.json.
 // Usage: node scripts/check-sync.js [--json] [--advisory] [--base <sha>]

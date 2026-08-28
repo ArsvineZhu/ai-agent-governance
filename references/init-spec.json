@@ -1,6 +1,9 @@
 {
   "$schema": "init-spec-v1",
   "description": "Machine-readable specification for the INIT scripted generator. SKILL.md references this file; never restate its contents in prose. Single source of truth for what the generator produces.",
+  "invariants": {
+    "copied_scripts_are_self_contained": "Artifacts of type 'copy' under scripts/ are copied into governed projects FILE BY FILE. Each one must therefore run standalone: Node builtins only, no relative require() of sibling modules, no reads of skill-repo files. Extracting shared helpers into a library breaks every governed project unless the library is added here too - and even then it burdens each project with an implicit dependency. Duplication across these scripts is deliberate, not an oversight. Enforced by the 'payload:' tests in tests/run-tests.js (static invariant + end-to-end load check)."
+  },
   "phases": {
     "A": {
       "name": "static skeleton",
