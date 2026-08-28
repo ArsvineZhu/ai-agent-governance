@@ -12,6 +12,9 @@
 //   8. consent-cluster sync   — every EXISTING consent sync point must declare the same
 //      markers (Exception A, Exception B, echo-never-waived); missing points are skipped,
 //      so both this repo (4 points) and governed projects (2 points) are covered.
+//   9. principles-index pointers — every file referenced by the AGENTS.md governance
+//      principles index must exist (the index is pointers-only, so a moved file silently
+//      turns it into a lie unless this is checked).
 //
 // Modes: default = advisory, ALWAYS exit 0 (heuristics, not a gate).
 //        --gate  = fail-closed on the mechanically checkable clusters ONLY (#2 and #8,
@@ -38,8 +41,12 @@ const CONSENT_SYNC_GROUPS = [
   ["SKILL.md"],
 ];
 const CONSENT_MARKERS = [
-  { name: "Exception A (explicit user instruction covers minimal sequence)", re: /Exception A|例外 A|例外一/ },
-  { name: "Exception B (release sequence)", re: /Exception B|例外 B|例外二/ },
+  // Definition-title match, not bare keyword: "例外 A" also appears in *reference* lines
+  // ("此时适用下方例外 A。"), so a keyword-only regex would treat a leftover reference as a
+  // live definition (a false negative — the definition can be deleted while the reference
+  // stays). A definition is marked by an em-dash heading: "Exception A —" / "例外 A ——".
+  { name: "Exception A (explicit user instruction covers minimal sequence)", re: /Exception A\s*\u2014|例外 A\s*\u2014\u2014|例外一\s*\u2014\u2014/ },
+  { name: "Exception B (release sequence)", re: /Exception B\s*\u2014|例外 B\s*\u2014\u2014|例外二\s*\u2014\u2014/ },
   { name: "echo never waived (waive re-asking, never echoing)", re: /never\s*\*\*\s*(?:re)?echo\w*|never echoing|不免除.*回显/ },
 ];
 
@@ -161,6 +168,30 @@ function main() {
       for (const m of CONSENT_MARKERS) {
         if (!m.re.test(c)) {
           gateIssues.push({ kind: "consent_cluster", item: `${rel}: missing marker ${m.name}` });
+        }
+      }
+    }
+  }
+
+  // ---- 9. principles-index pointers (gate class) ----
+  // The AGENTS.md index is pointers-only by design, so a moved or renamed source silently
+  // turns each row into a false claim. Assert every referenced file exists. Runs only where
+  // the index exists (this repo); governed projects have no such index and are skipped.
+  const agentsDoc = readFile(path.join(ROOT, "AGENTS.md"));
+  if (agentsDoc && /Governance principles index/i.test(agentsDoc)) {
+    const bt = String.fromCharCode(96);
+    const fileRe = new RegExp(bt + "([^" + bt + "]+)" + bt, "g");
+    for (const line of agentsDoc.split("\n")) {
+      if (!line.startsWith("| ") || line.startsWith("| ---") || line.startsWith("| Principle")) continue;
+      const cells = line.split("|").map((s) => s.trim());
+      const source = cells[2] || "";
+      let fm;
+      fileRe.lastIndex = 0;
+      while ((fm = fileRe.exec(source))) {
+        const target = fm[1].trim();
+        if (!/[/.]/.test(target)) continue; // not a path
+        if (!fs.existsSync(path.join(ROOT, target))) {
+          gateIssues.push({ kind: "principles_index", item: `AGENTS.md index points at missing ${target}` });
         }
       }
     }

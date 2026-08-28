@@ -2,6 +2,33 @@
 
 Guidelines for agents working on the ai-agent-governance skill repo itself. This repo is a skill distribution repository (not a governed software project) — it uses lightweight governance: release flow + plans/archive + ADRs + tests.
 
+## Governance principles index
+
+Where each principle authoritatively lives. Pointers only — never restate the content here; edit the authoritative file and this index stays valid. Scope tells you which domain a principle governs: **payload** ships to governed projects, **repo** governs work on this repository.
+
+| Principle | Authoritative source | Scope |
+| --- | --- | --- |
+| Single source of truth | `SKILL.md` § 单一事实源 | payload |
+| Rule Priority (conflict adjudication) | `SKILL.md` § Rule Priority | payload |
+| Agent permission matrix | `SKILL.md` § Agent Permission Model | payload |
+| Three-state status protocol | `SKILL.md` § 状态协议 | payload |
+| Anti-fabrication | `SKILL.md` § 反虚构规则 | payload |
+| Feature placeholder strategy | `SKILL.md` § Feature 占位策略 | payload |
+| Project defaults (no guessing) | `SKILL.md` § 项目默认值约定 | payload |
+| Language policy by audience | `SKILL.md` § 语言政策 · this file § Conventions | both |
+| Circuit breaker (error recovery) | `SKILL.md` § 熔断机制 | payload |
+| Two-pass context breaker | `SKILL.md` § 上下文熔断 | payload |
+| Governance file protection | `references/policies/governance-files.policy.md` | both |
+| Multi-agent identity + locking | `SKILL.md` § 多 Agent 协作 | payload |
+| Error classification | `SKILL.md` § 错误分类 | payload |
+| Human-in-the-loop release | `references/workflows/release.md` § 发布流程总览 | both |
+| SemVer discipline | `references/workflows/release.md` § Phase 2 | both |
+| Release transactionality | `references/workflows/release.md` § 事务性 | payload |
+| Turn-scoped consent + exceptions A/B | `references/policies/git.policy.md` § 确认范围 · this file § Git Operation Safety Protocol | both |
+| Payload self-containment | `references/init-spec.json` § invariants | repo |
+
+Two gates keep this index and its sources honest: the consent cluster and the protected-files cluster are verified by `node scripts/check-doc-consistency.js --gate` (part of `npm run check`).
+
 ## Repository architecture
 
 See [docs/en/architecture.md](docs/en/architecture.md) — the single source of truth for repository layout (what each directory is FOR, install payload vs repo infrastructure split).
@@ -12,6 +39,7 @@ Hard rules that follow from this:
 - **`docs/` edits are a documentation duty, not the feature.** When a sub-skill gains/changes trigger words, syncing them into `docs/{en,zh-CN,zh-TW}/commands.md` exists so USERS can learn how to invoke the skill — it serves the manual, not the skill. The skill works with or without it.
 - **Never restate skill content into `docs/`.** Docs reference the skill (file + section pointer), they do not copy workflows, step lists, or full trigger inventories.
 - **Classification judge rule** — ask "who reads this and does it change the skill?" Skill behavior (modes, lifecycle, templates, policies, validator checks, trigger definitions) → `references/`, single-language. Developer/user docs (how to install, how to invoke, design history, roadmap, glossary) → `docs/`, trilingual. A `docs/` page may summarize a skill concept but must point to the skill source rather than re-specify it.
+- **Where a principle goes (the three-layer judge rule)** — `SKILL.md` policy layer holds what the *skill executor* must read on every INIT/AUDIT/RELEASE run; `references/policies/` holds *content artifacts* that get copied into governed projects as `docs/rules/*`; `AGENTS.md` holds rules for working on *this* repository. Test: would an agent executing a concrete task get it wrong without reading this? If yes and it governs the skill's own execution → policy layer. If it is a rule the governed project's agents must follow → `references/policies/`. If it only applies to contributors here → this file. The index above records where each one currently lives.
 
 ## Before touching anything
 
@@ -30,12 +58,13 @@ Modifying `SKILL.md`, `references/policies/**`, `references/templates/**`, `refe
 - CHANGELOG is written at merge/release boundaries (per the release flow), not per commit
 - Small changes (single file, no public-interface change) skip the full lifecycle and CHANGELOG entry; medium/large changes follow the full six-phase lifecycle (per `references/policies/lifecycle.policy.md` scope tiers)
 - Plans are design docs in each language tree's `plans/` (`docs/<lang>/plans/`); completed plans are archived to `docs/archive/` (shared, single-language) at release, never deleted
+- **Every TASK plan declares a `Target`** — `payload` (ships to governed projects: `SKILL.md`, `references/`, `scripts/`, `LICENSE`), `repo-infra` (`docs/`, `tests/`, `package.json`, `.github/`, README/CONTRIBUTING/CHANGELOG/AGENTS.md), or `both`. When `Target: both`, the plan must enumerate the sync points per domain — that enumeration is what stops a cross-domain rule from being updated in one place only. Write filenames outside the Affected Files section without backticks: the delivery gate treats every backticked token inside that section as a delivery declaration.
 
 ## Validation (standard verification procedure)
 
 Run the gate group (`npm run check`) before declaring any task done; run the full group (`npm run check:all`) before release. Record real output (never claim "should pass").
 
-- **Impact-face check** — before touching any public interface/module/file, search its references first (`rg "<name>"`); found files enter the Affected Files list. At task end, compare actual changed files (`git diff --name-only`) against that list: listed-but-unchanged → fix or justify; changed-but-not-listed → explain (or revert if it was a lazy side-edit).
+- **Impact-face check** — before touching any public interface/module/file, search its references first (`rg "<name>"`); found files enter the Affected Files list. At task end, compare actual changed files (`git diff --name-only`) against that list: listed-but-unchanged → fix or justify; changed-but-not-listed → explain (or revert if it was a lazy side-edit). Also compare the changed set against the plan's `Target`: a file outside the declared domain is an out-of-domain edit and must be explained or reverted — payload edits smuggled into a `repo-infra` task are exactly how the install payload got broken once.
 
 - **Gate layer (fail-closed, exit ≠ 0 blocks):**
   - `npm test` — 55 tests across all scripts (always)

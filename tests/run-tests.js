@@ -1101,8 +1101,8 @@ test("payload: every copied gate script loads in a governed project (no MODULE_N
 const CONSISTENCY = path.join(__dirname, "..", "scripts", "check-doc-consistency.js");
 
 const CONSENT_THREE_MARKERS_TEXT =
-  "Exception A: an explicit user write instruction covers its minimal sequence.\n" +
-  "Exception B: the release sequence is covered by the Approval Gate.\n" +
+  "Exception A — an explicit user write instruction covers its minimal sequence.\n" +
+  "Exception B — the release sequence is covered by the Approval Gate.\n" +
   "Both exceptions waive re-asking, never echoing.";
 
 function writeConsentSyncPoint(dir, rel, content) {
@@ -1199,6 +1199,59 @@ test("consistency: advisory mode stays exit 0 even with gate-class violations", 
   writeConsentSyncPoint(dir, "AGENTS.md", "some text without any markers");
   const r = spawnSync(process.execPath, [CONSISTENCY], { cwd: dir, encoding: "utf8" });
   return r.status === 0;
+});
+
+test("consistency --gate: principles-index pointer to a missing file exits 1", () => {
+  const dir = tmp("index-broken");
+  write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
+  write(path.join(dir, "AGENTS.md"),
+    "# AGENTS.md\n\n## Governance principles index\n\n| Principle | Authoritative source | Scope |\n| --- | --- | --- |\n| Something | `references/does-not-exist.md` | payload |\n");
+  const r = spawnSync(process.execPath, [CONSISTENCY, "--gate", "--json"], { cwd: dir, encoding: "utf8" });
+  if (r.status !== 1) return false;
+  const out = JSON.parse(r.stdout);
+  return out.gateIssues.some((g) => g.kind === "principles_index" && g.item.includes("references/does-not-exist.md"));
+});
+
+test("consistency --gate: principles index with resolving pointers exits 0", () => {
+  const dir = tmp("index-ok");
+  write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
+  write(path.join(dir, "references/policies/git.policy.md"),
+    "例外 A —— 用户显式写指令覆盖其最小序列。\n例外 B —— 发布序列（RELEASE）。\n两条例外只免除「重复追问」，不免除「回显」。\n");
+  write(path.join(dir, "AGENTS.md"),
+    "# AGENTS.md\n\n## Governance principles index\n\n| Principle | Authoritative source | Scope |\n| --- | --- | --- |\n| Consent | `references/policies/git.policy.md` | both |\n\nException A — an explicit user write instruction.\nException B — the release sequence.\nBoth exceptions waive re-asking, never echoing.\n");
+  const r = spawnSync(process.execPath, [CONSISTENCY, "--gate"], { cwd: dir, encoding: "utf8" });
+  return r.status === 0;
+});
+
+test("consistency --gate: governed project without an index skips check 9", () => {
+  const dir = tmp("index-absent");
+  write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
+  writeConsentSyncPoint(dir, "AGENTS.md", CONSENT_THREE_MARKERS_TEXT); // no index section
+  const r = spawnSync(process.execPath, [CONSISTENCY, "--gate", "--json"], { cwd: dir, encoding: "utf8" });
+  if (r.status !== 0) return false;
+  const out = JSON.parse(r.stdout);
+  return !out.gateIssues.some((g) => g.kind === "principles_index");
+});
+
+test("consistency --gate: reference to a marker is not a definition (regression)", () => {
+  // A "例外 A" keyword can appear in a reference line without defining the rule. Deleting
+  // the definition but leaving the reference must NOT pass the gate — this was a false
+  // negative in the first implementation.
+  const dir = tmp("consent-ref-not-def");
+  write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
+  for (const rel of ["AGENTS.md", "references/templates/agents-md.template.md"]) {
+    writeConsentSyncPoint(dir, rel, CONSENT_THREE_MARKERS_TEXT);
+  }
+  writeConsentSyncPoint(dir, "SKILL.md", "例外一\n例外二\n不免除「回显」\n");
+  // git.policy.md: Exception A DEFINITION removed, but a reference line still says "例外 A".
+  writeConsentSyncPoint(dir, "references/policies/git.policy.md",
+    "- 此时应适用下方例外 A。\n" +
+    "例外 B —— 发布序列（RELEASE）：说明。\n" +
+    "两条例外只免除「重复追问」，不免除「回显」。\n");
+  const r = spawnSync(process.execPath, [CONSISTENCY, "--gate", "--json"], { cwd: dir, encoding: "utf8" });
+  if (r.status !== 1) return false;
+  const out = JSON.parse(r.stdout);
+  return out.gatePass === false && out.gateIssues.some((g) => g.item.includes("git.policy.md") && g.item.includes("Exception A"));
 });
 
 // ---------- runner (must stay after ALL test registrations) ----------

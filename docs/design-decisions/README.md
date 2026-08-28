@@ -10,5 +10,6 @@
 | [ADR-0003](adr-0003-single-file-bilingual-readme.md) | 单文件双语 README，而非按语言拆分文件 | Superseded（被 ADR-0005 取代） |
 | [ADR-0005](adr-0005-trilingual-split-docs.md) | 三语拆分文档（docs/en/ + docs/zh-CN/ + docs/zh-TW/） | Accepted |
 | [ADR-0004](adr-0004-human-in-the-loop-release.md) | Human-in-the-loop 发布流程（Analyze → Proposal → Approval → Execute） | Accepted（v0.4.0） |
+| [ADR-0006](adr-0006-no-dogfooding.md) | 本仓库不狗粮自身治理框架 | Accepted |
 
 状态：Proposed / Accepted / Superseded / Deprecated。
