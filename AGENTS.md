@@ -86,10 +86,21 @@ Run the gate group (`npm run check`) before declaring any task done; run the ful
 
 ## Git Operation Safety Protocol (HIGHEST PRIORITY)
 
-Read-only git ops (`status`/`log`/`diff`/`show`/`fetch`/`remote`/`branch`) are free. All write ops (`add`/`commit`/`push`/`merge`/`rebase`/`reset`/`stash`/`revert`/`clean`/`pull`) are **forbidden without explicit consent**. Consent is **turn-scoped** — a prior "确认" does not carry over; each write op needs its own fresh confirmation. Echo the exact command before running it. Task-level phrasing ("wrap it up", "完成任务", "发布吧") is NOT a write instruction. When in doubt, ask first.
+Read-only git ops (`status`/`log`/`diff`/`show`/`fetch`/`remote`/`branch`) are free.
 
-**Exception A — an explicit user write instruction covers its minimal sequence.** When the user directly issues a write instruction in the current turn ("push", "commit these changes", "提交并推送", "Run git push"), that instruction IS the consent and it covers the **minimal sequence required to fulfil it** — `git add <files>` → `git commit` → `git push`. Echo the whole plan **once** (staged-file list + commit message + target remote/branch), take **one** confirmation, then run the sequence through; do NOT re-ask per step. Conditions: nothing beyond what the instruction requires, `scripts/check-secrets.js` exits 0, and the staged list holds no sensitive or unrelated files. Write ops outside that scope (`tag`, `reset`, `rebase`, `revert`, `merge`, force push, `clean`) still need their own consent. Ambiguous instructions ("clean up the repo") do not qualify — ask first.
+**One confirmation per change set — the pre-commit echo.** After any task completes (regardless of size), before committing, echo the full git command sequence — which files to add, the commit message (a line per commit, type carried in its prefix), the push target — and take **one** confirmation covering `add` → `commit` → `push`. A user's write instruction ("push", "commit these changes") triggers this echo; the instruction itself is **not** the consent. No per-step re-asking.
 
-**Exception B — release sequence.** Approving a Release Proposal at the Approval Gate covers **every write op in that one release sequence** (version sync → archive → release commit → tag → push branch → push tag → GitHub Release → asset upload); do not re-ask per step. Per `references/workflows/release.md`: "批准覆盖本次 release 序列的全部写操作". Conditions: the full Proposal was shown and explicitly approved, the working tree/HEAD still match the approved `headSha`, and nothing outside the release sequence is touched. If any check fails mid-sequence, stop and re-plan (do not improvise past it).
+**Plan approval is intent alignment.** A medium/large task's Phase 2 plan approval aligns "what to change, how" — it is not a commit authorisation. Size tiering decides only whether a plan document is written, never whether the user gets to confirm the commit.
 
-Both exceptions waive **re-asking**, never **echoing** — always show the full command sequence before running it.
+**Release sequence.** A Proposal approved at the Approval Gate covers the whole sequence (version sync → archive → release commit → tag → push branch → push tag → GitHub Release → asset upload); no per-step re-asking. If any check fails mid-sequence, stop and re-plan.
+
+**Universal hard constraints (every change set):**
+
+- The echo IS the full command sequence (staged files, each commit message, target remote/branch); execution never deviates from it.
+- Any step fails → stop and report. Never retry with a different approach, never improvise a repair; re-confirm before continuing.
+- Push rejected (non-fast-forward) → stop and report. Never pull/rebase and re-push on your own.
+- Task-level phrasing ("wrap it up", "完成任务", "发布吧") is NOT a write instruction. Ambiguous remarks ("提交一下", "clean up the repo") → ask first.
+
+**Independent confirmation** — never covered by the pre-commit echo: `tag`, `reset`, `rebase`, `revert`, `merge`, force push, `clean`, `rm`, `restore`; checkout carrying uncommitted changes; amend of an already-pushed commit (counts as force push). `checkout -b` and clean-worktree switches are free.
+
+Before confirming, still run the pre-commit checklist: `scripts/check-secrets.js` exit 0, no sensitive/unrelated files staged. When in doubt, ask first.

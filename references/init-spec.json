@@ -371,6 +371,13 @@
       "type": "generated",
       "generator": "sub-skills",
       "description": "Generated sub-skills (agent-driven until the generator implements them)"
+    },
+    {
+      "phase": "C",
+      "path": ".githooks/pre-commit",
+      "source": "references/templates/githooks-template.md",
+      "type": "template",
+      "description": "Commit-consistency hook (content check, off by default: core.hooksPath is not configured by INIT; enabling is an admin decision)"
     }
   ]
 }

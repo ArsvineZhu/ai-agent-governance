@@ -19,32 +19,49 @@
 ## 需要确认（必须先向用户说明意图并等待明确同意）
 
 - `git add .` / `git add -A`（全量暂存，必须先检查 `git status` 与 `.gitignore`，确认无 `.env`/密钥/构建产物）
-- `git commit`
-- `git push`
+- `git rm` / `git restore`（删除文件 / 丢弃工作区改动，有破坏性）
 - `git tag`（创建/删除 tag；发布流程中须先经 Approval Gate，见 `references/workflows/release.md`）
 - `git reset` / `git rebase` / `git revert`
 - `git merge`
 - `git stash`
 - `git clean` / 任何破坏性命令
+- `git commit --amend`（已推送的提交视同 force push）
+- `checkout` 携带未提交改动切换分支（改动可能被覆盖）
+
+## 自动执行（无需确认）
+
+- `git checkout -b <branch>` / 干净工作区切换分支（与分支工作流一致，不打断任务开始）
 
 ## 禁止自动执行
 
 - `git push` 严禁在无人确认下执行
 - `git add .` 严禁在未检查 `.gitignore` 时执行（防止暂存 `.env`、`secret.pem`）
 
-## 确认范围（Turn-Scoped Consent）
+## 确认范围（一次确认 per 变更集）
 
-**每次 Git 写操作都需要当轮的独立明确确认。** 之前回合中的 "yes" / "确认" / "go ahead" **不**适用于后续回合。
+**提交前回显完整 git 命令序列，用户确认一次，覆盖 add → commit → push。** 这是唯一的确认点，与任务规模无关——小改动也不例外。
 
-- 执行任何写命令前，**必须先向用户回显确切命令**并等待最终确认。
-- 用户说"完成任务"、"wrap it up"、"发布吧"这类**任务级**表述时，**不得**据此提交或推送——它们不是写操作指令。写操作指令必须明确指向 Git 动作（"Commit these changes"、"Push now"、"Run git push"），此时适用下方例外 A。
+- 任何任务完成、提交之前，必须回显：暂存哪些文件、每个 commit 的消息（类型含在消息前缀）、目标 remote/branch。
+- 用户说 "push"、"commit 这些改动"、"提交并推送" 等写指令时，触发回显；**指令不是确认本身**——回显后仍需等待用户一次明确确认。
+- **计划批准 = 意图对齐**：中/大型任务的 Phase 2 计划批准只对齐"改什么、怎么改"，不是提交确认。用户批了计划不代表提交自动通过。
+- 规模分级决定"要不要写 TASK 计划文档"，不决定"要不要给用户确认"。
+- 用户说"完成任务"、"wrap it up"、"发布吧"这类**任务级**表述时，**不得**据此提交或推送——它们不是写操作指令。
 - 有疑问时，**永远先问**。
 
-**例外 A —— 用户显式写指令覆盖其最小序列**：用户在当轮直接下达写操作指令（"push"、"commit 这些改动"、"提交并推送"、"Run git push"）时，该指令即为该操作的确认，并覆盖**完成它所必需的最小写序列**——`git add <files>` → `git commit` → `git push`。Agent **一次性**回显完整计划（暂存文件清单 + commit message + 目标 remote/branch）取得**一次**确认后连续执行完，**不得**逐步追问。前提：① 不超出该指令的必要范围；② `scripts/check-secrets.js` 退出码 0；③ 暂存清单无敏感文件/无关文件。范围之外的写操作（`tag`、`reset`、`rebase`、`revert`、`merge`、force push、`clean`）仍需各自独立确认。指令含义不明确（如"整理一下仓库"）→ 不适用本例外，先问。
+**通用硬约束（每次变更集都适用）：**
 
-**例外 B —— 发布序列（RELEASE）**：在 Approval Gate 批准一次 Release Proposal，即覆盖**该次发布序列的全部写操作**（版本同步 → 归档 → release commit → tag → push 分支 → push tag → GitHub Release → 资产上传），不再逐步追问（见 `references/workflows/release.md`：「批准覆盖本次 release 序列的全部写操作」）。前提：完整 Proposal 已展示且获明确批准、工作区与 HEAD 仍与批准时的 `headSha` 一致、不触碰发布序列之外的内容。中途任一校验失败 → 停止并重新走 plan，不得擅自跳过。
+- 回显必须是完整命令序列（暂存文件、每个提交消息、目标 remote/branch）；执行不得偏离已确认序列。
+- 任一步失败 → 停止并报告，不得改用其他方式重试、不得即兴修补，重新取得确认后继续。
+- push 被拒（non-fast-forward）→ 停止并报告，不得擅自 pull/rebase 后再推。
+- 歧义指令（"提交一下"这类中文表述）→ 不适用自动回显，先问。
 
-两条例外的共同边界：**例外只免除「重复追问」，不免除「回显」**——执行前必须展示将要执行的完整命令序列。
+**独立确认（不覆盖于提交前确认，需各自单独确认）：**
+
+- `tag`、`reset`、`rebase`、`revert`、`merge`、force push、`clean`、`rm`、`restore`
+- `checkout` 携带未提交改动切换分支
+- `commit --amend` 已推送的提交（视同 force push）
+
+**发布序列（RELEASE）**：在 Approval Gate 批准一次 Release Proposal，即覆盖**该次发布序列的全部写操作**（版本同步 → 归档 → release commit → tag → push 分支 → push tag → GitHub Release → 资产上传），不再逐步追问（见 `references/workflows/release.md`）。前提：完整 Proposal 已展示且获明确批准、工作区与 HEAD 仍与批准时的 `headSha` 一致、不触碰发布序列之外的内容。中途任一校验失败 → 停止并重新走 plan，不得擅自跳过。
 
 ## Mandatory Pre-commit Checklist
 

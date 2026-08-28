@@ -6,7 +6,7 @@
 
 ### Objective
 
-Clear the three-layer patch pile and rebuild the consent policy from "per-step confirmation + exception patches" into a single principle — **echo the full git command sequence before committing, and execute after one confirmation**. When the user says push, show the commands to run — the add file list, the commit message (type carried in the message prefix), the push target branch — and execute the whole sequence after the user confirms once. Plan approval is demoted to intent alignment; size tiering is demoted to deciding whether a plan document is written; the full diff is not shown by default. The policy was violated by its own author several times (real incidents this session); the rewrite's goal is to clear the old framework at once, leaving no patches.
+Clear the three-layer patch pile and rebuild the consent policy from "per-step confirmation + exception patches" into a single principle — **echo the full git command sequence before committing, and execute after one confirmation**. When the user says push, show the commands to run — the add file list, the commit message (type carried in the message prefix), the push target branch — and execute the whole sequence after the user confirms once. Plan approval is demoted to intent alignment; size tiering is demoted to deciding whether a plan document is written. The policy was violated by its own author several times (real incidents this session); the rewrite's goal is to clear the old framework at once, leaving no patches.
 
 ### Current Problems
 

@@ -82,13 +82,13 @@ Secrets, unrelated refactors, restructuring without cause, skipping Definition o
 Note: users may request governance changes via explicit instruction (through the Governance File Protection flow), but ordinary tasks may not implicitly bypass governance rules. "Edit AGENTS.md" triggers the protection flow, not a normal override.
 
 ## Git Write Policy
-- Auto: `git status`, `git diff`, `git add <specific files>`
-- Confirm: `git add .` (after checking .gitignore), `git commit`, `git push`, `git reset`, `git rebase`, destructive commands
+- Auto: `git status`, `git diff`, `git add <specific files>`, `git checkout -b` / clean worktree switches
+- Confirm (destructive / out-of-sequence): `git add .`, `git rm`, `git restore`, `git tag`, `git reset`, `git rebase`, `git revert`, `git merge`, `git stash`, `git clean`, `git commit --amend` of a pushed commit (counts as force push), checkout carrying uncommitted changes
+- **One confirmation per change set.** After any task, before committing: echo the full git command sequence (files to add, each commit message with its type prefix, push target), wait for one explicit confirmation covering `add` → `commit` → `push`. A user's write instruction ("push", "commit these changes") triggers this echo — it is NOT the consent itself. No per-step re-asking.
+- **Plan approval is intent alignment** — aligning "what to change / how", not a commit authorisation. Size tiering decides whether a plan document is written, never whether the user confirms the commit.
+- **Hard constraints:** the echo IS the sequence (never deviate from it); a step fails → stop and report (never retry differently, never improvise); push rejected (non-fast-forward) → stop and report (never pull/rebase yourself); task-level phrasing ("wrap it up", "finish the task") is NOT a write instruction; ambiguous ("提交一下") → ask first.
 - Before any `git commit`: run `node scripts/check-secrets.js` — exit 0 required (never commit secret-like material). After a sync-group-triggering change, run `node scripts/check-sync.js` — exit 0 required (watch/require pairs must be reconciled).
-- **Consent is turn-scoped.** A "yes" in a prior turn does NOT apply to subsequent turns. Each git write operation requires fresh, explicit consent in the current turn. Before executing any write-command, echo the exact command back and wait for confirmation. Task-level phrasing ("wrap it up", "finish the task") is NOT a write instruction.
-- **Exception A — explicit user write instruction.** A direct write instruction in the current turn ("push", "commit these changes") IS the consent and covers the minimal sequence needed to fulfil it (`add` → `commit` → `push`): echo the whole plan once, take one confirmation, run it through — no per-step re-asking. Requires `check-secrets.js` exit 0 and no unrelated/sensitive files staged. `tag` / `reset` / `rebase` / force push stay outside the scope. Detail: @docs/rules/git-policy.md
-- **Exception B — release sequence.** Approving a Release Proposal covers every write op in that one release sequence (version sync → archive → commit → tag → push → release), no per-step re-asking, as long as the working tree/HEAD still match the approved state. Detail: @docs/rules/git-policy.md
-- Both exceptions waive re-asking, never echoing — always show the command sequence first.
+- Release sequence: a Proposal approved at the Approval Gate covers that one release's write ops; no per-step re-asking.
 - Full detail: @docs/rules/git-policy.md
 
 ## Git Workflow Governance

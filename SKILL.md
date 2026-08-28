@@ -82,16 +82,13 @@ Governance Spec  →  Governance Engine  →  Runtime Contract  →  Coding Agen
 | Modify Code | allowed，但必须验证（测试/静态检查/构建） |
 | Delete Code | confirmation required |
 | Dependency Change | confirmation required |
-| Git Commit | confirmation required |
-| Git Push | forbidden（禁止自动执行） |
+| Git Commit / Git Push | 一次确认 per 变更集（见下方确认范围） |
 
-**确认范围**：以上所有 "confirmation required" 操作都需要**当轮**的独立明确确认。之前回合中的 "yes" / "确认" **不**适用于后续回合。执行写命令前必须先向用户回显确切命令并等待确认。有疑问时永远先问。
+**确认范围（一次确认 per 变更集）**：提交前回显完整 git 命令序列——暂存哪些文件、每个 commit 的消息（类型含在消息前缀）、目标 remote/branch——用户确认**一次**，覆盖 add → commit → push。与任务规模无关：小改动也不例外，计划批准不是提交授权（意图对齐），用户说 "push" 等写指令只触发回显，**指令本身不是确认**。范围外操作（tag、reset、rebase、revert、merge、force push、clean、rm、restore、携带未提交改动切换分支、已推送提交的 amend）需各自独立确认。任务级表述（"完成任务"/"发布吧"）不是写指令；歧义表述（"提交一下"）先问。
 
-**例外一 —— 用户显式写指令序列**：用户直接下达写操作指令（"push"、"commit 这些改动"、"提交并推送"、"Run git push"）时，该指令覆盖完成它所必需的最小序列——`git add <files>` → `git commit` → `git push`。Agent 一次性回显完整计划（暂存文件清单 + commit message + 目标 remote/branch）取得一次确认后执行完，不再逐步追问。前提：不超出该指令范围、`scripts/check-secrets.js` 退出码 0、暂存清单无敏感/无关文件。范围外的写操作（tag、reset、rebase、revert、merge、force push、clean）仍需各自独立确认。含义模糊的指令（"整理一下仓库"）不适用，先问。
+**发布序列（RELEASE）**：Release Proposal 在 Approval Gate 获批准后，该批准覆盖本次发布序列的全部写操作（版本同步 → 归档 → release commit → tag → push 分支 → push tag → GitHub Release → 资产上传），不再逐步追问。前提：完整 Proposal 已展示且获明确批准、工作区与 HEAD 仍一致。中途任一校验失败 → 停止并重新走 plan。
 
-**例外二 —— 发布序列（RELEASE）**：Release Proposal 在 Approval Gate 获批准后，该批准覆盖本次发布序列的全部写操作（版本同步 → 归档 → release commit → tag → push 分支 → push tag → GitHub Release → 资产上传），不再逐步追问。前提：完整 Proposal 已展示且获明确批准、工作区与 HEAD 仍一致。中途任一校验失败 → 停止并重新走 plan。
-
-两条例外只免除「重复追问」，不免除「回显」——执行前必须展示完整命令序列。
+**通用硬约束**：回显即完整命令序列（执行不得偏离）；任一步失败 → 停止并报告，不得改用其他方式重试、不得即兴修补；push 被拒（non-fast-forward）→ 停止并报告，不得擅自 pull/rebase。
 
 ### 状态协议（最终报告必须支持三态）
 

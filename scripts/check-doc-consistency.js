@@ -41,13 +41,27 @@ const CONSENT_SYNC_GROUPS = [
   ["SKILL.md"],
 ];
 const CONSENT_MARKERS = [
-  // Definition-title match, not bare keyword: "例外 A" also appears in *reference* lines
-  // ("此时适用下方例外 A。"), so a keyword-only regex would treat a leftover reference as a
-  // live definition (a false negative — the definition can be deleted while the reference
-  // stays). A definition is marked by an em-dash heading: "Exception A —" / "例外 A ——".
-  { name: "Exception A (explicit user instruction covers minimal sequence)", re: /Exception A\s*\u2014|例外 A\s*\u2014\u2014|例外一\s*\u2014\u2014/ },
-  { name: "Exception B (release sequence)", re: /Exception B\s*\u2014|例外 B\s*\u2014\u2014|例外二\s*\u2014\u2014/ },
-  { name: "echo never waived (waive re-asking, never echoing)", re: /never\s*\*\*\s*(?:re)?echo\w*|never echoing|不免除.*回显/ },
+  // Universal: every sync point must state the one-confirmation principle (the pre-commit
+  // echo is the single authorisation point; a user's write instruction triggers the echo
+  // but is NOT the consent itself) and the intent-alignment demotion of plan approval.
+  { name: "one confirmation per change set (pre-commit echo; instruction is not consent)", re: /one confirmation per change set|一次确认|确认一次/i, files: null },
+  { name: "plan approval is intent alignment, not commit authorisation", re: /intent alignment|意图对齐|不是提交授权|不是提交确认/i, files: null },
+  // Release alignment point — lifecycle.policy.md is a lifecycle doc and carries no
+  // release-approval clause by design; only files that own release flow must state it.
+  { name: "release: Proposal at Approval Gate covers the sequence", re: /Approval Gate|批准.*发布序列|发布序列.*批准/i,
+    files: ["AGENTS.md", "references/policies/git.policy.md", "references/templates/agents-md.template.md", "SKILL.md"] },
+  // Universal hard constraints — the echo IS the sequence and execution never deviates;
+  // any step fails → stop and report (never retry differently); push rejected →
+  // stop and report (never pull/rebase). lifecycle doc carries no git sequence by design —
+  // it governs validation-gate failure (exit ≠ 0 = task undone), not git-command sequences.
+  // Markers anchor on each clause's OWN distinctive terms — "stop and report" is shared by
+  // both clauses, and "fails mid-sequence" appears in the release clause too ("If any
+  // check fails mid-sequence"), so broad terms would let a removed failure clause pass via
+  // the other clause's wording (both found as false negatives by regression).
+  { name: "mid-sequence failure: stop and report, never retry differently", re: /Any step fails|a step fails|任一步失败/i, 
+    files: ["AGENTS.md", "references/policies/git.policy.md", "references/templates/agents-md.template.md", "SKILL.md"] },
+  { name: "push rejected (non-fast-forward): stop and report, never pull/rebase", re: /non-fast-forward|push rejected|push 被拒|非快进|pull\/rebase|不自行 pull|不得擅自 pull/i,
+    files: ["AGENTS.md", "references/policies/git.policy.md", "references/templates/agents-md.template.md", "SKILL.md"] },
 ];
 
 // #2 trigger tightening: a document is only held to the full protected-files list when it
@@ -158,7 +172,8 @@ function main() {
   // ---- 8. consent-cluster sync (gate class) ----
   // Assert markers over every sync GROUP that has at least one present path; groups with
   // no existing path in this shape (e.g. the skill-entry group in a governed project) are
-  // skipped — absence of the whole domain, not a drift.
+  // skipped — absence of the whole domain, not a drift. A marker's `files` list (when set)
+  // limits which files must carry it — lifecycle.policy.md owns no release clause by design.
   for (const group of CONSENT_SYNC_GROUPS) {
     const present = group.filter((rel) => fs.existsSync(path.join(ROOT, rel)));
     if (present.length === 0) continue;
@@ -166,6 +181,7 @@ function main() {
       const c = readFile(path.join(ROOT, rel));
       if (!c) continue;
       for (const m of CONSENT_MARKERS) {
+        if (m.files && !m.files.some((f) => rel === f || rel.endsWith("/" + path.basename(f)))) continue;
         if (!m.re.test(c)) {
           gateIssues.push({ kind: "consent_cluster", item: `${rel}: missing marker ${m.name}` });
         }
