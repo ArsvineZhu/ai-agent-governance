@@ -40,7 +40,11 @@ Options:
 }
 
 function readJSON(p) {
-  return JSON.parse(fs.readFileSync(p, "utf8"));
+  try {
+    return JSON.parse(fs.readFileSync(p, "utf8"));
+  } catch (e) {
+    throw new Error(`generate-governance: cannot read JSON from ${p} (${e.message})`);
+  }
 }
 
 function argValue(args, name) {
@@ -126,6 +130,7 @@ const GITIGNORE_CONTENT = [
   ".governance/validation.json",
   ".governance/drift-report.json",
   ".governance/release-proposal.json",
+  ".governance/activity.jsonl",
   "",
   "# OS / editor",
   ".DS_Store",
@@ -241,7 +246,7 @@ function generateSubSkills(inputs, skillDir, targetAbs, dirRel) {
 }
 
 function generateManifest(inputs, spec, entries) {
-  const version = inputs.governance_version || "0.9.0";
+  const version = inputs.governance_version || "0.10.0";
   const manifest = {
     schema_version: "1.0",
     governance_version: version,
@@ -285,7 +290,7 @@ function main() {
 
   const inputs = file ? readJSON(file) : { project_name: projectName };
   inputs.phase = phase;
-  inputs.governance_version = inputs.governance_version || "0.9.0";
+  inputs.governance_version = inputs.governance_version || "0.10.0";
   inputs.description = inputs.description || "";
   inputs.project_name = inputs.project_name || projectName || "";
   inputs.test_cmd = inputs.test_cmd || "npm test";

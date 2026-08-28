@@ -26,7 +26,7 @@ The authoritative check list lives in `scripts/verify_governance.js` (the `DEFAU
 The CI governance job produces a shields.io `endpoint`-format artifact (`governance-badge.json`: `{ "schemaVersion": 1, "label": "governance", "message": "N/M", "color": "green|yellow|red" }`). Host it at a public URL of your choice and reference it in the README:
 
 ```markdown
-[![Governance](https://img.shields.io/endpoint?url=<YOUR_HOSTED_URL>/governance-badge.json)](docs/validator.md)
+[![Governance](https://img.shields.io/endpoint?url=<YOUR_HOSTED_URL>/governance-badge.json)](scripts/verify-governance.js)
 ```
 
 `score` (passed/total, unweighted v1) in `--json` output is the composite the badge and future dashboards consume. Color thresholds: 100% green, ≥80% yellow, otherwise red.

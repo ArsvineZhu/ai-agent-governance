@@ -16,6 +16,7 @@
 | CI 搭建 | `setup CI` | `add CI` · `create workflow` |
 | 治理校验 | `governance check` | `verify governance` · `validate AGENTS` |
 | 状态记录 | `update state` | `record progress` |
+| 审查改动或项目 | `review this` | `review the changes` · `audit recent changes` · `review my changes` · `审核一下` · `review the whole project` · `deep review` |
 | 准备发布版本 | `release` | `publish version` · `create release` · `/release vX.Y.Z` |
 
 Git 工作流治理没有独立提示词 —— 它作为运行期规则自动生效：任务开始前自动运行 `scripts/check-git-policy.js`，在受保护分支上阻止直接提交/推送（见 `.governance/git-policy.json`）。同理 `push` / `merge` 也不是提示词 —— 它们是需确认的写操作：Agent 会说明意图并等待你的明确批准（见 `docs/rules/git-policy.md`）。

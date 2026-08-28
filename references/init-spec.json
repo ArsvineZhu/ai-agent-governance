@@ -85,7 +85,7 @@
     },
     "governance_version": {
       "type": "string",
-      "default": "0.9.0",
+      "default": "0.10.0",
       "description": "Governance framework version stamped into manifest/CHANGELOG"
     },
     "release_version": {
@@ -274,7 +274,7 @@
       "path": ".governance/README.md",
       "source": null,
       "type": "static",
-      "content": "# .governance/ — machine-readable governance state\n\n- `manifest.json` — desired state: declared artifacts, paths, versions. Git-tracked.\n- `state.json` — current state: maturity, phase, agent identity. Git-tracked.\n- `git-policy.json` — Git workflow policy (protected branches, direct push, review). Git-tracked.\n- `sync-rules.json` — sync groups declaration (watch/require pairs). Git-tracked.\n- `preflight.json` — pre-INIT snapshot (rollback basis). Git-tracked.\n- `validation.json` / `drift-report.json` / `release-proposal.json` — runtime outputs, git-ignored.\n\nUsage: see the project AGENTS.md and `docs/rules/`.\n",
+      "content": "# .governance/ — machine-readable governance state\n\n- `manifest.json` — desired state: declared artifacts, paths, versions. Git-tracked.\n- `state.json` — current state: maturity, phase, agent identity. Git-tracked.\n- `git-policy.json` — Git workflow policy (protected branches, direct push, review). Git-tracked.\n- `sync-rules.json` — sync groups declaration (watch/require pairs). Git-tracked.\n- `preflight.json` — pre-INIT snapshot (rollback basis). Git-tracked.\n- `validation.json` / `drift-report.json` / `release-proposal.json` / `activity.jsonl` — runtime outputs, git-ignored.\n\nUsage: see the project AGENTS.md and `docs/rules/`.\n",
       "description": "Explains each state file and git tracking strategy"
     },
     {

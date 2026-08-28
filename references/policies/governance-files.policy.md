@@ -18,6 +18,7 @@
 | `scripts/check-lock.js` | 锁检查 |
 | `scripts/check-git-policy.js` | Git 策略门禁 |
 | `scripts/check-secrets.js` | 密钥扫描门禁 |
+| `scripts/check-sync.js` | 同步组门禁 |
 | `opencode.json` | Agent 配置 |
 | `.github/workflows/**` | CI 配置 |
 
@@ -65,6 +66,7 @@ Ignored:
 - validation.json
 - drift-report.json
 - release-proposal.json
+- activity.jsonl
 
 Do not delete manually.
 ```

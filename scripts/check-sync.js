@@ -45,7 +45,12 @@ function changedPaths(base) {
   if (r2.status === 0) {
     String(r2.stdout || "").split("\n").forEach((line) => {
       const m = line.match(/^..\s+(.+)$/);
-      if (m) out.add(m[1].trim());
+      if (!m) return;
+      // Rename entries read `R  old -> new` (porcelain v1). The sync groups should
+      // match against the NEW path, so take the part after ` -> ` when present.
+      const raw = m[1].trim();
+      const newPath = raw.includes(" -> ") ? raw.split(" -> ").pop().trim() : raw;
+      if (newPath) out.add(newPath);
     });
   }
   return Array.from(out);
@@ -104,7 +109,7 @@ try {
     base,
     clean: unsynced.length === 0,
     unsynced: unsynced.map((u) => u.group),
-    checked_at: "",
+    checked_at: new Date().toISOString(),
   };
   fs.mkdirSync(path.dirname(driftPath), { recursive: true });
   fs.writeFileSync(driftPath, JSON.stringify(drift, null, 2) + "\n");

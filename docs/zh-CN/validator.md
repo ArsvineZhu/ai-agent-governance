@@ -26,7 +26,7 @@ node scripts/verify-governance.js --help   # 用法
 CI 治理 job 产出 shields.io `endpoint` 格式工件（`governance-badge.json`：`{ "schemaVersion": 1, "label": "governance", "message": "N/M", "color": "green|yellow|red" }`）。托管到自选公网地址后，在 README 引用：
 
 ```markdown
-[![Governance](https://img.shields.io/endpoint?url=<YOUR_HOSTED_URL>/governance-badge.json)](docs/zh-CN/validator.md)
+[![Governance](https://img.shields.io/endpoint?url=<YOUR_HOSTED_URL>/governance-badge.json)](scripts/verify-governance.js)
 ```
 
 `--json` 输出的 `score`（passed/total，v1 等权）即徽章与未来看板消费的综合分数。配色阈值：100% 绿、≥80% 黄、否则红。

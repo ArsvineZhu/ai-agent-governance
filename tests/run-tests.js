@@ -151,6 +151,7 @@ test("custom doc root (documentation/) follows manifest (manifest mode)", () => 
   write(path.join(dir, ".governance/manifest.json"), JSON.stringify(manifest));
   write(path.join(dir, ".governance/git-policy.json"), JSON.stringify({ protectedBranches: ["main"], directPush: false, requireReview: true, allowForcePush: false }));
   fs.copyFileSync(VALIDATOR, path.join(dir, "scripts/verify-governance.js"));
+  fs.copyFileSync(SYNC_CHECK, path.join(dir, "scripts/check-sync.js"));
 
   const r = run(dir);
   return r.status === 0 && r.stdout.includes("mode: manifest") && r.stdout.includes("13/13 checks passed.");
@@ -291,6 +292,42 @@ test("check-secrets: staged fake secret exits 1 without leaking the token", () =
   spawnSync("git", ["add", "app.js"], { cwd: dir });
   const r = spawnSync(process.execPath, [SECRET_CHECK], { cwd: dir, encoding: "utf8" });
   return r.status === 1 && r.stderr.includes("aws-access-key") && !r.stderr.includes("AKIAIOSFODNN7EXAMPLE");
+});
+
+test("check-secrets: github PAT hits github-pat pattern", () => {
+  const dir = tmp("secrets-pat");
+  gitInit(dir);
+  write(path.join(dir, "ci.yml"), "token: ghp_" + "ABCDEFGHIJKLMNOPQRST0123456789");
+  spawnSync("git", ["add", "ci.yml"], { cwd: dir });
+  const r = spawnSync(process.execPath, [SECRET_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 1 && r.stderr.includes("github-pat") && !r.stderr.includes("ghp_ABCDEFGHIJKLMNOPQRST0123456789");
+});
+
+test("check-secrets: openai-style key hits openai-style-key pattern", () => {
+  const dir = tmp("secrets-openai");
+  gitInit(dir);
+  write(path.join(dir, "app.js"), "const api = 'sk-abc1234567890XYZ0123456789';");
+  spawnSync("git", ["add", "app.js"], { cwd: dir });
+  const r = spawnSync(process.execPath, [SECRET_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 1 && r.stderr.includes("openai-style-key") && !r.stderr.includes("sk-abc1234567890XYZ0123456789");
+});
+
+test("check-secrets: private key header hits private-key-header pattern", () => {
+  const dir = tmp("secrets-pem");
+  gitInit(dir);
+  write(path.join(dir, "id_rsa"), "-----BEGIN RSA PRIVATE KEY-----\nmock\n-----END RSA PRIVATE KEY-----");
+  spawnSync("git", ["add", "id_rsa"], { cwd: dir });
+  const r = spawnSync(process.execPath, [SECRET_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 1 && r.stderr.includes("private-key-header") && !r.stderr.includes("-----BEGIN RSA PRIVATE KEY-----");
+});
+
+test("check-secrets: credential assignment hits credential-assignment pattern", () => {
+  const dir = tmp("secrets-creds");
+  gitInit(dir);
+  write(path.join(dir, "config.env"), "api_key=abcdefgh12345678");
+  spawnSync("git", ["add", "config.env"], { cwd: dir });
+  const r = spawnSync(process.execPath, [SECRET_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 1 && r.stderr.includes("credential-assignment") && !r.stderr.includes("abcdefgh12345678");
 });
 
 test("check-secrets: clean staged diff exits 0", () => {
@@ -1168,6 +1205,27 @@ test("consistency --gate: complete five sync points exit 0", () => {
   write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
   for (const rel of ["AGENTS.md", "references/policies/git.policy.md", "references/policies/lifecycle.policy.md", "references/templates/agents-md.template.md", "SKILL.md"]) {
     writeConsentSyncPoint(dir, rel, CONSENT_THREE_MARKERS_TEXT);
+  }
+  const r = spawnSync(process.execPath, [CONSISTENCY, "--gate", "--json"], { cwd: dir, encoding: "utf8" });
+  if (r.status !== 0) return false;
+  const out = JSON.parse(r.stdout);
+  return out.gatePass === true && out.gateIssues.length === 0;
+});
+
+test("consistency --gate: Chinese-language markers satisfy the sync clamp (bilingual)", () => {
+  // The consent markers carry Chinese branches (回显, 命令序列, 意图对齐, 覆盖, 非快进).
+  // Exercise them so a regression that breaks the Chinese patterns is caught, not just
+  // the English path exercised by CONSENT_THREE_MARKERS_TEXT.
+  const zh =
+    "一次确认 per 变更集 — 提交前回显完整 git 命令序列，并一次确认 add → commit → push。\n" +
+    "计划批准是意图对齐，不是提交授权。\n" +
+    "一次 Proposal 获批准即覆盖整个发布序列。\n" +
+    "任一步失败：停止并报告，绝不换方式重试。\n" +
+    "若 push 被拒（非快进），停止并报告，绝不自行 pull/rebase。";
+  const dir = tmp("consent-zh");
+  write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
+  for (const rel of ["AGENTS.md", "references/policies/git.policy.md", "references/policies/lifecycle.policy.md", "references/templates/agents-md.template.md", "SKILL.md"]) {
+    writeConsentSyncPoint(dir, rel, zh);
   }
   const r = spawnSync(process.execPath, [CONSISTENCY, "--gate", "--json"], { cwd: dir, encoding: "utf8" });
   if (r.status !== 0) return false;

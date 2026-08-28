@@ -199,7 +199,7 @@ const results = manifestChecks
         ...manifestChecks,
         { name: "CHANGELOG format", path: "CHANGELOG.md", ok: hasChangelogFormat() },
         { name: "Git policy", path: ".governance/git-policy.json", ok: hasValidGitPolicy() },
-        { name: "Sync groups check", path: "scripts/check-sync.js", ok: isFile },
+        { name: "Sync groups check", path: "scripts/check-sync.js", ok: isFile(path.join(ROOT, "scripts/check-sync.js")) },
         { name: "Manifest schema", path: "manifest.schema_version", ok: hasSchemaVersion() },
         { name: "Manifest artifacts valid", path: "manifest.artifacts[].kind", ok: hasValidArtifactKinds() },
         { name: "Governance version", path: "manifest.governance_version", ok: hasGovernanceVersion() },

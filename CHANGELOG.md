@@ -2,8 +2,15 @@
 
 All notable changes to this project will be documented here.
 
-## [0.10.0] - 2026-08-29
+## [0.10.1] - 2026-08-29
 
+### Fixed
+
+- **review-manager audit (whole-project, lightweight): 17 confirmed defects fixed** — a full audit surfaced 23 findings; each was verified against its source and 17 were confirmed real and fixed, the rest evaluated as non-issues or intentionally-deferred. Script-logic fixes: `verify_governance.js`'s manifest-mode "Sync groups check" assigned the `isFile` function reference instead of calling it, so it always passed even when `scripts/check-sync.js` was missing (a fixture relied on that always-pass; it now copies the script); `check-lock.js` treated `"locked": false` as a held lock and falsely blocked — it is now normalised to "no lock"; `check-sync.js` wrote an empty `checked_at` timestamp and mis-parsed rename entries (`R old -> new`), now both fixed; `generate-governance.js` defaulted `governance_version` to a stale `"0.9.0"` (two sites) and `readJSON` threw an unhelpful raw stack on malformed input; `check-layout-sync.js` crashed on a missing `references/`/`scripts/` dir instead of failing closed. Version consistency: `references/init-spec.json`'s `governance_version` default was `0.9.0`; generated `.gitignore` and `.governance/README.md` omitted `activity.jsonl` from git-ignored despite the policy declaring it so. Governance-alignment: `SKILL.md` and `references/templates/agents-md.template.md` protected-file lists now include `scripts/check-secrets.js` and `scripts/check-sync.js` to match the single source of truth; `references/policies/governance-files.policy.md` gained the `scripts/check-sync.js` row the template already claimed. Docs: `review-this`/`deep-review` added to the Available Prompts main table in all three `commands.md`; the badge link in the three `validator.md` files pointed at a non-existent `docs/validator.md` (now links the validator script); `references/templates/sub-skills.md` section 8 used a 3-backtick fence while every other sub-skill uses 4 (latent parse-break risk). CI: `.github/workflows/ci.yml` gained a `permissions: contents: read` block. Tests: 4 check-secrets pattern classes (github-pat / openai-style-key / private-key-header / credential-assignment) added; a bilingual consent-marker regression test added (exercised the Chinese `回显`/`命令序列`/`意图对齐`/`覆盖`/`非快进` branches). Suite 102 → 107.
+
+- **`check-secrets.js` now ignores the repo's own `tests/` dir** — `run-tests.js` deliberately holds scanner fixtures (`AKIA...`, `ghp_...`, `sk-...`, and private-key-header lines) that must look real to exercise every pattern class, so the staged-diff gate would otherwise block the very tests that safeguard it. `tests/` is repo infrastructure, never shipped in the payload, so a token there is test data. Scoped: no payload or real-source path is exempted.
+
+## [0.10.0] - 2026-08-29
 
 ### Added
 

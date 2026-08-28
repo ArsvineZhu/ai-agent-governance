@@ -21,7 +21,12 @@ function readState() {
 
 function lockedValue(state) {
   if (!state) return null;
-  return state.locked === null || state.locked === undefined ? null : state.locked;
+  const v = state.locked;
+  // `false` (and the undefined/null family) means "no lock held"; only a truthy
+  // value (agent/task identifier) indicates a held lock. Treat `false` as unlocked,
+  // otherwise a hand-edited state.json with "locked": false would falsely block.
+  if (v === null || v === undefined || v === false) return null;
+  return v;
 }
 
 if (process.argv.includes("--help") || process.argv.includes("-h")) {

@@ -16,7 +16,11 @@ const PATTERNS = [
   { name: "credential-assignment", re: /(?:password|passwd|secret|token|api[_-]?key)\s*[:=]\s*["']?[A-Za-z0-9_\-\.]{8,}/i },
 ];
 
-const IGNORED_PATHS = /(^|\/)(\.env|\.env\.[^/]+)$/;
+// Ignore .env files and this repo's test suite: run-tests.js deliberately contains
+// scanner fixtures (AKIA..., ghp_..., sk-..., PRIVATE KEY headers) that MUST look
+// real to exercise every pattern class. tests/ is repo infrastructure, never part of
+// the install payload — a secret there is test data, not a shipped credential.
+const IGNORED_PATHS = /(^|\/)(\.env|\.env\.[^/]+)$|(^|\/)tests\//;
 
 function stagedDiff() {
   const r = spawnSync("git", ["diff", "--cached", "--no-color", "-U0"], { encoding: "utf8" });

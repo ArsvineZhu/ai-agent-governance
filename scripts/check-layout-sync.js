@@ -20,8 +20,14 @@ const HEADING = /###\s+(Repository Layout|仓库布局|倉庫佈局)/;
 const DIRS = ["references", "scripts"];
 
 function listFiles(dir) {
+  let entries;
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return []; // missing dir == no files; the gate treats empty as "needs attention"
+  }
   const out = [];
-  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+  for (const e of entries) {
     const p = path.join(dir, e.name);
     if (e.isDirectory()) out.push(...listFiles(p));
     else out.push(e.name); // basename is enough: no collisions across references/ + scripts/

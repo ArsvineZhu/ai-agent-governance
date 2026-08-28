@@ -335,7 +335,7 @@ Archiving happens at RELEASE (release-manager), NOT here.
 ````
 ## 8. review-manager
 
-```
+````
 ---
 name: review-manager
 description: Perform a review across two independent dimensions — depth (lightweight quick pass vs full audit: line-by-line, dev-plan cross-reference, execution-level verification, distrust-of-gates) and scope (the change set by default, a specified path, or the whole project). Triggers on "review this" · "review the changes" · "audit recent changes" · "review my changes" · "审核一下" (light/change-set) · "deep review" · "full review" · "全面审查" · "彻底审查" · "逐行审查" (full/change-set) · "review the whole project" · "全项目审核" (light/whole-project) · "audit everything" · "全项目彻查" (full/whole-project); append a path argument to scope it (review <path> / deep review <path> / 审核 <路径>).
@@ -405,5 +405,5 @@ Anti-confirmation-bias rule for both modes but especially full audit: assume bug
 Complementary: the review-manager's "doc consistency" subagent invokes drift-check scripts; no duplication.
 
 Governed-project note: review-manager focuses on governance artifacts + recent changes; business-logic review scope is decided by the project's own conventions, not enforced.
-```
+````
 

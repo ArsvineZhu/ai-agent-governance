@@ -16,6 +16,7 @@
 | CI 搭建 | `setup CI` | `add CI` · `create workflow` |
 | 治理校驗 | `governance check` | `verify governance` · `validate AGENTS` |
 | 狀態記錄 | `update state` | `record progress` |
+| 審查變動或專案 | `review this` | `review the changes` · `audit recent changes` · `review my changes` · `審核一下` · `review the whole project` · `deep review` |
 | 準備發佈版本 | `release` | `publish version` · `create release` · `/release vX.Y.Z` |
 
 Git 工作流程治理沒有獨立提示詞 —— 它作為執行期規則自動生效：任務開始前自動執行 `scripts/check-git-policy.js`，在受保護分支上阻止直接提交/推送（見 `.governance/git-policy.json`）。同理 `push` / `merge` 也不是提示詞 —— 它們是需確認的寫入操作：Agent 會說明意圖並等待你的明確批准（見 `docs/rules/git-policy.md`）。

@@ -16,6 +16,7 @@ All prompts below are chat prompts for AI coding agents, not shell commands. The
 | CI setup | `setup CI` | `add CI` · `create workflow` |
 | Governance validation | `governance check` | `verify governance` · `validate AGENTS` |
 | State recording | `update state` | `record progress` |
+| Reviewing changes or the project | `review this` | `review the changes` · `audit recent changes` · `review my changes` · `审核一下` · `review the whole project` · `deep review` |
 | Preparing a release | `release` | `publish version` · `create release` · `/release vX.Y.Z` |
 
 Git Workflow Governance has no prompt of its own — it takes effect automatically as a runtime rule: `scripts/check-git-policy.js` runs before work starts and blocks direct commits/pushes on protected branches (see `.governance/git-policy.json`). Likewise `push` / `merge` are not prompts — they are confirmation-gated write operations: the agent states intent and waits for your explicit approval (see `docs/rules/git-policy.md`).
