@@ -1096,6 +1096,111 @@ test("payload: every copied gate script loads in a governed project (no MODULE_N
   return true;
 });
 
+// ---------- 30. check-doc-consistency --gate (consent cluster + protected-files tightening) ----------
+
+const CONSISTENCY = path.join(__dirname, "..", "scripts", "check-doc-consistency.js");
+
+const CONSENT_THREE_MARKERS_TEXT =
+  "Exception A: an explicit user write instruction covers its minimal sequence.\n" +
+  "Exception B: the release sequence is covered by the Approval Gate.\n" +
+  "Both exceptions waive re-asking, never echoing.";
+
+function writeConsentSyncPoint(dir, rel, content) {
+  write(path.join(dir, rel), content);
+}
+
+test("consistency --gate: complete four sync points exit 0", () => {
+  const dir = tmp("consent-ok");
+  write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
+  for (const rel of ["AGENTS.md", "references/policies/git.policy.md", "references/templates/agents-md.template.md", "SKILL.md"]) {
+    writeConsentSyncPoint(dir, rel, CONSENT_THREE_MARKERS_TEXT);
+  }
+  const r = spawnSync(process.execPath, [CONSISTENCY, "--gate", "--json"], { cwd: dir, encoding: "utf8" });
+  if (r.status !== 0) return false;
+  const out = JSON.parse(r.stdout);
+  return out.gatePass === true && out.gateIssues.length === 0;
+});
+
+test("consistency --gate: marker removed from one sync point exits 1 and names it", () => {
+  const dir = tmp("consent-missing");
+  write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
+  for (const rel of ["AGENTS.md", "references/policies/git.policy.md", "references/templates/agents-md.template.md", "SKILL.md"]) {
+    writeConsentSyncPoint(dir, rel, CONSENT_THREE_MARKERS_TEXT);
+  }
+  // strip Exception A from SKILL.md
+  const skillPath = path.join(dir, "SKILL.md");
+  write(skillPath, CONSENT_THREE_MARKERS_TEXT.split("\n").filter((l) => !/Exception A/.test(l)).join("\n"));
+  const r = spawnSync(process.execPath, [CONSISTENCY, "--gate", "--json"], { cwd: dir, encoding: "utf8" });
+  if (r.status !== 1) return false;
+  const out = JSON.parse(r.stdout);
+  return out.gatePass === false && out.gateIssues.some((g) => g.item.includes("SKILL.md") && g.item.includes("Exception A"));
+});
+
+test("consistency --gate: governed-project shape skips absent sync points (2 of 4 exist)", () => {
+  const dir = tmp("consent-governed");
+  write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
+  // generated AGENTS.md + docs/rules/git-policy.md are the two points a governed project has
+  writeConsentSyncPoint(dir, "AGENTS.md", CONSENT_THREE_MARKERS_TEXT);
+  writeConsentSyncPoint(dir, "docs/rules/git-policy.md", CONSENT_THREE_MARKERS_TEXT);
+  const r = spawnSync(process.execPath, [CONSISTENCY, "--gate"], { cwd: dir, encoding: "utf8" });
+  return r.status === 0 && r.stdout.includes("no consistency issues");
+});
+
+test("consistency --gate: missing markers in a governed-project sync point exit 1", () => {
+  const dir = tmp("consent-governed-missing");
+  write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
+  writeConsentSyncPoint(dir, "AGENTS.md", CONSENT_THREE_MARKERS_TEXT);
+  const gitPolicy = CONSENT_THREE_MARKERS_TEXT.replace(/Exception B[^\n]*\n/, "");
+  writeConsentSyncPoint(dir, "docs/rules/git-policy.md", gitPolicy);
+  const r = spawnSync(process.execPath, [CONSISTENCY, "--gate", "--json"], { cwd: dir, encoding: "utf8" });
+  if (r.status !== 1) return false;
+  const out = JSON.parse(r.stdout);
+  return out.gateIssues.some((g) => g.item.includes("docs/rules/git-policy.md") && g.item.includes("Exception B"));
+});
+
+test("consistency --gate: protected list trigger is tightened (mere mention exempt)", () => {
+  const dir = tmp("proto-exempt");
+  write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
+  write(path.join(dir, "references/policies/governance-files.policy.md"),
+    "| `AGENTS.md` | policy |\n| `docs/rules/**` | policy |\n");
+  // mentions the protection flow but does NOT claim to enumerate the list
+  write(path.join(dir, "docs/en/README.md"), "# R\n\nThis change should follow the governance-file-protection flow.\n");
+  fs.mkdirSync(path.join(dir, "docs/zh-CN"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "docs/zh-TW"), { recursive: true });
+  write(path.join(dir, "docs/zh-CN/README.md"), "# R\n");
+  write(path.join(dir, "docs/zh-TW/README.md"), "# R\n");
+  const r = spawnSync(process.execPath, [CONSISTENCY, "--gate", "--json"], { cwd: dir, encoding: "utf8" });
+  if (r.status !== 0) return false;
+  const out = JSON.parse(r.stdout);
+  return out.gatePass === true && !out.gateIssues.some((g) => g.kind === "protected_lists");
+});
+
+test("consistency --gate: claimed enumeration with a missing entry still fails", () => {
+  const dir = tmp("proto-flagged");
+  write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
+  write(path.join(dir, "references/policies/governance-files.policy.md"),
+    "| `AGENTS.md` | policy |\n| `docs/rules/**` | policy |\n| `scripts/check-secrets.js` | script |\n");
+  // mentions the protection flow AND claims to enumerate its list — but omits check-secrets.js
+  write(path.join(dir, "docs/en/README.md"), "# R\n\nThe Governance File Protection list is:\n- `AGENTS.md`\n");
+  fs.mkdirSync(path.join(dir, "docs/zh-CN"), { recursive: true });
+  fs.mkdirSync(path.join(dir, "docs/zh-TW"), { recursive: true });
+  write(path.join(dir, "docs/zh-CN/README.md"), "# R\n");
+  write(path.join(dir, "docs/zh-TW/README.md"), "# R\n");
+  const r = spawnSync(process.execPath, [CONSISTENCY, "--gate", "--json"], { cwd: dir, encoding: "utf8" });
+  if (r.status !== 1) return false;
+  const out = JSON.parse(r.stdout);
+  return out.gateIssues.some((g) => g.kind === "protected_lists" && g.item.includes("check-secrets.js"));
+});
+
+test("consistency: advisory mode stays exit 0 even with gate-class violations", () => {
+  const dir = tmp("consent-advisory");
+  write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
+  // only AGENTS.md present, missing Exception C marker entirely — advisory never blocks
+  writeConsentSyncPoint(dir, "AGENTS.md", "some text without any markers");
+  const r = spawnSync(process.execPath, [CONSISTENCY], { cwd: dir, encoding: "utf8" });
+  return r.status === 0;
+});
+
 // ---------- runner (must stay after ALL test registrations) ----------
 let failed = 0;
 for (const t of tests) {

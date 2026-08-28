@@ -38,6 +38,7 @@ All notable changes to this project will be documented here.
 ### Changed
 
 - `references/init-spec.json` — Phase C `shipped` corrected from `"later"` to `"v0.9.1"` (Phase C shipped in v0.9.0/0.9.1; the field was stale metadata).
+- **`check-doc-consistency.js` gains `--gate` mode; protected-files trigger tightened** — the script's two mechanically checkable rule clusters (consent-sync and protected-files) are now fail-closed under `--gate` (exit 1 when they fail; the other six heuristics still report but never affect the exit code). This is the delivery of P1 from the governance-rule-sync plan: the same rule is expressed across two domains (this repo / governed projects), and keeping those clusters in sync is now mechanically enforced instead of left to human diligence. Two behaviour changes ship with it: (1) the consent-cluster check asserts markers (Exception A / Exception B / echo never waived) over every sync GROUP with at least one present path — this repo checks 4 groups; a governed project checks the 2 that exist (generated AGENTS.md, docs/rules/git-policy.md) and silently skips the absent ones, so `--gate` is meaningful in both shapes; (2) the protected-files check no longer flags documents that merely *mention* the protection flow — only documents that claim to enumerate the list are held to its completeness (the v0.9.1-era heuristic produced 12 false positives on a single plan document). `npm run check` now runs the script once with `--gate`; `check:all` drops its duplicate advisory invocation.
 
 ## [0.9.1] - 2026-08-21
 
