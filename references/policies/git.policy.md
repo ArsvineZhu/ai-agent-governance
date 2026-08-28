@@ -37,10 +37,14 @@
 **每次 Git 写操作都需要当轮的独立明确确认。** 之前回合中的 "yes" / "确认" / "go ahead" **不**适用于后续回合。
 
 - 执行任何写命令前，**必须先向用户回显确切命令**并等待最终确认。
-- 即使用户说"完成任务"、"wrap it up"、"发布吧"，也**不得**在没有明确写操作指令（如 "Commit these changes"、"Push now"、"Run git push"）的情况下自动提交或推送。
+- 用户说"完成任务"、"wrap it up"、"发布吧"这类**任务级**表述时，**不得**据此提交或推送——它们不是写操作指令。写操作指令必须明确指向 Git 动作（"Commit these changes"、"Push now"、"Run git push"），此时适用下方例外 A。
 - 有疑问时，**永远先问**。
 
-**例外 —— 发布序列（RELEASE）**：在 Approval Gate 批准一次 Release Proposal，即覆盖**该次发布序列的全部写操作**（版本同步 → 归档 → release commit → tag → push 分支 → push tag → GitHub Release → 资产上传），不再逐步追问（见 `references/workflows/release.md`：「批准覆盖本次 release 序列的全部写操作」）。前提：完整 Proposal 已展示且获明确批准、工作区与 HEAD 仍与批准时的 `headSha` 一致、不触碰发布序列之外的内容。中途任一校验失败 → 停止并重新走 plan，不得擅自跳过。
+**例外 A —— 用户显式写指令覆盖其最小序列**：用户在当轮直接下达写操作指令（"push"、"commit 这些改动"、"提交并推送"、"Run git push"）时，该指令即为该操作的确认，并覆盖**完成它所必需的最小写序列**——`git add <files>` → `git commit` → `git push`。Agent **一次性**回显完整计划（暂存文件清单 + commit message + 目标 remote/branch）取得**一次**确认后连续执行完，**不得**逐步追问。前提：① 不超出该指令的必要范围；② `scripts/check-secrets.js` 退出码 0；③ 暂存清单无敏感文件/无关文件。范围之外的写操作（`tag`、`reset`、`rebase`、`revert`、`merge`、force push、`clean`）仍需各自独立确认。指令含义不明确（如"整理一下仓库"）→ 不适用本例外，先问。
+
+**例外 B —— 发布序列（RELEASE）**：在 Approval Gate 批准一次 Release Proposal，即覆盖**该次发布序列的全部写操作**（版本同步 → 归档 → release commit → tag → push 分支 → push tag → GitHub Release → 资产上传），不再逐步追问（见 `references/workflows/release.md`：「批准覆盖本次 release 序列的全部写操作」）。前提：完整 Proposal 已展示且获明确批准、工作区与 HEAD 仍与批准时的 `headSha` 一致、不触碰发布序列之外的内容。中途任一校验失败 → 停止并重新走 plan，不得擅自跳过。
+
+两条例外的共同边界：**例外只免除「重复追问」，不免除「回显」**——执行前必须展示将要执行的完整命令序列。
 
 ## Mandatory Pre-commit Checklist
 

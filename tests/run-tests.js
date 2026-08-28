@@ -972,6 +972,46 @@ test("generate-governance: manifest records the platform-specific CI path", () =
   const allExist = mgl.artifacts.every((a) => fs.existsSync(path.join(gl, a.path)));
   return ghOk && glOk && allExist;
 });
+// ---------- 27. Validator edge cases (absent / malformed governance state) ----------
+
+test("validator: missing .governance dir exits 1", () => {
+  const dir = tmp("no-gov-dir");
+  buildFullDefault(dir);
+  fs.rmSync(path.join(dir, ".governance"), { recursive: true, force: true });
+  const r = run(dir);
+  return r.status === 1 && r.stdout.includes(".governance state dir");
+});
+
+test("validator: malformed manifest.json falls back to defaults, exits 1", () => {
+  const dir = tmp("bad-manifest-json");
+  buildFullDefault(dir);
+  write(path.join(dir, ".governance/manifest.json"), "{ not valid json");
+  const r = run(dir);
+  // unparseable manifest => loadManifestChecks() returns null => defaults mode,
+  // and "Governance version" cannot be read => must fail, never silently pass
+  return r.status === 1 && r.stdout.includes("mode: defaults") && r.stdout.includes("Governance version");
+});
+
+// ---------- 28. check-layout-sync edge cases ----------
+
+test("check-layout-sync: missing architecture.md exits 1", () => {
+  const dir = tmp("layout-no-arch");
+  buildLayoutRepo(dir, ["references/templates/a.template.md", "scripts/check-a.js"]);
+  fs.rmSync(path.join(dir, "docs/en/architecture.md"));
+  const r = spawnSync(process.execPath, [LAYOUT_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 1;
+});
+
+test("check-layout-sync: architecture.md without a Repository Layout block exits 1", () => {
+  const dir = tmp("layout-no-section");
+  buildLayoutRepo(dir, ["references/templates/a.template.md", "scripts/check-a.js"]);
+  for (const lang of ["en", "zh-CN", "zh-TW"]) {
+    write(path.join(dir, `docs/${lang}/architecture.md`), "# Architecture\n\nNo layout block here.\n");
+  }
+  const r = spawnSync(process.execPath, [LAYOUT_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 1;
+});
+
 // ---------- runner (must stay after ALL test registrations) ----------
 let failed = 0;
 for (const t of tests) {

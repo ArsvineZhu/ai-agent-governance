@@ -6,6 +6,17 @@
 
 skill 的行为（运行模式 INIT/AUDIT/RELEASE、生命周期管线、设计原则）定义在 skill 本体里，不在本页：见 [SKILL.md](../../SKILL.md) 与 `references/`。本页只记录文件都放在哪里。
 
+### 目录职责
+
+| 路径 | 职责 | 读者 | 语言 |
+| --- | --- | --- | --- |
+| `SKILL.md` | Skill 入口 / 产品规范 | agent（skill 使用者） | 单语 |
+| `references/` | **Skill 主体——skill 行为唯一存放处。** 复制进被治理项目、或定义 skill 如何行动的策略、模板、工作流。 | agent（skill 使用者） | 单语 |
+| `scripts/` | Skill 运行时脚本（校验器、检查、生成器、发布工具）——属于安装载荷 | agent/CI | 代码 |
+| `LICENSE` | MIT 许可证——属于安装载荷 | 安装者 | — |
+| `docs/` | **用户/开发者手册。不属于 skill 载荷。** 说明如何使用 skill（`commands.md` 触发词）、设计计划（`plans/`）、路线图、术语表。 | 用户/开发者 | 三语 |
+| `tests/`、`package.json`、`.github/`、`CHANGELOG.md`、`CONTRIBUTING.md`、`README.md`、`AGENTS.md` | 仓库基础设施：CI、发布流程、变更日志、贡献指南 | 仓库维护者 | 按文件 |
+
 ### 仓库布局
 
 ```

@@ -22,6 +22,21 @@ All notable changes to this project will be documented here.
 - **Plan status was not machine-readable** — `rule-capture` carried no status marker, so delivery verification could not tell design-only plans from undelivered work. Plans now use an explicit `Status: design plan, not implemented` marker and the checker relies on it instead of guessing from prose.
 - **Obsolete declaration in an archived plan** — `governed-project-sync-groups` cited `sync-rules.template.json`; the delivered file is `sync-rules.template.md`. Corrected.
 
+### Fixed
+
+- **Turn-scoped consent forced per-step re-asking on an explicit user instruction** — same defect class as the v0.9.1 release-sequence fix, left unfixed for ordinary write instructions: a user saying "push" got asked three separate times (add → commit → push), because the consent clause only exempted the release sequence. All four consent clauses (`AGENTS.md`, `references/policies/git.policy.md`, `references/templates/agents-md.template.md`, `SKILL.md`) now carry **Exception A — an explicit user write instruction covers its minimal sequence** (`add` → `commit` → `push`: echo the whole plan once, one confirmation, run it through), conditional on `check-secrets.js` exit 0 and nothing sensitive/unrelated staged; `tag`/`reset`/`rebase`/`revert`/`merge`/force-push/`clean` stay outside the scope, ambiguous instructions do not qualify. Both exceptions explicitly waive **re-asking** but never **echoing**. Surfaced by a real session where a one-word "push" cost three confirmation round-trips.
+- **`SKILL.md` was missing the release-sequence exception entirely** — the v0.9.1 fix patched three of the four consent clauses; `SKILL.md`'s Agent Permission Model still stated unconditional per-turn confirmation, contradicting `release.md`'s "批准覆盖本次 release 序列的全部写操作". Found by auditing all four sync points for the same defect class.
+- **Install payload was broken by a shared-library refactor (reverted)** — an unreleased change extracted `argValue`/`readJSON`/`walk` into `scripts/_lib.js` and rewired 5 scripts to `require('./_lib.js')`, but `_lib.js` was never added to `references/init-spec.json`'s copy list. Every governed project created by INIT got scripts that die with `MODULE_NOT_FOUND` on first run. The full 82-test suite stayed green throughout, because tests only ever execute inside this repo where `_lib.js` is present — a payload-boundary blind spot. Reverted rather than patched: `init-spec.json` copies those scripts **file by file**, so self-containment is a load-bearing invariant and the duplicated helpers are its deliberate price. Also reverted in the same batch: a CI rewrite that deleted the v0.8.0 governance-badge artifact and added a `validate` job running `verify_governance.js` (documented in AGENTS.md as failing by design here, so CI would be permanently red) plus a no-op `security` job; `release-manager --force` (an undeclared bypass of protected-branch enforcement); `--version` (resolves `../package.json`, so a copied `verify-governance.js` would report the governed project's version as its own); and two secret patterns shipped with no test coverage.
+
+### Added
+
+- **Validator and layout-gate edge-case tests** — 4 tests covering paths that previously had no coverage: validator with `.governance/` absent, validator with unparseable `manifest.json` (must fall back to defaults and still fail, never silently pass), `check-layout-sync` with a missing `architecture.md`, and `check-layout-sync` with an `architecture.md` that has no Repository Layout block. Suite 74 → 78.
+- **DEBUG diagnostics on failure-tolerant writes** — the three `.governance/drift-report.json` update sites (`check-doc-freshness.js`, `check-doc-consistency.js`, `check-sync.js`) plus the manifest read in `check-doc-freshness.js` swallowed every error silently by design; they now report the cause under `DEBUG=1`, keeping the same exit-code behaviour.
+
+### Changed
+
+- `references/init-spec.json` — Phase C `shipped` corrected from `"later"` to `"v0.9.1"` (Phase C shipped in v0.9.0/0.9.1; the field was stale metadata).
+
 ## [0.9.1] - 2026-08-21
 
 ### Fixed

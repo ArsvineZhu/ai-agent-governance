@@ -85,8 +85,10 @@ Note: users may request governance changes via explicit instruction (through the
 - Auto: `git status`, `git diff`, `git add <specific files>`
 - Confirm: `git add .` (after checking .gitignore), `git commit`, `git push`, `git reset`, `git rebase`, destructive commands
 - Before any `git commit`: run `node scripts/check-secrets.js` — exit 0 required (never commit secret-like material). After a sync-group-triggering change, run `node scripts/check-sync.js` — exit 0 required (watch/require pairs must be reconciled).
-- **Consent is turn-scoped.** A "yes" in a prior turn does NOT apply to subsequent turns. Each git write operation requires fresh, explicit consent in the current turn. Before executing any write-command, echo the exact command back and wait for confirmation.
-- **Exception — release sequence.** Approving a Release Proposal covers every write op in that one release sequence (version sync → archive → commit → tag → push → release), no per-step re-asking, as long as the working tree/HEAD still match the approved state. Detail: @docs/rules/git-policy.md
+- **Consent is turn-scoped.** A "yes" in a prior turn does NOT apply to subsequent turns. Each git write operation requires fresh, explicit consent in the current turn. Before executing any write-command, echo the exact command back and wait for confirmation. Task-level phrasing ("wrap it up", "finish the task") is NOT a write instruction.
+- **Exception A — explicit user write instruction.** A direct write instruction in the current turn ("push", "commit these changes") IS the consent and covers the minimal sequence needed to fulfil it (`add` → `commit` → `push`): echo the whole plan once, take one confirmation, run it through — no per-step re-asking. Requires `check-secrets.js` exit 0 and no unrelated/sensitive files staged. `tag` / `reset` / `rebase` / force push stay outside the scope. Detail: @docs/rules/git-policy.md
+- **Exception B — release sequence.** Approving a Release Proposal covers every write op in that one release sequence (version sync → archive → commit → tag → push → release), no per-step re-asking, as long as the working tree/HEAD still match the approved state. Detail: @docs/rules/git-policy.md
+- Both exceptions waive re-asking, never echoing — always show the command sequence first.
 - Full detail: @docs/rules/git-policy.md
 
 ## Git Workflow Governance

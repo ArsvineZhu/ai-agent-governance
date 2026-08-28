@@ -196,7 +196,9 @@ function main() {
     const drift = JSON.parse(readFile(driftPath));
     drift.consistency = issues;
     fs.writeFileSync(driftPath, JSON.stringify(drift, null, 2) + "\n");
-  } catch {}
+  } catch (e) {
+    if (process.env.DEBUG) console.error(`[DEBUG] drift-report.json not updated: ${e.message}`);
+  }
 
   if (json) {
     process.stdout.write(JSON.stringify(report, null, 2) + "\n");

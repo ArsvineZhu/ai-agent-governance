@@ -106,7 +106,9 @@ try {
   };
   fs.mkdirSync(path.dirname(driftPath), { recursive: true });
   fs.writeFileSync(driftPath, JSON.stringify(drift, null, 2) + "\n");
-} catch {}
+} catch (e) {
+  if (process.env.DEBUG) console.error(`[DEBUG] drift-report.json not updated: ${e.message}`);
+}
 
 if (json) {
   process.stdout.write(JSON.stringify({ clean: unsynced.length === 0, base, unsynced }, null, 2) + "\n");
