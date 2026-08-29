@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented here.
 
+## [Unreleased]
+
+### Added
+
+- **Opt-in commit-consistency hooks** — INIT now generates executable `.githooks/pre-commit` and `.githooks/commit-msg` scripts that fail closed without `.governance/consent.json`, preserve Unicode/space filenames through NUL-delimited Git output, and verify the confirmed commit message. INIT never enables `core.hooksPath`.
+
+### Changed
+
+- **Secret scanning coverage** — staged-diff scanning now covers Slack, Google, Stripe, Azure, JWT, base64/PEM material, connection strings, and punctuated credential values; force-added `.env` files are scanned, `tests/` is not a global bypass, and reports include real added-line numbers.
+- **Fail-closed state handling** — malformed lock, sync-rule, or Git-policy JSON is no longer treated as an absent/safe configuration.
+- **CI validation** — an empty `.github/workflows/` directory no longer satisfies the default CI workflow check.
+- **Release risk gating** — Release Proposals now include risk/review metadata; high-risk execution requires completed review evidence or explicit item-by-item risk approval, and malformed JSON inputs fail with controlled errors.
+- **Generated security baseline** — INIT-generated `.gitignore` now covers certificate bundles, private keys, credential files, secret filenames, logs, and other policy-declared sensitive artifacts.
+
+### Fixed
+
+- **Sync and documentation edge cases** — sync checks now handle untracked, renamed, Unicode, and space-containing paths; archive Markdown links are checked on Windows and stale archive links were corrected.
+- **Generator version drift** — generated manifests use the skill package version by default, and fenced-template extraction stops at the first matching fence.
+
 ## [0.10.1] - 2026-08-29
 
 ### Fixed

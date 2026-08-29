@@ -34,12 +34,19 @@ The INIT scripted generator (`scripts/generate-governance.js`) produces a determ
 | .governance/git-policy.json / sync-rules.json | templates (JSON extracted from code block) |
 | scripts/verify-governance.js + 4 gate scripts | copied verbatim from this skill |
 
+## Phase C — adaptive output and optional hooks
+
+| Path | Source |
+| --- | --- |
+| .github/workflows/ci.yml (or .gitlab-ci.yml) | selected from references/workflows/ci.md |
+| scripts/check-doc-freshness.js + check-doc-consistency.js | copied verbatim from this skill |
+| .governance/generated/skills/ | generated from references/templates/sub-skills.md |
+| .githooks/pre-commit + .githooks/commit-msg | references/templates/githooks-template.md; executable, opt-in, never enabled by INIT |
+
 ## Determinism and validation
 
 - Same inputs produce byte-identical outputs (no timestamps, no randomness).
 - Existing files are skipped, never overwritten (merge-not-overwrite arrives in Phase C).
 - A Phase B output passes `scripts/verify-governance.js` (manifest mode) — covered by the end-to-end test in `tests/run-tests.js`.
 
-## Not yet generated (agent-driven until Phase C)
-
-CI workflow selection, CLAUDE.md and other tool-detected entry files, sub-skills generation, README language layout, advisory scripts (freshness / consistency), structure-adaptive mode (existing doc roots).
+CI workflow selection, tool-detected entry files, README language layout, and structure-adaptive mode (existing doc roots) remain agent-driven decisions; the listed Phase C artifacts are generated when their inputs are selected.

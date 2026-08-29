@@ -19,6 +19,8 @@
 | `scripts/check-git-policy.js` | Git 策略门禁 |
 | `scripts/check-secrets.js` | 密钥扫描门禁 |
 | `scripts/check-sync.js` | 同步组门禁 |
+| `.githooks/pre-commit` | 暂存内容一致性门禁（默认不启用） |
+| `.githooks/commit-msg` | 已确认提交消息门禁（默认不启用） |
 | `opencode.json` | Agent 配置 |
 | `.github/workflows/**` | CI 配置 |
 
@@ -43,8 +45,9 @@
 | `drift-report.json` | 运行报告 | 忽略 |
 | `release-proposal.json` | Release Proposal 审批证据 | 忽略 |
 | `activity.jsonl` | Agent 行为审计轨迹（追加式） | 忽略 |
+| `consent.json` | 钩子确认凭证（运行时输出） | 忽略 |
 
-`validation.json` / `drift-report.json` / `release-proposal.json` / `activity.jsonl` 由 AUDIT/RELEASE/任务运行产生，**不作为 required artifact**——fresh-checkout CI 必须无它们也通过。
+`validation.json` / `drift-report.json` / `release-proposal.json` / `activity.jsonl` / `consent.json` 由 AUDIT/RELEASE/任务运行产生，**不作为 required artifact**——fresh-checkout CI 必须无它们也通过。
 
 ## .governance/README.md 生成模板
 
@@ -67,6 +70,7 @@ Ignored:
 - drift-report.json
 - release-proposal.json
 - activity.jsonl
+- consent.json
 
 Do not delete manually.
 ```

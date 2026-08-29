@@ -9,23 +9,44 @@
 const { spawnSync } = require("child_process");
 
 const PATTERNS = [
-  { name: "aws-access-key", re: /AKIA[0-9A-Z]{16}/ },
+  { name: "aws-access-key", re: /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/ },
   { name: "github-pat", re: /(?:ghp_|github_pat_)[A-Za-z0-9_]{20,}/ },
   { name: "openai-style-key", re: /sk-[A-Za-z0-9]{20,}/ },
-  { name: "private-key-header", re: /-----BEGIN [A-Z ]*PRIVATE KEY-----/ },
-  { name: "credential-assignment", re: /(?:password|passwd|secret|token|api[_-]?key)\s*[:=]\s*["']?[A-Za-z0-9_\-\.]{8,}/i },
+  { name: "slack-token", re: /\bxox[baprs]-[A-Za-z0-9-]{20,}\b/ },
+  { name: "google-api-key", re: /\bAIza[0-9A-Za-z_-]{30,}\b/ },
+  { name: "stripe-secret-key", re: /\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9]{16,}\b/ },
+  {
+    name: "azure-storage-key",
+    re: /(?:DefaultEndpointsProtocol=https;[^\n]*;AccountKey=[^;\s]{16,}|(?:azure|az)[_-]?(?:storage[_-]?)?(?:account[_-]?)?(?:key|secret)\s*[:=]\s*["']?[A-Za-z0-9+/=]{16,})/i,
+  },
+  { name: "jwt", re: /\beyJ[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]{5,}\b/ },
+  { name: "private-key-header", re: /-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----/ },
+  {
+    name: "base64-secret",
+    re: /(?:base64|b64|encoded(?:[_-]?(?:secret|token|key))?|(?:password|passwd|secret|token|api[_-]?key))\s*[:=]\s*["']?[A-Za-z0-9+/]{24,}={0,2}(?=["'\s;,)]|$)/i,
+  },
+  { name: "pem-body", re: /\bMII[A-Za-z0-9+/]{30,}={0,2}\b/ },
+  { name: "generic-connection-string", re: /(?:mongodb|postgres(?:ql)?|mysql|redis|amqp):\/\/[^:\s]+:[^@\s]+@/i },
+  // Keep punctuation used by real credentials in the value class. The match stops
+  // at whitespace/quotes so a trailing statement delimiter is not part of the value.
+  { name: "credential-assignment", re: /(?:password|passwd|secret|token|api[_-]?key|client[_-]?secret|access[_-]?key)\s*[:=]\s*["']?[A-Za-z0-9_./+=!@$%:~?*#-]{8,}/i },
 ];
 
-// Ignore .env files and this repo's test suite: run-tests.js deliberately contains
-// scanner fixtures (AKIA..., ghp_..., sk-..., PRIVATE KEY headers) that MUST look
-// real to exercise every pattern class. tests/ is repo infrastructure, never part of
-// the install payload — a secret there is test data, not a shipped credential.
-const IGNORED_PATHS = /(^|\/)(\.env|\.env\.[^/]+)$|(^|\/)tests\//;
-
 function stagedDiff() {
-  const r = spawnSync("git", ["diff", "--cached", "--no-color", "-U0"], { encoding: "utf8" });
+  const r = spawnSync("git", ["-c", "core.quotePath=false", "diff", "--cached", "--no-color", "--no-ext-diff", "-U0"], { encoding: "utf8" });
   if (r.status !== 0) return { error: String(r.stderr || "git diff failed") };
   return { out: String(r.stdout || "") };
+}
+
+function diffPath(raw) {
+  const p = String(raw || "").trim();
+  if (!p || p === "/dev/null") return null;
+  return p.replace(/^b\//, "").replace(/\\/g, "/");
+}
+
+function hunkNewLine(line) {
+  const m = line.match(/^@@ [^+]*\+(\d+)(?:,(\d+))? @@/);
+  return m ? parseInt(m[1], 10) : null;
 }
 
 if (process.argv.includes("--help") || process.argv.includes("-h")) {
@@ -43,24 +64,34 @@ if (error) {
 
 const hits = [];
 let currentFile = null;
+let nextLine = null;
 const lines = out.split("\n");
 
 for (const line of lines) {
   if (line.startsWith("+++ ")) {
-    currentFile = line.slice(4).trim().replace(/^[ab]\//, "");
+    currentFile = diffPath(line.slice(4));
     continue;
   }
-  if (line.startsWith("--- ") || line.startsWith("@@") || line.startsWith("diff --git") || line.startsWith("index ")) {
+  if (line.startsWith("@@")) {
+    nextLine = hunkNewLine(line);
     continue;
   }
-  if (!line.startsWith("+") || line === "+" || line.length === 1) continue;
-  if (IGNORED_PATHS.test(currentFile || "")) continue;
-
+  if (line.startsWith("--- ") || line.startsWith("diff --git") || line.startsWith("index ")) {
+    continue;
+  }
+  if (line.startsWith(" ")) {
+    if (nextLine !== null) nextLine++;
+    continue;
+  }
+  if (!line.startsWith("+")) continue;
+  const lineNumber = nextLine;
+  if (nextLine !== null) nextLine++;
+  if (line === "+" || line.length === 1) continue;
   const content = line.slice(1);
   for (const p of PATTERNS) {
     const m = content.match(p.re);
     if (m) {
-      hits.push({ file: currentFile || "(unknown)", line: "staged-diff", pattern: p.name });
+      hits.push({ file: currentFile || "(unknown)", line: lineNumber === null ? "unknown" : lineNumber, pattern: p.name });
       break;
     }
   }

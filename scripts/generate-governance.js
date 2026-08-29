@@ -16,7 +16,6 @@ const path = require("path");
 const SKILL_DIR = path.resolve(__dirname, "..");
 const SPEC_PATH = path.join(SKILL_DIR, "references", "init-spec.json");
 const PHASE_ORDER = ["A", "B", "C"];
-const LANG_TAGS = /^(json|bash|sh|yaml|yml|md|markdown|txt|javascript|js|typescript|ts|python|py|rust|go|java|cpp|c|toml|ini)$/;
 
 function usage() {
   console.log(`Usage:
@@ -52,12 +51,13 @@ function argValue(args, name) {
   return i >= 0 && i + 1 < args.length ? args[i + 1] : null;
 }
 
-function writeIfAbsent(filepath, content) {
+function writeIfAbsent(filepath, content, mode) {
   fs.mkdirSync(path.dirname(filepath), { recursive: true });
   if (fs.existsSync(filepath)) {
     return { path: filepath, action: "skipped" };
   }
   fs.writeFileSync(filepath, content, "utf8");
+  if (mode && process.platform !== "win32") fs.chmodSync(filepath, mode);
   return { path: filepath, action: "created" };
 }
 
@@ -85,16 +85,35 @@ function resolvePlaceholders(content, placeholders, inputs) {
   return result;
 }
 
-// Extract the code block from a markdown template: content between the first and
-// last ``` fences, with the optional language tag stripped (known tags only).
+// Extract the first complete fenced code block from a markdown template. Matching
+// the opening fence with its own closing fence matters when the surrounding
+// documentation contains a second example block.
 function extractCodeBlock(raw) {
-  const first = raw.indexOf("```");
-  const last = raw.lastIndexOf("```");
-  if (first < 0 || last <= first) return raw;
-  let inner = raw.slice(first + 3, last);
-  const lines = inner.split("\n");
-  if (lines[0] && LANG_TAGS.test(lines[0].trim())) lines.shift();
-  return lines.join("\n");
+  const lines = String(raw).replace(/\r\n/g, "\n").split("\n");
+  let opening = null;
+  let openingIndex = -1;
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].trim().match(/^(`{3,})([A-Za-z0-9_-]*)\s*$/);
+    if (m) {
+      opening = m;
+      openingIndex = i;
+      break;
+    }
+  }
+  if (!opening) return raw;
+
+  const closeRe = new RegExp("^`{" + opening[1].length + ",}\\s*$");
+  let closingIndex = -1;
+  for (let i = openingIndex + 1; i < lines.length; i++) {
+    if (closeRe.test(lines[i].trim())) {
+      closingIndex = i;
+      break;
+    }
+  }
+  if (closingIndex < 0) return raw;
+
+  const body = lines.slice(openingIndex + 1, closingIndex);
+  return body.join("\n");
 }
 
 function artifactType(artPath) {
@@ -102,6 +121,7 @@ function artifactType(artPath) {
   if (artPath.startsWith("docs/rules/")) return "policy";
   if (artPath === ".gitignore" || artPath === ".env.example" || artPath === ".gitmessage.txt") return "policy";
   if (artPath === ".governance" || artPath.startsWith(".governance/")) return "state";
+  if (artPath.startsWith(".githooks/")) return "script";
   if (artPath.startsWith("scripts/")) return "script";
   if (artPath.startsWith(".github/")) return "ci";
   return "documentation";
@@ -120,17 +140,25 @@ const GITIGNORE_CONTENT = [
   "!.env.example",
   "*.key",
   "*.pem",
+  "*.p12",
+  "*.pfx",
+  "id_rsa",
+  "credentials.json",
+  "secrets.*",
   "",
   "# Build output",
   "dist/",
   "build/",
   "coverage/",
+  "*.log",
+  "logs/",
   "",
   "# Governance runtime outputs (git-tracked: manifest/state/preflight/git-policy/sync-rules/generated)",
   ".governance/validation.json",
   ".governance/drift-report.json",
   ".governance/release-proposal.json",
   ".governance/activity.jsonl",
+  ".governance/consent.json",
   "",
   "# OS / editor",
   ".DS_Store",
@@ -246,7 +274,7 @@ function generateSubSkills(inputs, skillDir, targetAbs, dirRel) {
 }
 
 function generateManifest(inputs, spec, entries) {
-  const version = inputs.governance_version || "0.10.0";
+  const version = inputs.governance_version || defaultGovernanceVersion(spec);
   const manifest = {
     schema_version: "1.0",
     governance_version: version,
@@ -261,6 +289,17 @@ function generateManifest(inputs, spec, entries) {
     };
   }
   return JSON.stringify(manifest, null, 2) + "\n";
+}
+
+function defaultGovernanceVersion(spec) {
+  try {
+    const pkg = JSON.parse(fs.readFileSync(path.join(SKILL_DIR, "package.json"), "utf8"));
+    if (typeof pkg.version === "string" && pkg.version.length > 0) return pkg.version;
+  } catch {
+    // Fall back to the version declared in the machine-readable spec below.
+  }
+  const fallback = spec && spec.inputs && spec.inputs.governance_version && spec.inputs.governance_version.default;
+  return typeof fallback === "string" && fallback.length > 0 ? fallback : "0.10.1";
 }
 
 // --- Main ---
@@ -288,9 +327,10 @@ function main() {
   if (!target) { console.error("error: --target is required"); process.exit(2); }
   if (!projectName && !file) { console.error("error: --project-name is required (or use --file)"); process.exit(2); }
 
+  const spec = readJSON(SPEC_PATH);
   const inputs = file ? readJSON(file) : { project_name: projectName };
   inputs.phase = phase;
-  inputs.governance_version = inputs.governance_version || "0.10.0";
+  inputs.governance_version = inputs.governance_version || defaultGovernanceVersion(spec);
   inputs.description = inputs.description || "";
   inputs.project_name = inputs.project_name || projectName || "";
   inputs.test_cmd = inputs.test_cmd || "npm test";
@@ -306,7 +346,6 @@ function main() {
   inputs.stack = inputs.stack || "docs-only";
   inputs.ci_platform = inputs.ci_platform || "github";
 
-  const spec = readJSON(SPEC_PATH);
   const maxPhaseIdx = PHASE_ORDER.indexOf(phase);
   if (maxPhaseIdx < 0) { console.error("error: --phase must be A, B, or C"); process.exit(2); }
 
@@ -370,7 +409,8 @@ function main() {
         } else {
           const raw = fs.readFileSync(sourcePath, "utf8");
           const body = extractCodeBlock(raw);
-          result = writeIfAbsent(targetPath, resolvePlaceholders(body, art.placeholders, inputs));
+          const executable = artPath === ".githooks/pre-commit" || artPath === ".githooks/commit-msg";
+          result = writeIfAbsent(targetPath, resolvePlaceholders(body, art.placeholders, inputs), executable ? 0o755 : null);
         }
         break;
       }

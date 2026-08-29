@@ -1,7 +1,5 @@
 # Consent 政策重写：提交前一次确认（TASK 计划）
 
-[English](../../en/plans/consent-policy-hardening.md) · [简体中文](consent-policy-hardening.md) · [繁體中文](../../zh-TW/plans/consent-policy-hardening.md)
-
 **Target：both** —— 五个同步点：本仓库侧 `AGENTS.md`；载荷侧 `references/policies/git.policy.md`（权威详解）、`references/policies/lifecycle.policy.md`（Phase 2 确认门）、`references/templates/agents-md.template.md`（被治理项目模板摘要）、`SKILL.md`（权限矩阵）。改任何一处必须同步其余四处，同步点清单见「受影响文件」。
 
 ### 任务目的

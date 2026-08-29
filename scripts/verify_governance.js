@@ -96,7 +96,6 @@ function hasCI() {
   return (
     isFile(path.join(ROOT, ".github/workflows/ci.yml")) ||
     isFile(path.join(ROOT, ".github/workflows/ci.yaml")) ||
-    isDir(path.join(ROOT, ".github/workflows")) ||
     isFile(path.join(ROOT, ".gitlab-ci.yml")) ||
     isFile(path.join(ROOT, ".circleci/config.yml"))
   );

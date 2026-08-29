@@ -154,6 +154,8 @@ scripts/check-lock.js
 scripts/check-git-policy.js
 scripts/check-secrets.js
 scripts/check-sync.js
+.githooks/pre-commit
+.githooks/commit-msg
 opencode.json / .github/workflows/**
 ```
 

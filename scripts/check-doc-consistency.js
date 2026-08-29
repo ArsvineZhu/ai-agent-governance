@@ -91,7 +91,7 @@ function walk(dir, base = dir) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
     const p = path.join(dir, e.name);
     if (e.isDirectory()) out.push(...walk(p, base));
-    else if (e.name.endsWith(".md")) out.push(path.relative(base, p));
+    else if (e.name.endsWith(".md")) out.push(path.relative(base, p).replace(/\\/g, "/"));
   }
   return out.sort();
 }
@@ -119,11 +119,12 @@ function mdFiles() {
   if (fs.existsSync(DOCS)) {
     for (const lang of ["en", "zh-CN", "zh-TW"]) {
       const dir = path.join(DOCS, lang);
-      if (fs.existsSync(dir)) for (const rel of walk(dir)) out.push(path.join("docs", lang, rel));
+      if (fs.existsSync(dir)) for (const rel of walk(dir)) out.push((path.join("docs", lang, rel)).replace(/\\/g, "/"));
     }
     for (const rel of walk(DOCS)) {
-      if (rel.startsWith("design-decisions/") || rel.startsWith("archive/")) {
-        out.push(path.join("docs", rel));
+      const normalized = rel.replace(/\\/g, "/");
+      if (normalized.startsWith("design-decisions/") || normalized.startsWith("archive/")) {
+        out.push((path.join("docs", normalized)).replace(/\\/g, "/"));
       }
     }
   }
@@ -322,10 +323,13 @@ function main() {
   // Append to drift-report.json if present (runtime output, optional)
   try {
     const driftPath = path.join(ROOT, ".governance", "drift-report.json");
-    const drift = JSON.parse(readFile(driftPath));
-    drift.consistency = issues;
-    drift.consistencyGate = { gate, pass: gateIssues.length === 0, issues: gateIssues };
-    fs.writeFileSync(driftPath, JSON.stringify(drift, null, 2) + "\n");
+    const rawDrift = readFile(driftPath);
+    if (rawDrift) {
+      const drift = JSON.parse(rawDrift);
+      drift.consistency = issues;
+      drift.consistencyGate = { gate, pass: gateIssues.length === 0, issues: gateIssues };
+      fs.writeFileSync(driftPath, JSON.stringify(drift, null, 2) + "\n");
+    }
   } catch (e) {
     if (process.env.DEBUG) console.error(`[DEBUG] drift-report.json not updated: ${e.message}`);
   }

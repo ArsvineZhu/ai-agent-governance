@@ -34,6 +34,7 @@ AI 仅在前两阶段自动行动（分析 + 提案，只读）；任何写操�
 | `version.manifest_match_tag` | package.json / CHANGELOG / `.governance/manifest.json` 的 `governance_version` 与 tag 一致 | ❌ 停止发布 |
 | `release.tag_required` | 目标 tag 尚不存在（`git tag -l <tag>` 为空） | ⚠️ Blocked，tag 已存在 |
 | `release.proposal_approved` | Release Proposal 已生成（`scripts/release-manager.js plan`）且开发者已**明确批准** | ⚠️ Blocked，等待批准 |
+| `release.review_satisfied` | Proposal 风险/审核字段有效；高风险 Proposal 的 `reviewStatus` 为 `completed` 或 `explicitly-approved` | ❌ 停止发布，先完成深度审核或逐项取得开发者确认 |
 | `validator.passed` | `scripts/verify-governance.js` 退出码 0 | ❌ 停止发布。**豁免**：skill 仓库自身发布不适用本项（skill 仓库无 `.governance/`、无软件项目形态工件，validator 按默认检查必然失败）；skill 仓库自身以 `tests.required`（npm test 退出码 0）替代 |
 | `docs.parity_passed` | `scripts/check-doc-parity.js` 退出码 0（三语文档树结构平行） | ⚠️ Blocked，先同步缺失/漂移的文档；仅适用于维护三语文档树的仓库 |
 | `sync.passed` | `scripts/check-sync.js` 退出码 0（同步组无漏项：watch 命中的组其 require 文件已一并更新） | ❌ 停止发布，先补齐漏同步的文件 |
@@ -142,6 +143,9 @@ low / medium / high
 Review recommendation:
 none / suggested (review-manager) / required (review-manager 或逐项确认)
 
+Review status:
+not-required / suggested / required / completed / explicitly-approved
+
 Release Notes:
 ...
 
@@ -159,6 +163,7 @@ Proceed with release?
 - 轻量级门禁**总是自动跑**（标准验证序列，见 lifecycle Phase 4）--底线，零成本
 - 高风险清单**明确列举**（见上表），不依赖 AI 自由裁量；边界模糊时**取更高级别**
 - review-manager 已实现（sub-skills.md 第 8 节）：**高风险变更默认运行「全量深度 × 本次变更集范围」**（逐行通读 + 对照开发计划 + 执行级验证 + 不信任门禁；范围 = 计划中的 `git diff` 变更集，不是全项目——全项目彻查成本高，仅在开发者显式要求时使用）；开发者也可选择逐项明确确认替代（二选一，不允许跳过）
+- Proposal JSON 必须包含 `riskLevel`、`reviewRecommendation` 与 `reviewStatus`；高风险执行前，`reviewStatus` 必须为 `completed` 或 `explicitly-approved`，否则 `release-manager execute` 拒绝创建 tag。
 
 批准后把 Proposal 记录到 `.governance/release-proposal.json`（运行时输出，git 忽略，非 required artifact）作为审批证据。
 

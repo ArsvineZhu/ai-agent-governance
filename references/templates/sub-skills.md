@@ -208,6 +208,7 @@ Core principle: AI analyzes and proposes; the developer authorizes; no release o
 - `version.manifest_match_tag`: `package.json.version` == `CHANGELOG` top version == `manifest.governance_version` == tag `v<version>`
 - `release.tag_required`: target tag does not exist yet (`git tag -l <tag>`)
 - `release.proposal_approved`: a Release Proposal was generated and the developer explicitly approved it
+- `release.review_satisfied`: Proposal risk/review metadata is valid; a high-risk Proposal has `reviewStatus` set to `completed` or `explicitly-approved`
 - `validator.passed`: `node scripts/verify-governance.js` exit 0
 
 Any failure → report ⚠️/❌ with the exact item; do NOT proceed.
@@ -218,7 +219,7 @@ Inspect the repository: current tag/version, `git log` / `git diff` since the la
 
 `node scripts/release-manager.js plan --json '<{"current":"X.Y.Z","changes":[{"type":"...","description":"...","uncertain":false}]}>'`
 
-It outputs the Release Proposal JSON (current / recommended / releaseType / reasons / releaseNotes / headSha) and NEVER writes. Exit code 2 → clarification required (see Uncertainty).
+It outputs the Release Proposal JSON (current / recommended / releaseType / reasons / riskLevel / reviewRecommendation / reviewStatus / riskReasons / releaseNotes / headSha) and NEVER writes. Exit code 2 → clarification required (see Uncertainty).
 
 ## Phase 2 — Version Decision (SemVer 2.0.0)
 
@@ -237,12 +238,15 @@ Release Proposal
 Current: vX.Y.Z
 Recommended: vX.Y.Z
 Reason: ...
+Risk level: low / medium / high
+Review recommendation: none / suggested / required
+Review status: not-required / suggested / required / completed / explicitly-approved
 Release Notes: ...
 
 Proceed with release?
 ```
 
-Wait for explicit confirmation. Write the approved proposal to `.governance/release-proposal.json` (git-ignored runtime output). Forbidden to proceed when: no confirmation, vague reply, unresolved breaking-change judgement, or the working tree changed.
+Wait for explicit confirmation. Write the approved proposal to `.governance/release-proposal.json` (git-ignored runtime output). For high-risk proposals, set `reviewStatus` to `completed` after review-manager finishes, or to `explicitly-approved` after item-by-item developer confirmation. Forbidden to proceed when: no confirmation, vague reply, unresolved breaking-change judgement, missing high-risk review evidence, or the working tree changed.
 
 ## Phase 4 — Execute
 

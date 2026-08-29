@@ -2,9 +2,9 @@
 
 [English](../../en/plans/post-review-remediation.md) · [简体中文](../../zh-CN/plans/post-review-remediation.md) · [繁體中文](post-review-remediation.md)
 
-> **狀態：設計計劃，未實作。** 交付對帳（`scripts/check-plan-delivery.js`）跳過純設計計劃；本行即標記。本計劃是 v0.10.0 深度審查的後備積壓清單，尚未開始實作。
+> **狀態：已完成（2026-08-29）。** 交付對帳（`scripts/check-plan-delivery.js`）現在會稽核本計劃宣告的檔案。既有缺陷與可選鉤子重新實作要求均已落地，並由下方驗證矩陣覆蓋。
 
-**Target：both** —— 載荷側 `scripts/`（既有腳本缺陷）與倉庫側 `docs/`（歸檔死鏈、文件計數）。鉤子待辦指向未來重新實作時涉及的 `references/templates/` 與 `references/init-spec.json`。清單見「受影響檔案」。
+**Target：both** —— 載荷側執行時行為已在 `scripts/`、`references/init-spec.json` 及鉤子範本/策略中落地；倉庫側同步已在 `docs/`（歸檔連結與佈局）、`SKILL.md`、`CHANGELOG.md` 及三語計劃副本中完成。鉤子條目現已實作，不再延期。
 
 ### 任務目的
 
@@ -28,7 +28,7 @@
 8. `docs/archive/` —— 因第 7 條的盲點，10 個死鏈從未被報告：`sync-groups-mechanical-check.md`、`governed-project-sync-groups.md`、`review-manager.md`、`tiered-review-gate.md` 內指向語言樹的返回連結（`../../en/plans/...`）及 `../roadmap.md` 均不解析。GENERAL。
 9. `scripts/generate-governance.js:288` —— `governance_version` 硬編碼為 `"0.9.0"`，比 `package.json` 落後一個版本。每次 INIT 生成的 `.governance/manifest.json` 都自報 0.9.0；release 版同步流程不更新它，因此由 v0.9.1 初始化的專案各自報到舊版本。SEVERE（版本一致性）。
 
-### 二、鉤子重新實作待辦（B 方案，撤出後若要重做必須做對）
+### 二、鉤子重新實作（B 方案，已完成）
 
 1. `.governance/consent.json` 加入生成的 `.gitignore` 與 `references/policies/governance-files.policy.md` 的 `.governance/` 追蹤表——模板宣稱「git-ignored」，生成的 `.gitignore` 卻沒有它。
 2. fail-open 改為 fail-closed——`consent.json` 缺失時 exit 1 報錯，而非 `[ -f ] || exit 0` 靜默放行（刪除憑據即禁用檢查）。
@@ -47,7 +47,7 @@
 - 第 2/3 條：構造中文、空格、rename 檔名的暫存改動，`check-sync.js` 必須正確命中/不誤報 watch 組。
 - 第 4/5 條：`locked:false`、`locked:""`、損壞 state.json 各自的行為須可區分，損壞態 fail-closed。
 - 第 6 條：對已知真實密鑰形狀（Slack/Google/Stripe/JWT/PEM 主體/帶標點密碼/force-added `.env`）逐一驗證阻斷。
-- 第 7/8 條：修復後 `docs/archive/` 死鏈須被 `npm run check` 報出（而非靜默綠）。
+- 第 7/8 條：`npm run check` 現在會掃描 `docs/archive/`；已發現的死鏈均已修正，一致性閘門乾淨通過。
 - 第 9 條：新生成的 manifest 的 `governance_version` 須與 `package.json` 一致；重跑 INIT 後的 manifest 報當前版本而非 0.9.0。
 - 鉤子 1-10：全部落地後，在真 sh 環境用真實 git 提交矩陣驗證；`npm run check` 與 `npm run check:all` exit 0，測試數上調且無恆真斷言。
 
@@ -65,11 +65,18 @@
 - references/policies/governance-files.policy.md —— 鉤子 1、8
 - scripts/generate-governance.js —— 鉤子 6、第 9 條
 - tests/run-tests.js —— 鉤子 9 及第 1-6 條迴歸測試
+- `docs/{en,zh-CN,zh-TW}/architecture.md` —— 恢復範本後的 Repository Layout 同步
+- `docs/{en,zh-CN,zh-TW}/bootstrap-output.md` —— Phase C 鉤子產物文件
+- `docs/{en,zh-CN,zh-TW}/plans/post-review-remediation.md` —— 完成狀態及三語受影響檔案宣告同步
+- `SKILL.md` —— 生成鉤子的受保護檔案摘要
+- `CHANGELOG.md` —— Unreleased 行為變更記錄
+- `references/policies/git.policy.md` —— 受治理專案保護清單
+- `references/templates/agents-md.template.md` —— 生成 Agent 的保護清單
 
 ### 風險
 
 - **批次過大**：既有缺陷橫跨 7 個腳本，一次修復面廣；建議按 SEVERE 優先分批，每批獨立跑門禁。
-- **鉤子是否重做未定**：A 方案撤出後，是否值得重新引入鉤子本身是開放問題；本清單是「若重做則必須做對」的約束，不是重啟鉤子的承諾。
+- **鉤子保持可選啟用**：管理員必須明確設定 `core.hooksPath`，並確保確認憑據持續被忽略；提交時依賴 Node.js。
 - **check-secrets 模式擴展**：新增模式有誤報風險，需配真實樣本與陰性樣本雙向驗證，避免把普通文本當秘密阻斷。
 
 ---

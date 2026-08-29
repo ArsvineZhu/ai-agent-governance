@@ -2,9 +2,9 @@
 
 [English](post-review-remediation.md) · [简体中文](../../zh-CN/plans/post-review-remediation.md) · [繁體中文](../../zh-TW/plans/post-review-remediation.md)
 
-> **Status: design plan, not implemented.** Delivery verification (`scripts/check-plan-delivery.js`) skips design-only plans; this line is what marks it. This plan is the remediation backlog produced by the v0.10.0 deep review; no implementation has started.
+> **Status: Completed (2026-08-29).** Delivery verification (`scripts/check-plan-delivery.js`) now audits this plan's declared files. The pre-existing defects and the opt-in hook reimplementation requirements are implemented and covered by the validation matrix below.
 
-**Target: both** — `scripts/` on the payload side (pre-existing script defects) and `docs/` on the repo side (archive dead links, doc counts). The hook items point at `references/templates/` and `references/init-spec.json` for a future reimplementation. List under Affected Files.
+**Target: both** — payload-side runtime behavior is implemented in `scripts/`, `references/init-spec.json`, and the hook template/policies; repo-infrastructure synchronization is implemented in `docs/` (archive links and layout), `SKILL.md`, `CHANGELOG.md`, and the translated plan copies. The hook items are now implemented, not deferred.
 
 ### Objective
 
@@ -28,7 +28,7 @@ By file, each with line number and evidence.
 8. `docs/archive/` — because of #7's blind spot, 10 dead links are never reported: the language-tree back-links (`../../en/plans/...`) and `../roadmap.md` inside `sync-groups-mechanical-check.md`, `governed-project-sync-groups.md`, `review-manager.md`, `tiered-review-gate.md`. GENERAL.
 9. `scripts/generate-governance.js:288` — `governance_version` is hardcoded to `"0.9.0"`, one release behind `package.json`. Every INIT-generated `.governance/manifest.json` self-reports 0.9.0; the release version-sync never updates it, so a v0.9.1-initialised project reports the old version. SEVERE (version consistency).
 
-### 2. Hook reimplementation backlog (B plan — must be done right if re-done)
+### 2. Hook reimplementation (B plan — completed)
 
 1. Add `.governance/consent.json` to the generated `.gitignore` and to the `.governance/` tracking table in `references/policies/governance-files.policy.md` — the template claims "git-ignored", the generated `.gitignore` does not contain it.
 2. Fail-open → fail-closed — missing `consent.json` must exit 1, not the `[ -f ] || exit 0` silent pass (deleting the credential disables the check).
@@ -47,7 +47,7 @@ By file, each with line number and evidence.
 - Items 2/3: staged changes with unicode, space, and rename filenames must be correctly matched/not-false-flagged by `check-sync.js`.
 - Items 4/5: `locked:false`, `locked:""`, and corrupt `state.json` must be distinguishable; corrupt state fails closed.
 - Item 6: verify blocking against known real secret shapes (Slack/Google/Stripe/JWT/PEM body/punctuated password/force-added `.env`).
-- Items 7/8: after the fix, `docs/archive/` dead links must be reported by `npm run check` rather than silently green.
+- Items 7/8: `npm run check` now scans `docs/archive/`; all discovered dead links are corrected and the consistency gate is clean.
 - Item 9: a freshly generated manifest's `governance_version` must match `package.json`; re-running INIT reports the current version instead of 0.9.0.
 - Hook 1-10: once all land, verify with a real git-commit matrix in a real shell; `npm run check` and `npm run check:all` exit 0, test count raised with no tautological assertions.
 
@@ -59,17 +59,24 @@ By file, each with line number and evidence.
 - scripts/check-git-policy.js — item 5
 - scripts/check-secrets.js — item 6
 - scripts/check-doc-consistency.js — item 7
-- docs/archive — item 8 (dead-link content fix)
+- docs/archive — item 8 (dead-link content fix; all affected archive records)
 - references/templates/githooks-template.md — hook 1-10
 - references/init-spec.json — hook 1, 7
 - references/policies/governance-files.policy.md — hook 1, 8
 - scripts/generate-governance.js — hook 6, item 9
 - tests/run-tests.js — hook 9 and regression tests for items 1-6
+- `docs/{en,zh-CN,zh-TW}/architecture.md` — Repository Layout sync for the restored template
+- `docs/{en,zh-CN,zh-TW}/bootstrap-output.md` — Phase C hook output documentation
+- `docs/{en,zh-CN,zh-TW}/plans/post-review-remediation.md` — completion status and synchronized affected-file declaration
+- `SKILL.md` — protected-file summary for generated hooks
+- `CHANGELOG.md` — Unreleased behavioral-change record
+- `references/policies/git.policy.md` — generated-project protection list
+- `references/templates/agents-md.template.md` — generated-agent protection list
 
 ### Risks
 
 - **Large batch**: pre-existing defects span 7 scripts; a single pass is too broad — batch by severity with independent gates per batch.
-- **Whether to redo the hook is open**: after the A removal, re-introducing the hook is itself undecided; this list is a "must do right if redone" constraint, not a commitment to restart it.
+- **The hook remains opt-in**: administrators must explicitly configure `core.hooksPath`, keep the confirmation credential ignored, and provide Node.js at commit time.
 - **check-secrets pattern expansion**: new patterns risk false positives; verify with both positive and negative samples so ordinary text is not blocked as a secret.
 
 ---

@@ -48,6 +48,38 @@ function bump(v, type) {
   return { major: v.major, minor: v.minor, patch: v.patch + 1 };
 }
 
+const HIGH_RISK_RE = /\b(?:security|secret|credential|password|token|permission|authorization|authentication|access[ -]control|delete|deletion|protected|governance|sensitive)\b/i;
+const MEDIUM_RISK_RE = /\b(?:script|code|logic|policy|template|workflow|hook|generator|validator|check|behavior|behaviour|configuration|config)\b/i;
+const LOW_RISK_RE = /\b(?:typo|version|link|format|readme|documentation|docs?)\b/i;
+
+function assessRisk(changes) {
+  const assessments = changes.map((ch) => {
+    const type = String(ch.type || "other").toLowerCase();
+    const description = String(ch.description || "");
+    const signal = `${type} ${description}`;
+    if (type === "breaking" || HIGH_RISK_RE.test(signal)) {
+      return { level: "high", reason: `${type}: ${description || "high-impact change"}` };
+    }
+    if (!MEDIUM_RISK_RE.test(signal) && LOW_RISK_RE.test(signal)) {
+      return { level: "low", reason: `${type}: ${description || "documentation-only change"}` };
+    }
+    if (type === "feature" || MEDIUM_RISK_RE.test(signal) || ["fix", "refactor", "test", "ci", "chore"].includes(type)) {
+      return { level: "medium", reason: `${type}: ${description || "implementation change"}` };
+    }
+    return { level: "medium", reason: `${type}: ${description || "uncategorized change"}` };
+  });
+  const rank = { low: 0, medium: 1, high: 2 };
+  const riskLevel = assessments.reduce((level, item) => (rank[item.level] > rank[level] ? item.level : level), "low");
+  const reviewRecommendation = riskLevel === "high" ? "required" : riskLevel === "medium" ? "suggested" : "none";
+  const reviewStatus = riskLevel === "high" ? "required" : riskLevel === "medium" ? "suggested" : "not-required";
+  return {
+    riskLevel,
+    reviewRecommendation,
+    reviewStatus,
+    riskReasons: assessments.map((item) => item.reason),
+  };
+}
+
 function getHeadSha() {
   const r = spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" });
   return r.status === 0 ? String(r.stdout || "").trim() || null : null;
@@ -83,6 +115,7 @@ function decide(input) {
   const current = parseVersion(input.current);
   if (!current) fail("plan: invalid current version (expected X.Y.Z)", 1);
   const c = classify(input.changes);
+  const risk = assessRisk(input.changes);
   const uncertain = [...c.breaking, ...c.features].filter((i) => i.uncertain);
   if (uncertain.length > 0) {
     return {
@@ -94,6 +127,7 @@ function decide(input) {
       reasons: ["Potential Breaking Change / Potential Feature requires developer confirmation"],
       releaseNotes: "",
       headSha: getHeadSha(),
+      ...risk,
     };
   }
   let type = "patch";
@@ -115,6 +149,7 @@ function decide(input) {
     reasons,
     releaseNotes: buildNotes(c),
     headSha: getHeadSha(),
+    ...risk,
   };
 }
 
@@ -134,6 +169,12 @@ function plan(argv) {
     input = JSON.parse(raw);
   } catch (e) {
     fail("plan: invalid --json input: " + e.message, 1);
+  }
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    fail("plan: input must be a JSON object", 1);
+  }
+  if (!Array.isArray(input.changes) || !input.changes.every((ch) => ch && typeof ch === "object" && !Array.isArray(ch))) {
+    fail("plan: changes must be an array of objects", 1);
   }
   const proposal = decide(input);
   process.stdout.write(JSON.stringify(proposal, null, 2) + "\n");
@@ -155,8 +196,19 @@ function execute(argv) {
   } catch (e) {
     fail("execute: cannot read proposal: " + e.message, 3);
   }
+  if (!proposal || typeof proposal !== "object" || Array.isArray(proposal)) {
+    fail("execute: proposal must be a JSON object", 3);
+  }
   if (!argv.includes("--yes")) {
     fail("execute: release NOT approved (no --yes) — no write operations performed", 3);
+  }
+  const validRisk = ["low", "medium", "high"].includes(proposal.riskLevel);
+  const validRecommendation = { low: "none", medium: "suggested", high: "required" }[proposal.riskLevel];
+  if (!validRisk || proposal.reviewRecommendation !== validRecommendation || typeof proposal.reviewStatus !== "string") {
+    fail("execute: proposal is missing valid risk/review metadata", 3);
+  }
+  if (proposal.riskLevel === "high" && !["completed", "explicitly-approved"].includes(proposal.reviewStatus)) {
+    fail("execute: high-risk proposal requires completed review or explicit risk approval", 4);
   }
   const ver = parseVersion(proposal.recommended);
   if (!ver) fail("execute: proposal has no valid recommended version", 3);
