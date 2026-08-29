@@ -1,7 +1,5 @@
 # INIT Scripted Generator（TASK 计划）
 
-[English](../../en/plans/init-scripted-generator.md) · [简体中文](init-scripted-generator.md) · [繁體中文](../../zh-TW/plans/init-scripted-generator.md)
-
 ### 任务目的
 
 把 INIT 生成逻辑固化为**确定性、可快照测试的脚本**，让 100 次 INIT 产出逐字节一致——这是 skill 规模化之前的可靠性前提。

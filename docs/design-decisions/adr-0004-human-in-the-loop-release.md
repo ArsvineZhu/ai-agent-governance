@@ -16,7 +16,7 @@
 Analyze → Release Proposal → Developer Approval → Create Git Tag → Create Release
 ```
 
-- **Analyze（只读）** — `scripts/release-manager.js plan` 按 SemVer 2.0.0 分类变更，输出 Release Proposal（current / recommended / releaseType / reasons / releaseNotes / headSha），永不写仓库。
+- **Analyze（只读）** — `scripts/release-manager.js plan` 按 SemVer 2.0.0 分类变更，输出 Release Proposal（current / recommended / releaseType / reasons / riskLevel / reviewRecommendation / reviewStatus / riskReasons / releaseNotes / headSha），永不写仓库。
 - **Approval Gate（审批门禁）** — AI 展示 Proposal 并等待开发者明确确认；已批准的 Proposal 记录到 `.governance/release-proposal.json`（git 忽略的运行时输出）。
 - **Execute（写）** — `scripts/release-manager.js execute --yes` 重新验证（工作区干净 + HEAD == proposal.headSha）后创建 annotated tag；push 与 GitHub Release 在批准覆盖下执行。
 - 不确定性（Potential Breaking Change / Potential Feature）暂停流程并请求澄清（退出码 2）。

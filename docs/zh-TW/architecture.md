@@ -31,6 +31,7 @@ ai-agent-governance/
 │   │   ├── env-example.template.md # .env.example 範本（佔位符、按依賴裁剪）
 │   │   ├── gitmessage.template.md  # .gitmessage.txt 範本（提交約定）
 │   │   ├── git-policy.template.md  # .governance/git-policy.json 範本（Git 工作流程策略）
+│   │   ├── githooks-template.md     # 可選 .githooks/pre-commit + commit-msg 範本
 │   │   └── sync-rules.template.md  # .governance/sync-rules.json 範本（同步組）
 │   ├── policies/
 │   │   ├── lifecycle.policy.md / git.policy.md / security.policy.md / coding.policy.md / testing.policy.md

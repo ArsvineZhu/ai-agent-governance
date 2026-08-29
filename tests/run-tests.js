@@ -28,6 +28,10 @@ function write(p, content) {
   fs.writeFileSync(p, content);
 }
 
+function assemble(...parts) {
+  return parts.join("");
+}
+
 function run(dir, args = []) {
   return spawnSync(process.execPath, [VALIDATOR, ...args], { cwd: dir, encoding: "utf8" });
 }
@@ -81,6 +85,17 @@ test("full default structure exits 0 (defaults mode)", () => {
 
   const r = run(dir);
   return r.status === 0 && r.stdout.includes("21/21 checks passed.");
+});
+
+test("empty CI workflow directory does not satisfy the validator", () => {
+  const dir = tmp("empty-ci");
+  buildFullDefault(dir);
+  fs.rmSync(path.join(dir, ".github/workflows/ci.yml"));
+  const r = run(dir, ["--json"]);
+  if (r.status !== 1) return false;
+  const report = JSON.parse(r.stdout);
+  const ci = report.results.find((x) => x.name === "CI workflow");
+  return ci && ci.ok === false;
 });
 
 test("skeleton ARCHITECTURE.md fails (wrong-but-present)", () => {
@@ -252,6 +267,25 @@ test("check-lock: unlocked state exits 0", () => {
   return r.status === 0;
 });
 
+test("check-lock: false and empty-string locks are unlocked", () => {
+  const values = [false, ""];
+  return values.every((locked, i) => {
+    const dir = tmp(`lock-falsy-${i}`);
+    write(path.join(dir, ".governance/state.json"), JSON.stringify({ locked }));
+    const r = spawnSync(process.execPath, [LOCK_CHECK, "--json"], { cwd: dir, encoding: "utf8" });
+    if (r.status !== 0) return false;
+    const out = JSON.parse(r.stdout);
+    return out.locked === false && out.lock === null;
+  });
+});
+
+test("check-lock: malformed state exits 1 (fail-closed)", () => {
+  const dir = tmp("lock-corrupt");
+  write(path.join(dir, ".governance/state.json"), "{ not valid json");
+  const r = spawnSync(process.execPath, [LOCK_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 1 && /refusing to proceed/.test(r.stderr);
+});
+
 test("validator: CHANGELOG without version section exits 1", () => {
   const dir = tmp("badchangelog");
   buildFullDefault(dir);
@@ -266,6 +300,14 @@ test("validator: invalid git-policy.json exits 1", () => {
   write(path.join(dir, ".governance/git-policy.json"), JSON.stringify({ directPush: false }));
   const r = run(dir);
   return r.status === 1 && r.stdout.includes("Git policy");
+});
+
+test("check-git-policy: malformed policy exits 1 (fail-closed)", () => {
+  const dir = tmp("gitpolicy-corrupt");
+  gitInit(dir);
+  write(path.join(dir, ".governance/git-policy.json"), "{ not valid json");
+  const r = spawnSync(process.execPath, [GIT_POLICY_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 1 && /refusing to proceed/.test(r.stderr);
 });
 
 test("check-git-policy: protected branch with directPush=false exits 1", () => {
@@ -288,46 +330,92 @@ test("check-git-policy: feature branch exits 0", () => {
 test("check-secrets: staged fake secret exits 1 without leaking the token", () => {
   const dir = tmp("secrets-hit");
   gitInit(dir);
-  write(path.join(dir, "app.js"), "const apiKey = 'AKIAIOSFODNN7EXAMPLE';");
+  const value = assemble("AKIA", "IOSFODNN7EXAMPLE");
+  write(path.join(dir, "app.js"), assemble("const apiKey = '", value, "';"));
   spawnSync("git", ["add", "app.js"], { cwd: dir });
   const r = spawnSync(process.execPath, [SECRET_CHECK], { cwd: dir, encoding: "utf8" });
-  return r.status === 1 && r.stderr.includes("aws-access-key") && !r.stderr.includes("AKIAIOSFODNN7EXAMPLE");
+  return r.status === 1 && r.stderr.includes("aws-access-key") && !r.stderr.includes(value);
 });
 
 test("check-secrets: github PAT hits github-pat pattern", () => {
   const dir = tmp("secrets-pat");
   gitInit(dir);
-  write(path.join(dir, "ci.yml"), "token: ghp_" + "ABCDEFGHIJKLMNOPQRST0123456789");
+  const value = assemble("ghp_", "ABCDEFGHIJKLMNOPQRST0123456789");
+  write(path.join(dir, "ci.yml"), assemble("token: ", value));
   spawnSync("git", ["add", "ci.yml"], { cwd: dir });
   const r = spawnSync(process.execPath, [SECRET_CHECK], { cwd: dir, encoding: "utf8" });
-  return r.status === 1 && r.stderr.includes("github-pat") && !r.stderr.includes("ghp_ABCDEFGHIJKLMNOPQRST0123456789");
+  return r.status === 1 && r.stderr.includes("github-pat") && !r.stderr.includes(value);
 });
 
 test("check-secrets: openai-style key hits openai-style-key pattern", () => {
   const dir = tmp("secrets-openai");
   gitInit(dir);
-  write(path.join(dir, "app.js"), "const api = 'sk-abc1234567890XYZ0123456789';");
+  const value = assemble("sk-", "abc1234567890XYZ0123456789");
+  write(path.join(dir, "app.js"), assemble("const api = '", value, "';"));
   spawnSync("git", ["add", "app.js"], { cwd: dir });
   const r = spawnSync(process.execPath, [SECRET_CHECK], { cwd: dir, encoding: "utf8" });
-  return r.status === 1 && r.stderr.includes("openai-style-key") && !r.stderr.includes("sk-abc1234567890XYZ0123456789");
+  return r.status === 1 && r.stderr.includes("openai-style-key") && !r.stderr.includes(value);
 });
 
 test("check-secrets: private key header hits private-key-header pattern", () => {
   const dir = tmp("secrets-pem");
   gitInit(dir);
-  write(path.join(dir, "id_rsa"), "-----BEGIN RSA PRIVATE KEY-----\nmock\n-----END RSA PRIVATE KEY-----");
+  const header = assemble("-----BEGIN ", "RSA PRIVATE KEY", "-----");
+  const footer = assemble("-----END ", "RSA PRIVATE KEY", "-----");
+  write(path.join(dir, "id_rsa"), assemble(header, "\nmock\n", footer));
   spawnSync("git", ["add", "id_rsa"], { cwd: dir });
   const r = spawnSync(process.execPath, [SECRET_CHECK], { cwd: dir, encoding: "utf8" });
-  return r.status === 1 && r.stderr.includes("private-key-header") && !r.stderr.includes("-----BEGIN RSA PRIVATE KEY-----");
+  return r.status === 1 && r.stderr.includes("private-key-header") && !r.stderr.includes(header);
 });
 
 test("check-secrets: credential assignment hits credential-assignment pattern", () => {
   const dir = tmp("secrets-creds");
   gitInit(dir);
-  write(path.join(dir, "config.env"), "api_key=abcdefgh12345678");
+  write(path.join(dir, "config.env"), assemble("api_", "key=abcdefgh12345678"));
   spawnSync("git", ["add", "config.env"], { cwd: dir });
   const r = spawnSync(process.execPath, [SECRET_CHECK], { cwd: dir, encoding: "utf8" });
   return r.status === 1 && r.stderr.includes("credential-assignment") && !r.stderr.includes("abcdefgh12345678");
+});
+
+test("check-secrets: expanded provider and token patterns block without leaking values", () => {
+  const fixtures = [
+    ["slack-token", "slack.txt", assemble("xoxb-", "123456789012-123456789012-abcdefghijklmnop")],
+    ["google-api-key", "google.txt", assemble("AIza", "SyA123456789012345678901234567890123")],
+    ["stripe-secret-key", "stripe.txt", assemble("sk_", "live_1234567890abcdefghijklmnop")],
+    ["azure-storage-key", "azure.txt", assemble("DefaultEndpointsProtocol=https;AccountName=demo;", "Account", "Key=1234567890abcdef1234")],
+    ["jwt", "jwt.txt", assemble("eyJhbGciOiJIUzI1NiJ9.", "eyJzdWIiOiIxMjMifQ.", "abcdefghijklmnop")],
+    ["base64-secret", "base64.txt", assemble("sec", "ret=QWxhZGRpbjpPcGVu", "U2VzYW1lMTIzNDU2Nzg5MA==")],
+    ["pem-body", "pem.txt", assemble("MIIEvQIBADAN", "BgkqhkiG9w0BAQEFAASCBK", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")],
+  ];
+  return fixtures.every(([pattern, file, value]) => {
+    const dir = tmp(`secrets-${pattern}`);
+    gitInit(dir);
+    write(path.join(dir, file), value);
+    spawnSync("git", ["add", file], { cwd: dir });
+    const r = spawnSync(process.execPath, [SECRET_CHECK], { cwd: dir, encoding: "utf8" });
+    return r.status === 1 && r.stderr.includes(pattern) && !r.stderr.includes(value);
+  });
+});
+
+test("check-secrets: punctuated credential reports the real added line", () => {
+  const dir = tmp("secrets-punctuation");
+  gitInit(dir);
+  write(path.join(dir, "config.txt"), assemble("one\ntwo\npass", "word = 'p@ss/w0rd+=!'\n"));
+  spawnSync("git", ["add", "config.txt"], { cwd: dir });
+  const r = spawnSync(process.execPath, [SECRET_CHECK, "--json"], { cwd: dir, encoding: "utf8" });
+  if (r.status !== 1) return false;
+  const out = JSON.parse(r.stdout);
+  return out.hits.length === 1 && out.hits[0].pattern === "credential-assignment" && out.hits[0].line === 3 && !r.stdout.includes("p@ss/w0rd+=!");
+});
+
+test("check-secrets: force-added .env is scanned", () => {
+  const dir = tmp("secrets-force-env");
+  gitInit(dir);
+  write(path.join(dir, ".gitignore"), ".env\n");
+  write(path.join(dir, ".env"), assemble("TOK", "EN=p@ss/w0rd+=!\n"));
+  spawnSync("git", ["add", "-f", ".env"], { cwd: dir });
+  const r = spawnSync(process.execPath, [SECRET_CHECK], { cwd: dir, encoding: "utf8" });
+  return r.status === 1 && r.stderr.includes("credential-assignment");
 });
 
 test("check-secrets: clean staged diff exits 0", () => {
@@ -419,12 +507,71 @@ test("check-sync: writes the sync section into drift-report.json", () => {
   return j.sync && j.sync.clean === false && j.sync.unsynced.includes("api-architecture");
 });
 
+test("check-sync: NUL status parsing preserves untracked unicode/space paths", () => {
+  const dir = tmp("sync-untracked-paths");
+  gitInit(dir);
+  write(path.join(dir, "src", "new file 中文.ts"), "x");
+  write(path.join(dir, "docs", "ARCHITECTURE.md"), "architecture");
+  write(path.join(dir, ".governance", "sync-rules.json"),
+    JSON.stringify({ syncGroups: [{ name: "api-architecture", watch: ["src/**"], require: ["docs/ARCHITECTURE.md"] }] }));
+  write(path.join(dir, ".governance", "state.json"), JSON.stringify({ task_start_sha: "" }));
+  const r = spawnSync(process.execPath, [SYNC_CHECK, "--json"], { cwd: dir, encoding: "utf8" });
+  if (r.status !== 0) return false;
+  const out = JSON.parse(r.stdout);
+  return out.clean === true && out.unsynced.length === 0;
+});
+
+test("check-sync: rename matching uses the destination path", () => {
+  const dir = tmp("sync-rename-path");
+  gitInit(dir);
+  write(path.join(dir, "legacy", "old name 中文.ts"), "x");
+  spawnSync("git", ["add", "legacy"], { cwd: dir });
+  spawnSync("git", ["commit", "-q", "-m", "add legacy file"], { cwd: dir });
+  fs.mkdirSync(path.join(dir, "src"), { recursive: true });
+  fs.renameSync(path.join(dir, "legacy", "old name 中文.ts"), path.join(dir, "src", "new name 中文.ts"));
+  spawnSync("git", ["add", "-A"], { cwd: dir });
+  write(path.join(dir, ".governance", "sync-rules.json"),
+    JSON.stringify({ syncGroups: [
+      { name: "new-path", watch: ["src/**"], require: ["docs/ARCHITECTURE.md"] },
+      { name: "old-path", watch: ["legacy/**"], require: ["docs/ARCHITECTURE.md"] },
+    ] }));
+  write(path.join(dir, ".governance", "state.json"), JSON.stringify({ task_start_sha: "" }));
+  const r = spawnSync(process.execPath, [SYNC_CHECK, "--json"], { cwd: dir, encoding: "utf8" });
+  if (r.status !== 1) return false;
+  const out = JSON.parse(r.stdout);
+  return out.unsynced.some((u) => u.group === "new-path") && !out.unsynced.some((u) => u.group === "old-path");
+});
+
+test("check-sync: malformed policy and state exit 1 (fail-closed)", () => {
+  const badPolicy = tmp("sync-bad-policy");
+  gitInit(badPolicy);
+  write(path.join(badPolicy, ".governance/sync-rules.json"), "{ not valid json");
+  const p = spawnSync(process.execPath, [SYNC_CHECK], { cwd: badPolicy, encoding: "utf8" });
+  const badState = tmp("sync-bad-state");
+  gitInit(badState);
+  write(path.join(badState, ".governance/sync-rules.json"), JSON.stringify({ syncGroups: [] }));
+  write(path.join(badState, ".governance/state.json"), "{ not valid json");
+  const s = spawnSync(process.execPath, [SYNC_CHECK], { cwd: badState, encoding: "utf8" });
+  return p.status === 1 && s.status === 1 && /refusing to proceed/.test(p.stderr) && /refusing to proceed/.test(s.stderr);
+});
+
 test("validator: missing check-sync.js exits 1", () => {
   const dir = tmp("nosync");
   buildFullDefault(dir);
   fs.rmSync(path.join(dir, "scripts/check-sync.js"));
   const r = run(dir);
   return r.status === 1 && r.stdout.includes("Sync groups check");
+});
+
+test("validator: manifest sync check keeps an explicit false ok field", () => {
+  const dir = tmp("nosync-json");
+  buildFullDefault(dir);
+  fs.rmSync(path.join(dir, "scripts/check-sync.js"));
+  const r = run(dir, ["--json"]);
+  if (r.status !== 1) return false;
+  const out = JSON.parse(r.stdout);
+  const check = out.results.find((x) => x.name === "Sync groups check");
+  return check && check.ok === false;
 });
 
 // ---------- 9. Doc parity check (scripts/check-doc-parity.js) ----------
@@ -562,6 +709,15 @@ test("doc consistency: broken relative link is flagged", () => {
   return r.status === 0 && out.issues.broken_links.some((i) => i.includes("does-not-exist.md"));
 });
 
+test("doc consistency: archive links are scanned on Windows path separators", () => {
+  const dir = tmp("consistency-archive-link");
+  write(path.join(dir, "package.json"), JSON.stringify({ version: "1.0.0" }));
+  write(path.join(dir, "docs/archive/old.md"), "[missing](../does-not-exist.md)\n");
+  const r = spawnSync(process.execPath, [CONSISTENCY_CHECK, "--json"], { cwd: dir, encoding: "utf8" });
+  const out = JSON.parse(r.stdout);
+  return r.status === 0 && out.issues.broken_links.some((i) => i.includes("docs/archive/old.md") && i.includes("does-not-exist.md"));
+});
+
 
 test("doc consistency: numeric claim mismatch with validator source is flagged", () => {
   const dir = tmp("consistency-numeric");
@@ -630,28 +786,32 @@ test("release plan: README-scale doc changes recommend patch", () => {
   const r = planChanges("1.2.3", [{ type: "docs", description: "rewrite README" }]);
   if (r.status !== 0) return false;
   const out = JSON.parse(r.stdout);
-  return out.releaseType === "patch" && out.recommended === "1.2.4" && out.needsClarification === false;
+  return out.releaseType === "patch" && out.recommended === "1.2.4" && out.needsClarification === false &&
+    out.riskLevel === "low" && out.reviewRecommendation === "none" && out.reviewStatus === "not-required";
 });
 
 test("release plan: large internal refactor recommends patch", () => {
   const r = planChanges("1.2.3", [{ type: "refactor", description: "restructure modules" }]);
   if (r.status !== 0) return false;
   const out = JSON.parse(r.stdout);
-  return out.releaseType === "patch" && out.recommended === "1.2.4";
+  return out.releaseType === "patch" && out.recommended === "1.2.4" &&
+    out.riskLevel === "medium" && out.reviewRecommendation === "suggested";
 });
 
 test("release plan: new CLI command recommends minor", () => {
   const r = planChanges("1.2.3", [{ type: "feature", description: "add CLI command" }]);
   if (r.status !== 0) return false;
   const out = JSON.parse(r.stdout);
-  return out.releaseType === "minor" && out.recommended === "1.3.0";
+  return out.releaseType === "minor" && out.recommended === "1.3.0" &&
+    out.riskLevel === "medium" && out.reviewRecommendation === "suggested";
 });
 
 test("release plan: deleted public API recommends major", () => {
   const r = planChanges("1.2.3", [{ type: "breaking", description: "remove public API" }]);
   if (r.status !== 0) return false;
   const out = JSON.parse(r.stdout);
-  return out.releaseType === "major" && out.recommended === "2.0.0";
+  return out.releaseType === "major" && out.recommended === "2.0.0" &&
+    out.riskLevel === "high" && out.reviewRecommendation === "required" && out.reviewStatus === "required";
 });
 
 test("release plan: uncertain breaking change requests clarification (exit 2)", () => {
@@ -660,7 +820,8 @@ test("release plan: uncertain breaking change requests clarification (exit 2)", 
   ]);
   if (r.status !== 2) return false;
   const out = JSON.parse(r.stdout);
-  return out.needsClarification === true && out.releaseType === "unknown";
+  return out.needsClarification === true && out.releaseType === "unknown" &&
+    out.riskLevel === "high" && out.reviewRecommendation === "required";
 });
 
 test("release plan: --file reads JSON input from a file", () => {
@@ -670,7 +831,13 @@ test("release plan: --file reads JSON input from a file", () => {
   const r = runRelease(dir, ["plan", "--file", inputPath]);
   if (r.status !== 0) return false;
   const out = JSON.parse(r.stdout);
-  return out.releaseType === "minor" && out.recommended === "1.3.0";
+  return out.releaseType === "minor" && out.recommended === "1.3.0" &&
+    out.riskLevel === "medium" && out.reviewRecommendation === "suggested";
+});
+
+test("release plan: null input is rejected cleanly", () => {
+  const r = runRelease(TMP_ROOT, ["plan", "--json", "null"]);
+  return r.status === 1 && /input must be a JSON object/.test(r.stderr) && !/TypeError/.test(r.stderr);
 });
 
 test("release execute: unapproved release creates no tag", () => {
@@ -683,6 +850,9 @@ test("release execute: unapproved release creates no tag", () => {
     releaseType: "patch",
     headSha: head,
     summary: "test patch",
+    riskLevel: "low",
+    reviewRecommendation: "none",
+    reviewStatus: "not-required",
   };
   const proposalPath = path.join(dir, ".governance", "release-proposal.json");
   write(proposalPath, JSON.stringify(proposal));
@@ -700,6 +870,9 @@ test("release execute: approved release creates annotated tag", () => {
     releaseType: "patch",
     headSha: head,
     summary: "test patch",
+    riskLevel: "low",
+    reviewRecommendation: "none",
+    reviewStatus: "not-required",
   };
   const proposalPath = path.join(dir, ".governance", "release-proposal.json");
   write(proposalPath, JSON.stringify(proposal));
@@ -719,11 +892,47 @@ test("release execute: proposal without headSha is rejected (identity binding)",
     recommended: "1.0.1",
     releaseType: "patch",
     summary: "no headSha",
+    riskLevel: "low",
+    reviewRecommendation: "none",
+    reviewStatus: "not-required",
   };
   const proposalPath = path.join(dir, ".governance", "release-proposal.json");
   write(proposalPath, JSON.stringify(proposal));
   const r = runRelease(dir, ["execute", "--proposal", proposalPath, "--yes"]);
   return r.status !== 0 && gitTags(dir) === "" && /headSha/.test(r.stdout + r.stderr);
+});
+
+test("release execute: high-risk proposal requires review evidence", () => {
+  const dir = tmp("rel-high-risk");
+  gitInit(dir);
+  const head = gitHead(dir);
+  const proposal = {
+    current: "1.0.0",
+    recommended: "1.0.1",
+    releaseType: "patch",
+    headSha: head,
+    summary: "security fix",
+    riskLevel: "high",
+    reviewRecommendation: "required",
+    reviewStatus: "required",
+  };
+  const proposalPath = path.join(dir, ".governance", "release-proposal.json");
+  write(proposalPath, JSON.stringify(proposal));
+  const blocked = runRelease(dir, ["execute", "--proposal", proposalPath, "--yes"]);
+  if (blocked.status !== 4 || gitTags(dir) !== "" || !/requires completed review/.test(blocked.stderr)) return false;
+  proposal.reviewStatus = "completed";
+  write(proposalPath, JSON.stringify(proposal));
+  const allowed = runRelease(dir, ["execute", "--proposal", proposalPath, "--yes"]);
+  return allowed.status === 0 && gitTags(dir) === "v1.0.1";
+});
+
+test("release execute: null proposal is rejected cleanly", () => {
+  const dir = tmp("rel-null-proposal");
+  gitInit(dir);
+  const proposalPath = path.join(dir, ".governance", "release-proposal.json");
+  write(proposalPath, "null");
+  const r = runRelease(dir, ["execute", "--proposal", proposalPath, "--yes"]);
+  return r.status === 3 && /proposal must be a JSON object/.test(r.stderr) && !/TypeError/.test(r.stderr) && gitTags(dir) === "";
 });
 
 // ---------- 24. generate-governance.js ----------
@@ -794,6 +1003,14 @@ test("generate-governance: manifest lists created artifacts with correct types",
   const validKinds = m.artifacts.every((a) => a.kind === "file" || a.kind === "dir");
   const agentsType = m.artifacts.find((a) => a.path === "AGENTS.md").type;
   return count("policy") === 9 && count("script") === 5 && count("state") === 6 && validKinds && agentsType === "policy";
+});
+
+test("generate-governance: gitignore covers sensitive filenames", () => {
+  const dir = tmp("gen-gitignore-security");
+  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "Security", "--phase", "B"], { encoding: "utf8" });
+  if (r.status !== 0) return false;
+  const content = fs.readFileSync(path.join(dir, ".gitignore"), "utf8");
+  return ["*.p12", "*.pfx", "id_rsa", "credentials.json", "secrets.*", "*.log", "logs/"].every((entry) => content.includes(entry));
 });
 
 test("generate-governance: manifest omits release for fresh INIT", () => {
@@ -1060,6 +1277,88 @@ test("generate-governance: manifest records the platform-specific CI path", () =
   // every manifest-listed artifact must actually exist
   const allExist = mgl.artifacts.every((a) => fs.existsSync(path.join(gl, a.path)));
   return ghOk && glOk && allExist;
+});
+
+test("generate-governance: default manifest version matches package.json", () => {
+  const dir = tmp("gen-version");
+  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "Version", "--phase", "B"], { encoding: "utf8" });
+  if (r.status !== 0) return false;
+  const pkg = JSON.parse(fs.readFileSync(path.join(SKILL_ROOT, "package.json"), "utf8"));
+  const manifest = JSON.parse(fs.readFileSync(path.join(dir, ".governance/manifest.json"), "utf8"));
+  return manifest.governance_version === pkg.version;
+});
+
+test("generate-governance: hook artifacts use the first complete fence and are typed as scripts", () => {
+  const dir = tmp("gen-hooks");
+  const r = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "Hooks", "--phase", "C"], { encoding: "utf8" });
+  if (r.status !== 0) return false;
+  const hook = fs.readFileSync(path.join(dir, ".githooks/pre-commit"), "utf8");
+  const msgHook = fs.readFileSync(path.join(dir, ".githooks/commit-msg"), "utf8");
+  const manifest = JSON.parse(fs.readFileSync(path.join(dir, ".governance/manifest.json"), "utf8"));
+  const hookEntries = manifest.artifacts.filter((a) => a.path.startsWith(".githooks/"));
+  const modeOk = process.platform === "win32" || ((fs.statSync(path.join(dir, ".githooks/pre-commit")).mode & 0o111) !== 0 && (fs.statSync(path.join(dir, ".githooks/commit-msg")).mode & 0o111) !== 0);
+  return hook.startsWith("#!/bin/sh") && msgHook === hook && !hook.includes('"staged": [') &&
+    hookEntries.length === 2 && hookEntries.every((a) => a.type === "script") &&
+    fs.readFileSync(path.join(dir, ".gitignore"), "utf8").includes(".governance/consent.json") && modeOk;
+});
+
+function findPosixShell() {
+  const candidates = ["sh"];
+  if (process.platform === "win32") {
+    for (const base of [process.env.ProgramFiles, process.env["ProgramFiles(x86)"]]) {
+      if (!base) continue;
+      candidates.push(path.join(base, "Git", "bin", "sh.exe"));
+      candidates.push(path.join(base, "Git", "usr", "bin", "sh.exe"));
+    }
+    const where = spawnSync("where.exe", ["git"], { encoding: "utf8" });
+    for (const line of String(where.stdout || "").split(/\r?\n/).filter(Boolean)) {
+      const cmdDir = path.dirname(line.trim());
+      const gitRoot = path.basename(cmdDir).toLowerCase() === "cmd" ? path.dirname(cmdDir) : path.dirname(path.dirname(cmdDir));
+      candidates.push(path.join(gitRoot, "bin", "sh.exe"), path.join(gitRoot, "usr", "bin", "sh.exe"));
+    }
+  }
+  for (const candidate of [...new Set(candidates)]) {
+    const probe = spawnSync(candidate, ["-c", "exit 0"], { encoding: "utf8" });
+    if (!probe.error && probe.status === 0) return candidate;
+  }
+  return null;
+}
+
+test("payload: hooks pass sh -n and real git commit matrix", () => {
+  const shell = findPosixShell();
+  if (!shell) {
+    console.error("  sh unavailable; hook execution test skipped in this environment");
+    return true;
+  }
+  const dir = tmp("hook-commit-matrix");
+  const generated = spawnSync(process.execPath, [GENERATOR, "--target", dir, "--project-name", "HookMatrix", "--phase", "C"], { encoding: "utf8" });
+  if (generated.status !== 0) return false;
+  const pre = path.join(dir, ".githooks/pre-commit");
+  const msg = path.join(dir, ".githooks/commit-msg");
+  if (spawnSync(shell, ["-n", pre], { encoding: "utf8" }).status !== 0 || spawnSync(shell, ["-n", msg], { encoding: "utf8" }).status !== 0) return false;
+
+  gitInit(dir);
+  spawnSync("git", ["config", "core.hooksPath", ".githooks"], { cwd: dir });
+  const first = "文档/带 空格.md";
+  write(path.join(dir, first), "first\n");
+  spawnSync("git", ["add", "--", first], { cwd: dir });
+  write(path.join(dir, ".governance/consent.json"), JSON.stringify({ staged: [first], message: ["fix: approved"] }));
+  const matching = spawnSync("git", ["commit", "-q", "-m", "fix: approved"], { cwd: dir, encoding: "utf8" });
+  if (matching.status !== 0) return false;
+
+  const second = "second file.txt";
+  write(path.join(dir, second), "second\n");
+  spawnSync("git", ["add", "--", second], { cwd: dir });
+  write(path.join(dir, ".governance/consent.json"), JSON.stringify({ staged: [second], message: ["fix: approved"] }));
+  const mismatchedMessage = spawnSync("git", ["commit", "-q", "-m", "feat: unapproved"], { cwd: dir, encoding: "utf8" });
+  if (mismatchedMessage.status !== 1) return false;
+
+  const third = "third.txt";
+  write(path.join(dir, third), "third\n");
+  spawnSync("git", ["add", "--", third], { cwd: dir });
+  fs.rmSync(path.join(dir, ".governance/consent.json"));
+  const missingConsent = spawnSync("git", ["commit", "-q", "-m", "fix: missing consent"], { cwd: dir, encoding: "utf8" });
+  return missingConsent.status === 1;
 });
 // ---------- 27. Validator edge cases (absent / malformed governance state) ----------
 

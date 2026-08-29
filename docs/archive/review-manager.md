@@ -1,8 +1,6 @@
 # Review Manager（TASK 计划）
 
-[English](../../en/plans/review-manager.md) · [简体中文](review-manager.md) · [繁體中文](../../zh-TW/plans/review-manager.md)
-
-> **状态：设计计划，未实现。** 本页是路线图条目 `Review manager` 的详细设计（见 [roadmap.md](../roadmap.md)），按 `docs/plans/TASK_<name>.md` 六字段模板组织。
+> **状态：已实现（2026-08-29）。** 本页保留路线图条目 `Review manager` 的设计记录；实现位于 `references/templates/sub-skills.md` 第 8 节（见 [roadmap.md](../zh-CN/roadmap.md)）。
 
 ### 任务目的
 

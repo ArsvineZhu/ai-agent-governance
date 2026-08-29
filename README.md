@@ -165,7 +165,7 @@ Releases run as a human-in-the-loop flow — **the AI proposes, the developer ap
 Analyze changes → Generate SemVer proposal → Developer approval → Create tag → GitHub Release
 ```
 
-- **Analyze** — `release-manager` inspects git history and change classifications (SemVer 2.0.0), produces a Release Proposal (current / recommended / release type / reasons / Release Notes) — read-only
+- **Analyze** — `release-manager` inspects git history and change classifications (SemVer 2.0.0), produces a Release Proposal (current / recommended / release type / reasons / risk level / review recommendation / Release Notes) — read-only
 - **Approve** — explicit developer confirmation before any write operation; uncertainty (Potential Breaking Change) pauses the flow and requests clarification
 - **Execute** — after approval: annotated tag → push → GitHub Release, with synchronized versions. Spec: [references/workflows/release.md](references/workflows/release.md)
 

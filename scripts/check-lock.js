@@ -13,19 +13,19 @@ const STATE = path.join(process.cwd(), ".governance", "state.json");
 
 function readState() {
   try {
-    return JSON.parse(fs.readFileSync(STATE, "utf8"));
-  } catch {
-    return null;
+    return { state: JSON.parse(fs.readFileSync(STATE, "utf8")), missing: false, error: null };
+  } catch (e) {
+    if (e.code === "ENOENT") return { state: null, missing: true, error: null };
+    return { state: null, missing: false, error: e };
   }
 }
 
 function lockedValue(state) {
   if (!state) return null;
   const v = state.locked;
-  // `false` (and the undefined/null family) means "no lock held"; only a truthy
-  // value (agent/task identifier) indicates a held lock. Treat `false` as unlocked,
-  // otherwise a hand-edited state.json with "locked": false would falsely block.
-  if (v === null || v === undefined || v === false) return null;
+  // `false`, an empty string, and the undefined/null family mean "no lock held";
+  // any other value is treated as held so malformed-but-parseable state fails closed.
+  if (v === null || v === undefined || v === false || (typeof v === "string" && v.trim() === "")) return null;
   return v;
 }
 
@@ -36,7 +36,27 @@ Exit codes: 0 no lock held · 1 lock held by another agent`);
   process.exit(0);
 }
 
-const state = readState();
+const stateResult = readState();
+if (stateResult.error) {
+  const message = `cannot read .governance/state.json safely (${stateResult.error.message})`;
+  if (process.argv.includes("--json")) {
+    process.stdout.write(JSON.stringify({ locked: true, lock: null, agentId: null, taskId: null, error: message }, null, 2) + "\n");
+  } else {
+    console.error(`check-lock: ${message} — refusing to proceed`);
+  }
+  process.exit(1);
+}
+
+const state = stateResult.state;
+if (!stateResult.missing && (!state || typeof state !== "object" || Array.isArray(state))) {
+  const message = "invalid .governance/state.json shape — refusing to proceed";
+  if (process.argv.includes("--json")) {
+    process.stdout.write(JSON.stringify({ locked: true, lock: null, agentId: null, taskId: null, error: message }, null, 2) + "\n");
+  } else {
+    console.error(`check-lock: ${message}`);
+  }
+  process.exit(1);
+}
 const lock = lockedValue(state);
 
 if (process.argv.includes("--json")) {

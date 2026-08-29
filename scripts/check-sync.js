@@ -15,13 +15,16 @@ const STATE = path.join(process.cwd(), ".governance", "state.json");
 
 function readJSON(p) {
   try {
-    return JSON.parse(fs.readFileSync(p, "utf8"));
-  } catch {
-    return null;
+    return { value: JSON.parse(fs.readFileSync(p, "utf8")), missing: false, error: null };
+  } catch (e) {
+    if (e.code === "ENOENT") return { value: null, missing: true, error: null };
+    return { value: null, missing: false, error: e };
   }
 }
 
 function globMatch(pattern, file) {
+  pattern = String(pattern).replace(/\\/g, "/");
+  file = String(file).replace(/\\/g, "/");
   if (pattern === file) return true;
   if (pattern.endsWith("/**")) {
     const prefix = pattern.slice(0, -3);
@@ -33,27 +36,50 @@ function globMatch(pattern, file) {
   return false;
 }
 
+function nulPaths(buffer) {
+  return String(buffer || "")
+    .split("\0")
+    .filter(Boolean)
+    .map((p) => p.replace(/^\.\//, "").replace(/\\/g, "/"));
+}
+
+function porcelainPaths(buffer) {
+  const fields = String(buffer || "").split("\0");
+  const out = [];
+  for (let i = 0; i < fields.length; i++) {
+    const entry = fields[i];
+    if (!entry || entry.length < 4 || entry[2] !== " ") continue;
+    const status = entry.slice(0, 2);
+    const file = entry.slice(3);
+    if (!file) continue;
+    // With porcelain v1 -z, rename/copy entries are destination first, followed
+    // by the original path as the next NUL-delimited field.
+    out.push(file.replace(/^\.\//, "").replace(/\\/g, "/"));
+    if (/[RC]/.test(status)) i++;
+  }
+  return out;
+}
+
 function changedPaths(base) {
   const out = new Set();
   if (base) {
-    const r = spawnSync("git", ["diff", "--name-only", base + "..HEAD"], { encoding: "utf8" });
+    const r = spawnSync("git", ["diff", "--name-only", "--find-renames", "-z", base + "..HEAD"], { encoding: "buffer" });
     if (r.status === 0) {
-      String(r.stdout || "").split("\n").filter(Boolean).forEach((p) => out.add(p));
+      nulPaths(r.stdout).forEach((p) => out.add(p));
+    } else {
+      return { paths: [], error: `cannot inspect git diff from task-start SHA (${String(r.stderr || "").trim() || "git diff failed"})` };
     }
   }
-  const r2 = spawnSync("git", ["status", "--porcelain"], { encoding: "utf8" });
+  // -uall keeps untracked files at file granularity instead of collapsing
+  // `?? docs/new.md` into `?? docs/`. -z gives raw UTF-8 names, preserving
+  // spaces and non-ASCII characters without relying on git's quote format.
+  const r2 = spawnSync("git", ["status", "--porcelain=v1", "-uall", "-z"], { encoding: "buffer" });
   if (r2.status === 0) {
-    String(r2.stdout || "").split("\n").forEach((line) => {
-      const m = line.match(/^..\s+(.+)$/);
-      if (!m) return;
-      // Rename entries read `R  old -> new` (porcelain v1). The sync groups should
-      // match against the NEW path, so take the part after ` -> ` when present.
-      const raw = m[1].trim();
-      const newPath = raw.includes(" -> ") ? raw.split(" -> ").pop().trim() : raw;
-      if (newPath) out.add(newPath);
-    });
+    porcelainPaths(r2.stdout).forEach((p) => out.add(p));
+  } else {
+    return { paths: [], error: `cannot inspect git status (${String(r2.stderr || "").trim() || "git status failed"})` };
   }
-  return Array.from(out);
+  return { paths: Array.from(out), error: null };
 }
 
 if (process.argv.includes("--help") || process.argv.includes("-h")) {
@@ -66,15 +92,42 @@ function argValue(name) {
   return i >= 0 && i + 1 < process.argv.length ? process.argv[i + 1] : null;
 }
 
-const policy = readJSON(POLICY);
-if (!policy || !Array.isArray(policy.syncGroups)) {
-  console.error("check-sync: no .governance/sync-rules.json - nothing to check");
+const advisory = process.argv.includes("--advisory");
+const json = process.argv.includes("--json");
+
+function failClosed(message) {
+  if (json) {
+    process.stdout.write(JSON.stringify({ clean: false, base: null, unsynced: [], error: message }, null, 2) + "\n");
+  } else {
+    console.error(`check-sync: ${message}`);
+  }
+  process.exit(1);
+}
+
+const policyResult = readJSON(POLICY);
+if (policyResult.error) {
+  failClosed(`cannot read .governance/sync-rules.json safely (${policyResult.error.message}) — refusing to proceed`);
+}
+const policy = policyResult.value;
+if (policyResult.missing) {
+  if (json) process.stdout.write(JSON.stringify({ clean: true, base: null, unsynced: [] }, null, 2) + "\n");
+  else console.error("check-sync: no .governance/sync-rules.json - nothing to check");
   process.exit(0);
+}
+if (!policy || !Array.isArray(policy.syncGroups)) {
+  failClosed("invalid .governance/sync-rules.json shape — refusing to proceed");
 }
 
 let base = argValue("--base");
 if (!base) {
-  const st = readJSON(STATE);
+  const stateResult = readJSON(STATE);
+  if (stateResult.error) {
+    failClosed(`cannot read .governance/state.json safely (${stateResult.error.message}) — refusing to proceed`);
+  }
+  const st = stateResult.value;
+  if (!stateResult.missing && (!st || typeof st !== "object" || Array.isArray(st))) {
+    failClosed("invalid .governance/state.json shape — refusing to proceed");
+  }
   base = st && st.task_start_sha ? st.task_start_sha : null;
 }
 if (!base) {
@@ -86,7 +139,9 @@ if (!base) {
   process.exit(1);
 }
 
-const changed = changedPaths(base);
+const changedResult = changedPaths(base);
+if (changedResult.error) failClosed(changedResult.error);
+const changed = changedResult.paths;
 const unsynced = [];
 for (const g of policy.syncGroups) {
   const watch = g.watch || [];
@@ -96,9 +151,6 @@ for (const g of policy.syncGroups) {
   const synced = require.some((p) => changed.some((f) => globMatch(p, f)));
   if (!synced) unsynced.push({ group: g.name, watch, require });
 }
-
-const advisory = process.argv.includes("--advisory");
-const json = process.argv.includes("--json");
 
 // Append to .governance/drift-report.json under `sync` (runtime output, git-ignored,
 // optional: never let a report-write failure change the check result).

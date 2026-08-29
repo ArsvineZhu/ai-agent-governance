@@ -31,6 +31,7 @@ ai-agent-governance/
 │   │   ├── env-example.template.md # .env.example template (placeholders, dependency-trimmed)
 │   │   ├── gitmessage.template.md  # .gitmessage.txt template (commit conventions)
 │   │   ├── git-policy.template.md  # .governance/git-policy.json template (Git workflow policy)
+│   │   ├── githooks-template.md     # opt-in .githooks/pre-commit + commit-msg templates
 │   │   └── sync-rules.template.md  # .governance/sync-rules.json template (sync groups)
 │   ├── policies/
 │   │   ├── lifecycle.policy.md / git.policy.md / security.policy.md / coding.policy.md / testing.policy.md

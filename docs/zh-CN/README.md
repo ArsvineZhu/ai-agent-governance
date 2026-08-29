@@ -165,7 +165,7 @@ my-project/
 分析变更 → 生成 SemVer Proposal → 开发者批准 → 创建 tag → GitHub Release
 ```
 
-- **分析** — `release-manager` 检查 git 历史与变更分类（SemVer 2.0.0），产出 Release Proposal（当前版本 / 推荐版本 / 发布类型 / 理由 / Release Notes）—— 只读
+- **分析** — `release-manager` 检查 git 历史与变更分类（SemVer 2.0.0），产出 Release Proposal（当前版本 / 推荐版本 / 发布类型 / 理由 / 风险等级 / 审核建议 / Release Notes）—— 只读
 - **批准** — 任何写操作前开发者必须明确确认；不确定性（Potential Breaking Change）暂停流程并请求澄清
 - **执行** — 批准后执行：annotated tag → push → GitHub Release，版本一致（synchronized versions）。规范：[references/workflows/release.md](../../references/workflows/release.md)
 

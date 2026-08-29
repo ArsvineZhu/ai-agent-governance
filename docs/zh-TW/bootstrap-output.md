@@ -34,12 +34,19 @@ INIT 腳本化生成器（`scripts/generate-governance.js`）為被治理專案�
 | .governance/git-policy.json / sync-rules.json | 模板（JSON 從程式碼區塊提取） |
 | scripts/verify-governance.js + 4 個門禁腳本 | 從本 skill 原樣複製 |
 
+## Phase C — 結構適配與可選鉤子
+
+| 路徑 | 來源 |
+| --- | --- |
+| .github/workflows/ci.yml（或 .gitlab-ci.yml） | 從 references/workflows/ci.md 按輸入選擇 |
+| scripts/check-doc-freshness.js + check-doc-consistency.js | 從本 skill 原樣複製 |
+| .governance/generated/skills/ | 從 references/templates/sub-skills.md 生成 |
+| .githooks/pre-commit + .githooks/commit-msg | references/templates/githooks-template.md；可執行、可選啟用，INIT 不自動啟用 |
+
 ## 確定性與驗證
 
 - 相同輸入產出位元組級一致的輸出（無時間戳、無隨機）。
 - 已存在的檔案跳過、絕不覆蓋（合併而不覆蓋留到 Phase C）。
 - Phase B 輸出通過 `scripts/verify-governance.js`（manifest 模式）——由 `tests/run-tests.js` 的端到端測試覆蓋。
 
-## 尚未生成（Phase C 前由 Agent 完成）
-
-CI 工作流選擇、CLAUDE.md 等按工具偵測的入口檔案、子技能生成、README 語言佈局、建議性腳本（新鮮度 / 一致性）、結構適配模式（既有文件根）。
+CI 工作流程選擇、按工具偵測的入口檔案、README 語言佈局與結構適配模式（既有文件根）仍由 Agent 根據輸入決定；選擇後，Phase C 列出的工件由生成器產出。

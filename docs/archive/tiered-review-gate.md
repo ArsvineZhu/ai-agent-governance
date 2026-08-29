@@ -1,8 +1,6 @@
 # Tiered Review Gate（TASK 计划）
 
-[English](../../en/plans/tiered-review-gate.md) · [简体中文](tiered-review-gate.md) · [繁體中文](../../zh-TW/plans/tiered-review-gate.md)
-
-> **状态：设计计划，未实现。** 本页是路线图条目 `Tiered review gate` 的详细设计（见 [roadmap.md](../roadmap.md)），按 `docs/plans/TASK_<name>.md` 六字段模板组织。
+> **状态：已实现（2026-08-29）。** 本页保留路线图条目 `Tiered review gate` 的设计记录；风险字段与审核规则已写入 `references/workflows/release.md`（见 [roadmap.md](../zh-CN/roadmap.md)）。
 
 ### 任务目的
 

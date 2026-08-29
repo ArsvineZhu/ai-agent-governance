@@ -14,9 +14,10 @@ const POLICY = path.join(process.cwd(), ".governance", "git-policy.json");
 
 function readPolicy() {
   try {
-    return JSON.parse(fs.readFileSync(POLICY, "utf8"));
-  } catch {
-    return null;
+    return { policy: JSON.parse(fs.readFileSync(POLICY, "utf8")), missing: false, error: null };
+  } catch (e) {
+    if (e.code === "ENOENT") return { policy: null, missing: true, error: null };
+    return { policy: null, missing: false, error: e };
   }
 }
 
@@ -33,10 +34,38 @@ Exit codes: 0 safe to proceed · 1 on a protected branch with directPush=false (
   process.exit(0);
 }
 
-const policy = readPolicy();
+const policyResult = readPolicy();
+if (policyResult.error) {
+  const message = `cannot read .governance/git-policy.json safely (${policyResult.error.message})`;
+  if (process.argv.includes("--json")) {
+    process.stdout.write(JSON.stringify({ policyPresent: true, currentBranch: currentBranch(), protectedBranches: [], directPush: false, blocked: true, error: message }, null, 2) + "\n");
+  } else {
+    console.error(`check-git-policy: ${message} — refusing to proceed`);
+  }
+  process.exit(1);
+}
+
+const policy = policyResult.policy;
 const branch = currentBranch();
-const protectedBranches = policy && Array.isArray(policy.protectedBranches) ? policy.protectedBranches : [];
-const directPush = policy ? !!policy.directPush : true;
+const policyShapeValid =
+  policyResult.missing ||
+  (policy &&
+    Array.isArray(policy.protectedBranches) &&
+    typeof policy.directPush === "boolean" &&
+    typeof policy.requireReview === "boolean" &&
+    typeof policy.allowForcePush === "boolean");
+if (!policyShapeValid) {
+  const message = "invalid .governance/git-policy.json shape — refusing to proceed";
+  if (process.argv.includes("--json")) {
+    process.stdout.write(JSON.stringify({ policyPresent: true, currentBranch: branch, protectedBranches: [], directPush: false, blocked: true, error: message }, null, 2) + "\n");
+  } else {
+    console.error(`check-git-policy: ${message}`);
+  }
+  process.exit(1);
+}
+
+const protectedBranches = policy ? policy.protectedBranches : [];
+const directPush = policy ? policy.directPush : true;
 const blocked = branch !== null && protectedBranches.includes(branch) && !directPush;
 
 if (process.argv.includes("--json")) {
